@@ -44,6 +44,18 @@ Everything else here is upstream-owned and **read-only**; the drift gate enforce
 | **Design** | The template's neon HUD look is **not** Huginn's and is being replaced: calm, restrained, professional — ADR-PROJ-003 |
 | **Crates** | One Cargo workspace, rooted at `src-tauri/` (forced: the pinned `sync-version.mjs` writes there) — ADR-PROJ-009 |
 
+## How we work right now: Windows here, macOS on the Mac
+
+**The development machine is Windows.** Work proceeds on the **Windows line**. When a task is
+macOS-specific — the non-activating `NSPanel`, `CGEvent` injection, `SMAppService` autostart, TCC
+permission prompts, a signed DMG — the maintainer **switches the development environment to the Mac**, and
+it is written and verified there.
+
+**Therefore: never assert macOS behaviour from this machine.** Not "should work", not "the API exists".
+If it was not run on the Mac, it is marked **open** — in the ADR, in the reply, in the commit
+(ADR-CORE-004). A `#[cfg(target_os = "macos")]` branch nobody has compiled is not a stub; it is unwritten,
+and it is said so plainly. `PLAN.md` tags every handover point with **[mac]**.
+
 ## What must never happen here
 
 - **Audio or recognised text leaving the device.** Not in a log, not in a crash report, not in
