@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Panel } from "./ui/Panel";
 import { Button } from "./ui/Button";
 import { useBuildInfo } from "../hooks/useBuildInfo";
@@ -12,6 +13,7 @@ import logoUrl from "../../src-tauri/icons/icon.svg";
  * (ADR-CORE-024). Closes on the button, on Escape, or on a backdrop click.
  */
 export function AboutDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const { data: build } = useBuildInfo();
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
       }}
     >
       <div className="w-full max-w-sm" style={{ boxShadow: "var(--huginn-shadow)" }}>
-        <Panel label="About">
+        <Panel label={t("about.title")}>
           <div className="flex flex-col items-center gap-4 text-center">
             <img src={logoUrl} alt="" aria-hidden className="h-16 w-16" />
 
@@ -46,19 +48,22 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
             <p className="text-dim text-xs leading-relaxed">{APP_DESCRIPTION}</p>
 
             <dl className="border-line text-dim grid w-full grid-cols-2 gap-x-4 gap-y-1.5 border-t pt-3 text-left font-mono text-xs">
-              <Meta k="version" v={build ? `v${build.version}` : "—"} />
+              <Meta k={t("about.version")} v={build ? `v${build.version}` : "—"} />
               <div className="flex justify-between gap-2">
-                <dt>channel</dt>
+                <dt>{t("about.channel")}</dt>
                 <dd className={build?.channel === "dev" ? "text-warning" : "text-fg"}>
                   {build?.channel ?? "—"}
                 </dd>
               </div>
-              <Meta k="commit" v={build ? `${build.git_sha}${build.git_dirty ? "+" : ""}` : "—"} />
-              <Meta k="commit date" v={commitDate} />
+              <Meta
+                k={t("about.commit")}
+                v={build ? `${build.git_sha}${build.git_dirty ? "+" : ""}` : "—"}
+              />
+              <Meta k={t("about.commitDate")} v={commitDate} />
             </dl>
 
             <Button onClick={onClose} className="mt-1">
-              Close
+              {t("about.close")}
             </Button>
           </div>
         </Panel>

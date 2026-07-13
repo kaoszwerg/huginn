@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { TitleBar } from "./components/layout/TitleBar";
 import { StatusBar } from "./components/layout/StatusBar";
 import { Sidebar } from "./components/sidebar/Sidebar";
@@ -11,6 +12,7 @@ import { SettingsView } from "./views/SettingsView";
 import { useScrollTop } from "./hooks/useScrollTop";
 import { useApplyUiScale } from "./hooks/useUiScale";
 import { useApplyTheme } from "./hooks/useTheme";
+import { useApplyLanguage } from "./hooks/useLanguage";
 import { useHotkeyStatus } from "./hooks/useHotkey";
 import { useNativeContextMenuGuard } from "./hooks/useNativeContextMenuGuard";
 import { useUiStore } from "./store/ui";
@@ -24,6 +26,7 @@ import { useUiStore } from "./store/ui";
  * changes when one is added.
  */
 export default function App() {
+  const { t } = useTranslation();
   const view = useUiStore((s) => s.view);
   const setView = useUiStore((s) => s.setView);
   const aboutOpen = useUiStore((s) => s.aboutOpen);
@@ -32,6 +35,7 @@ export default function App() {
   const { canTop, scrollToTop } = useScrollTop(mainRef, view);
   const hotkey = useHotkeyStatus();
   useApplyTheme();
+  useApplyLanguage();
   useApplyUiScale();
   useNativeContextMenuGuard();
 
@@ -52,13 +56,13 @@ export default function App() {
           action={
             view === "settings" ? undefined : (
               <Button tone="danger" onClick={() => setView("settings")}>
-                Fix it
+                {t("hotkey.fix")}
               </Button>
             )
           }
         >
-          <strong className="text-fg">Push-to-talk is not active.</strong>{" "}
-          {hotkey.data?.error ?? "The key combination could not be registered."}
+          <strong className="text-fg">{t("hotkey.dead")}</strong>{" "}
+          {hotkey.data?.error ?? t("hotkey.deadFallback")}
         </Notice>
       ) : null}
 

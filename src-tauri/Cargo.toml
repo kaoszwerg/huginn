@@ -1,6 +1,6 @@
 [package]
 name = "huginn"
-version = "0.4.0"
+version = "0.5.0"
 description = "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings."
 authors = ["kaoszwerg"]
 edition = "2021"

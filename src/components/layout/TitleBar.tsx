@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Minus, Square, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { IconButton } from "../ui/IconButton";
 import { useBuildInfo } from "../../hooks/useBuildInfo";
@@ -12,6 +13,7 @@ import logoUrl from "../../../src-tauri/icons/icon.svg";
  * development build (ADR-CORE-024) — quietly, in the warning tone, not as a neon sticker.
  */
 export function TitleBar() {
+  const { t } = useTranslation();
   const { data: build } = useBuildInfo();
 
   return (
@@ -31,19 +33,22 @@ export function TitleBar() {
         </span>
         {build?.channel === "dev" ? (
           <span className="border-warning text-warning ml-1 rounded-[4px] border px-1.5 py-px text-[10px] font-medium tracking-wider uppercase">
-            Dev
+            {t("app.dev")}
           </span>
         ) : null}
       </div>
 
       <div className="flex items-center gap-0.5">
-        <WinButton label="Minimize" onClick={() => void getCurrentWindow().minimize()}>
+        <WinButton label={t("window.minimize")} onClick={() => void getCurrentWindow().minimize()}>
           <Minus size={15} strokeWidth={2} />
         </WinButton>
-        <WinButton label="Maximize" onClick={() => void getCurrentWindow().toggleMaximize()}>
+        <WinButton
+          label={t("window.maximize")}
+          onClick={() => void getCurrentWindow().toggleMaximize()}
+        >
           <Square size={12} strokeWidth={2} />
         </WinButton>
-        <WinButton label="Close" danger onClick={() => void getCurrentWindow().close()}>
+        <WinButton label={t("window.close")} danger onClick={() => void getCurrentWindow().close()}>
           <X size={16} strokeWidth={2} />
         </WinButton>
       </div>

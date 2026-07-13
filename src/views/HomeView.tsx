@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Panel } from "../components/ui/Panel";
 import { useBuildInfo } from "../hooks/useBuildInfo";
 import { APP_DESCRIPTION, APP_NAME } from "../lib/app";
@@ -7,6 +8,7 @@ import { APP_DESCRIPTION, APP_NAME } from "../lib/app";
  * trip works, because the build identity comes from the Rust backend, not from the bundle.
  */
 export function HomeView() {
+  const { t } = useTranslation();
   const { data: build } = useBuildInfo();
 
   return (
@@ -17,16 +19,16 @@ export function HomeView() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Panel label="What works">
+        <Panel label={t("home.worksTitle")}>
           <ul className="text-dim space-y-1.5 text-sm">
-            <Item>Push-to-talk hotkey with a focus-neutral recording overlay</Item>
-            <Item>Text inserted straight into the application you were working in</Item>
-            <Item>Typed IPC surface (ts-rs bindings as the single source of truth)</Item>
-            <Item>Structured logging: console, rotating JSON file, live log view</Item>
+            <Item>{t("home.works.pushToTalk")}</Item>
+            <Item>{t("home.works.injection")}</Item>
+            <Item>{t("home.works.typedIpc")}</Item>
+            <Item>{t("home.works.logging")}</Item>
           </ul>
         </Panel>
 
-        <Panel label="Build">
+        <Panel label={t("home.buildTitle")}>
           <dl className="text-dim grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-xs">
             <Meta k="version" v={build ? `v${build.version}` : "—"} />
             <Meta k="channel" v={build?.channel ?? "—"} />
@@ -36,21 +38,8 @@ export function HomeView() {
         </Panel>
       </div>
 
-      <Panel
-        label="Not yet"
-        info={
-          <p>
-            Speech recognition runs in a separate, deprivileged worker process — the process that
-            holds the microphone and synthesises keystrokes must never be the one parsing a model
-            file (ADR-PROJ-005).
-          </p>
-        }
-      >
-        <p className="text-dim text-sm leading-relaxed">
-          There is no speech engine yet: holding the hotkey shows the overlay and inserts a probe
-          string, which is what proves the path from key to text end to end. The recogniser, the
-          model catalogue and the dictionary follow.
-        </p>
+      <Panel label={t("home.notYetTitle")} info={<p>{t("home.notYetInfo")}</p>}>
+        <p className="text-dim text-sm leading-relaxed">{t("home.notYetBody")}</p>
       </Panel>
     </div>
   );

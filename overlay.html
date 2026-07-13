@@ -95,8 +95,12 @@
   <body>
     <div class="overlay">
       <span class="pulse" aria-hidden="true"></span>
-      <span role="status">Listening…</span>
-      <span class="hint">release to insert</span>
+      <!-- Filled by src/overlay/main.ts from the language in the URL fragment. The German text is
+           here as the fallback: if the script ever fails to load, the overlay says something rather
+           than showing an empty bar over the user's work. -->
+      <span role="status" data-overlay-state>Ich höre zu …</span>
+      <span class="hint" data-overlay-hint>loslassen zum Einfügen</span>
     </div>
+    <script type="module" src="/src/overlay/main.ts"></script>
   </body>
 </html>

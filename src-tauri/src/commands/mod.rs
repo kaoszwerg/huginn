@@ -67,13 +67,21 @@ pub fn update_settings(
     ui_scale: Option<f64>,
     minimize_to_tray: Option<bool>,
     theme: Option<ThemeChoice>,
+    language: Option<String>,
 ) -> Result<SettingsDto> {
-    tracing::info!(?ui_scale, ?minimize_to_tray, ?theme, "update_settings");
+    tracing::info!(
+        ?ui_scale,
+        ?minimize_to_tray,
+        ?theme,
+        ?language,
+        "update_settings"
+    );
     let _ = &app; // the tray is installed unconditionally now; nothing here toggles it.
     let next = state.settings.update(SettingsPatch {
         ui_scale,
         minimize_to_tray,
         theme,
+        language,
         hotkey: None,
     })?;
     tracing::debug!(

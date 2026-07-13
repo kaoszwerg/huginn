@@ -456,7 +456,7 @@ fn build_overlay_window(app: &AppHandle) -> Result<isize> {
     }
 
     let window =
-        WebviewWindowBuilder::new(app, OVERLAY_LABEL, WebviewUrl::App("overlay.html".into()))
+        WebviewWindowBuilder::new(app, OVERLAY_LABEL, WebviewUrl::App(overlay_url(app).into()))
             .title("Huginn")
             .inner_size(OVERLAY_WIDTH, OVERLAY_HEIGHT)
             // Born off-screen. `visible(false)` is not enough: creating the window makes it briefly
@@ -496,7 +496,17 @@ fn build_overlay_window(app: &AppHandle) -> Result<isize> {
     Ok(hwnd)
 }
 
-/// The overlay's `HWND`, or an error if it was never built.
+/// The overlay's URL, carrying the interface language in its fragment ().
+///
+/// The overlay window holds **no IPC capability** (least privilege, ADR-CORE-011), so it cannot ask
+/// what language to speak — it is told, in the one channel a window always has: its address.
+#[cfg(target_os = "windows")]
+fn overlay_url(app: &AppHandle) -> String {
+    let language = app.state::<AppState>().settings.get().language;
+    format!("overlay.html#{language}")
+}
+
+/// The overlay's , or an error if it was never built.
 #[cfg(target_os = "windows")]
 fn overlay_hwnd(app: &AppHandle) -> Result<isize> {
     app.get_webview_window(OVERLAY_LABEL)

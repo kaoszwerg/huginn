@@ -2,6 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
+// Initialises i18next before the first component renders (ADR-PROJ-010). German is the default and
+// the fallback: an untranslated key must degrade to a language, not to a raw identifier.
+import "./i18n";
 import "./styles/globals.css";
 
 // No webfont is loaded on purpose (ADR-PROJ-003): Huginn draws in the system face, so it reads like

@@ -31,6 +31,7 @@ describe("useSettings", () => {
       ui_scale: 1.1,
       minimize_to_tray: false,
       theme: "system",
+      language: "en",
       hotkey: "Ctrl+Space",
     };
     vi.mocked(api.getSettings).mockResolvedValue(settings);
@@ -66,6 +67,7 @@ describe("useUpdateSettings", () => {
       ui_scale: 1.25,
       minimize_to_tray: false,
       theme: "system",
+      language: "en",
       hotkey: "Ctrl+Space",
     };
     vi.mocked(api.updateSettings).mockResolvedValue(updated);

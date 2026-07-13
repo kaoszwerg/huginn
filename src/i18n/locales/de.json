@@ -1,0 +1,113 @@
+{
+  "app": {
+    "name": "Huginn",
+    "dev": "Dev"
+  },
+  "nav": {
+    "aria": "Hauptnavigation",
+    "home": "Start",
+    "logs": "Protokoll",
+    "settings": "Einstellungen"
+  },
+  "window": {
+    "minimize": "Minimieren",
+    "maximize": "Maximieren",
+    "close": "Schließen",
+    "scrollTop": "Nach oben",
+    "about": "Über {{name}}"
+  },
+  "hotkey": {
+    "dead": "Push-to-talk ist nicht aktiv.",
+    "deadFallback": "Die Tastenkombination konnte nicht registriert werden.",
+    "fix": "Beheben",
+    "armed": "Push-to-talk ist scharf.",
+    "change": "Ändern",
+    "cancel": "Abbrechen",
+    "recordPrompt": "Kombination drücken …",
+    "recordTooltip": "Neue Tastenkombination aufnehmen",
+    "chooseAnother": "Wähle oben eine andere Kombination."
+  },
+  "home": {
+    "worksTitle": "Was funktioniert",
+    "works": {
+      "pushToTalk": "Push-to-talk mit fokusneutralem Aufnahme-Overlay",
+      "injection": "Text landet direkt in der Anwendung, in der du gerade arbeitest",
+      "typedIpc": "Typisierte IPC-Grenze (ts-rs als einzige Quelle der Wahrheit)",
+      "logging": "Strukturiertes Logging: Konsole, rotierende JSON-Datei, Live-Ansicht"
+    },
+    "buildTitle": "Build",
+    "notYetTitle": "Noch nicht",
+    "notYetBody": "Es gibt noch keine Spracherkennung: Beim Halten der Taste erscheint das Overlay und ein Testtext wird eingefügt — das beweist den Weg von der Taste bis zum Text. Erkenner, Modellkatalog und Wörterbuch folgen.",
+    "notYetInfo": "Die Spracherkennung läuft in einem separaten, entrechteten Worker-Prozess — der Prozess mit Mikrofon und Tastatur darf niemals derjenige sein, der eine Modelldatei parst (ADR-PROJ-005)."
+  },
+  "logs": {
+    "title": "Protokoll",
+    "search": "suchen …",
+    "searchAria": "Protokoll durchsuchen",
+    "newest": "Neueste",
+    "oldest": "Älteste",
+    "sortTooltip": "Sortierung umkehren",
+    "live": "Live",
+    "paused": "Pausiert",
+    "pauseTooltip": "Live-Strom anhalten",
+    "resumeTooltip": "Live-Strom fortsetzen",
+    "clear": "Leeren",
+    "records": "{{count}} Einträge",
+    "loading": "Lädt …",
+    "empty": "Keine Protokolleinträge.",
+    "failed": "Protokoll konnte nicht geladen werden: {{message}}"
+  },
+  "settings": {
+    "sectionsAria": "Einstellungsbereiche",
+    "sections": {
+      "recording": "Aufnahme",
+      "appearance": "Erscheinungsbild",
+      "background": "Hintergrund"
+    },
+    "recording": {
+      "title": "Push-to-talk",
+      "info": "Halte die Kombination zum Aufnehmen, lass sie los, und der Text wird in die Anwendung eingefügt, in der du gearbeitet hast. Ein globales Tastenkürzel ist exklusiv: Solange Huginn es hält, bekommt es keine andere Anwendung.",
+      "combination": "Tastenkombination",
+      "combinationHint": "Halten zum Sprechen, loslassen zum Einfügen."
+    },
+    "appearance": {
+      "title": "Erscheinungsbild",
+      "theme": "Farbschema",
+      "themeHint": "Huginn folgt deinem Desktop, sofern du nichts anderes sagst.",
+      "themeSystem": "Wie das System",
+      "themeLight": "Hell",
+      "themeDark": "Dunkel",
+      "language": "Sprache",
+      "languageHint": "Sprache der Oberfläche. Die Sprache, die Huginn erkennt, wird beim Modell eingestellt.",
+      "size": "Größe der Oberfläche"
+    },
+    "background": {
+      "title": "Hintergrund",
+      "info": "Huginn ist ein Hintergrundprogramm: Die Taste wirkt in jeder Anwendung, aber nur solange Huginn läuft. Es behält immer ein Symbol im Infobereich — darüber öffnest du es wieder, und darüber beendest du es.",
+      "autostart": "Mit dem System starten",
+      "autostartHint": "Standardmäßig aus. Nichts trägt sich ungefragt in deinen Autostart ein.",
+      "autostartFailed": "Das System hat die Änderung des Autostart-Eintrags abgelehnt.",
+      "on": "An",
+      "off": "Aus",
+      "onClose": "Beim Schließen des Fensters",
+      "onCloseHint": "Das Schließen des Fensters beendet das Diktieren nicht, außer du willst es so — die Taste braucht ein laufendes Huginn.",
+      "keepRunning": "Im Infobereich weiterlaufen",
+      "quit": "Huginn beenden"
+    }
+  },
+  "about": {
+    "title": "Über",
+    "close": "Schließen",
+    "version": "Version",
+    "channel": "Kanal",
+    "commit": "Commit",
+    "commitDate": "Commit-Datum"
+  },
+  "panel": {
+    "whatIsThis": "Was ist das?"
+  },
+  "overlay": {
+    "listening": "Ich höre zu …",
+    "releaseToInsert": "loslassen zum Einfügen"
+  }
+}

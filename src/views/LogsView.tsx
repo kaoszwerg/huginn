@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLogs } from "../hooks/useLogs";
 import { Panel } from "../components/ui/Panel";
 import { Button } from "../components/ui/Button";
@@ -25,6 +26,7 @@ const LEVEL_COLOR: Record<string, string> = {
  * pause and clear. It is a developer's window into the app — never a substitute for telling the user
  * something went wrong (that is what `Notice` is for). */
 export function LogsView() {
+  const { t } = useTranslation();
   const { logs, clear, paused, setPaused, error, isLoading } = useLogs();
   const [level, setLevel] = useState<LevelFilter>("ALL");
   const [q, setQ] = useState("");
@@ -47,7 +49,7 @@ export function LogsView() {
   return (
     <div className="flex h-full flex-col gap-4 overflow-hidden p-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-fg text-lg font-semibold tracking-tight">Logs</h1>
+        <h1 className="text-fg text-lg font-semibold tracking-tight">{t("logs.title")}</h1>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex gap-1">
             {LEVELS.map((l) => (
@@ -66,35 +68,42 @@ export function LogsView() {
           <TextField
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="search…"
-            aria-label="Search logs"
+            placeholder={t("logs.search")}
+            aria-label={t("logs.searchAria")}
             className="w-40"
           />
-          <Button variant="ghost" onClick={() => setDesc((d) => !d)} tooltip="Toggle sort order">
-            {desc ? "Newest" : "Oldest"}
+          <Button
+            variant="ghost"
+            onClick={() => setDesc((d) => !d)}
+            tooltip={t("logs.sortTooltip")}
+          >
+            {desc ? t("logs.newest") : t("logs.oldest")}
           </Button>
           <Button
             variant="ghost"
             onClick={() => setPaused((p) => !p)}
             active={paused}
-            tooltip={paused ? "Resume the live stream" : "Pause the live stream"}
+            tooltip={paused ? t("logs.resumeTooltip") : t("logs.pauseTooltip")}
           >
-            {paused ? "Paused" : "Live"}
+            {paused ? t("logs.paused") : t("logs.live")}
           </Button>
           <Button variant="ghost" tone="danger" onClick={clear}>
-            Clear
+            {t("logs.clear")}
           </Button>
         </div>
       </header>
 
-      <Panel label={`${rows.length} records`} className="flex min-h-0 flex-1 flex-col">
+      <Panel
+        label={t("logs.records", { count: rows.length })}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <div className="flex min-h-0 flex-1 flex-col overflow-auto font-mono text-xs">
           {error ? (
-            <p style={{ color: PALETTE.danger }}>Failed to load logs: {error.message}</p>
+            <p style={{ color: PALETTE.danger }}>{t("logs.failed", { message: error.message })}</p>
           ) : isLoading && logs.length === 0 ? (
-            <p className="text-dim">Loading…</p>
+            <p className="text-dim">{t("logs.loading")}</p>
           ) : rows.length === 0 ? (
-            <p className="text-dim">No log records.</p>
+            <p className="text-dim">{t("logs.empty")}</p>
           ) : (
             rows.map((r, i) => <LogLine key={`${r.ts}-${i}`} rec={r} />)
           )}

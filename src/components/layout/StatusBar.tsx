@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "../ui/Button";
 import { useBuildInfo } from "../../hooks/useBuildInfo";
 import { useUiStore } from "../../store/ui";
@@ -11,6 +12,7 @@ export function StatusBar({
   canScrollTop?: boolean;
   onScrollTop?: () => void;
 }) {
+  const { t } = useTranslation();
   const { data: build } = useBuildInfo();
   const setAboutOpen = useUiStore((s) => s.setAboutOpen);
 
@@ -19,7 +21,7 @@ export function StatusBar({
       <Button
         variant="ghost"
         onClick={() => setAboutOpen(true)}
-        tooltip={`About ${APP_NAME}`}
+        tooltip={t("window.about", { name: APP_NAME })}
         className="px-2 py-0.5 font-mono"
       >
         {APP_NAME} {build ? `v${build.version}` : ""}
@@ -36,11 +38,11 @@ export function StatusBar({
         <Button
           variant="ghost"
           onClick={onScrollTop}
-          aria-label="Scroll to top"
-          tooltip="Scroll to top"
+          aria-label={t("window.scrollTop")}
+          tooltip={t("window.scrollTop")}
           className="px-2 py-0.5"
         >
-          ↑ Top
+          ↑
         </Button>
       ) : null}
     </footer>

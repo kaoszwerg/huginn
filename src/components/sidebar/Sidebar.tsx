@@ -1,26 +1,29 @@
 import { Home, ScrollText, Settings } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { IconButton } from "../ui/IconButton";
 import { useUiStore, type ViewId } from "../../store/ui";
 
-type NavItem = { id: ViewId; Icon: LucideIcon; label: string };
+/** The nav entries. `labelKey` is a translation key — the label itself is decided at render time. */
+type NavItem = { id: ViewId; Icon: LucideIcon; labelKey: string };
 
-const MAIN_NAV: NavItem[] = [{ id: "home", Icon: Home, label: "Home" }];
+const MAIN_NAV: NavItem[] = [{ id: "home", Icon: Home, labelKey: "nav.home" }];
 
 const BOTTOM_NAV: NavItem[] = [
-  { id: "logs", Icon: ScrollText, label: "Logs" },
-  { id: "settings", Icon: Settings, label: "Settings" },
+  { id: "logs", Icon: ScrollText, labelKey: "nav.logs" },
+  { id: "settings", Icon: Settings, labelKey: "nav.settings" },
 ];
 
 /** The navigation rail: product views at the top, logs and settings pinned to the bottom. */
 export function Sidebar() {
+  const { t } = useTranslation();
   const view = useUiStore((s) => s.view);
   const setView = useUiStore((s) => s.setView);
 
   return (
     <nav
       className="bg-surface border-line flex w-14 shrink-0 flex-col items-center gap-1 border-r py-2"
-      aria-label="Primary"
+      aria-label={t("nav.aria")}
     >
       {MAIN_NAV.map((item) => (
         <NavButton
@@ -57,10 +60,11 @@ function NavButton({
   active: boolean;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   const { Icon } = item;
   return (
     <IconButton
-      label={item.label}
+      label={t(item.labelKey)}
       active={active}
       onClick={onClick}
       aria-current={active ? "page" : undefined}

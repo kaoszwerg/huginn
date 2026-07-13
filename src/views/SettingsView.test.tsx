@@ -31,6 +31,7 @@ const DEFAULTS: SettingsDto = {
   // hotkey only works while the process lives.
   minimize_to_tray: true,
   theme: "system",
+  language: "en",
   hotkey: "Ctrl+Space",
 };
 
@@ -119,6 +120,7 @@ describe("SettingsView", () => {
     mockSettings();
     render(<SettingsView />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Appearance" }));
     fireEvent.click(screen.getByRole("button", { name: "Dark" }));
     expect(mutate).toHaveBeenCalledWith({ theme: "dark" });
   });
@@ -126,6 +128,7 @@ describe("SettingsView", () => {
   it("marks the persisted theme as pressed", () => {
     mockSettings({ theme: "light" });
     render(<SettingsView />);
+    fireEvent.click(screen.getByRole("button", { name: "Appearance" }));
     expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Follow system" })).toHaveAttribute(
       "aria-pressed",
@@ -136,6 +139,7 @@ describe("SettingsView", () => {
   it("calls updateSettings with the chosen UI scale", () => {
     mockSettings();
     render(<SettingsView />);
+    fireEvent.click(screen.getByRole("button", { name: "Appearance" }));
 
     fireEvent.click(screen.getByRole("button", { name: "125%" }));
     expect(mutate).toHaveBeenCalledWith({ uiScale: 1.25 });
@@ -145,6 +149,7 @@ describe("SettingsView", () => {
     mockSettings();
     mockAutostart(false);
     render(<SettingsView />);
+    fireEvent.click(screen.getByRole("button", { name: "Background" }));
 
     expect(screen.getByRole("button", { name: "Off" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "On" }));
@@ -155,6 +160,7 @@ describe("SettingsView", () => {
     // The default that matters most for this product: closing the window must not stop dictation.
     mockSettings();
     render(<SettingsView />);
+    fireEvent.click(screen.getByRole("button", { name: "Background" }));
     expect(screen.getByRole("button", { name: "Keep listening in the tray" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -164,6 +170,7 @@ describe("SettingsView", () => {
   it("toggles the close-button behaviour", () => {
     mockSettings();
     render(<SettingsView />);
+    fireEvent.click(screen.getByRole("button", { name: "Background" }));
 
     fireEvent.click(screen.getByRole("button", { name: "Keep listening in the tray" }));
     expect(mutate).toHaveBeenCalledWith({ minimizeToTray: true });
@@ -190,11 +197,17 @@ describe("SettingsView", () => {
     mockAutostart();
     render(<SettingsView />);
 
+    // The recording section still renders (it is the one the view opens on) rather than blanking out
+    // while the settings query is in flight.
+    expect(screen.getByRole("button", { name: "Change" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Appearance" }));
     expect(screen.getByRole("button", { name: "100%" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Quit Huginn" })).toHaveAttribute(
+
+    fireEvent.click(screen.getByRole("button", { name: "Background" }));
+    expect(screen.getByRole("button", { name: "Keep listening in the tray" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByText("Ctrl + Space")).toBeInTheDocument();
   });
 });

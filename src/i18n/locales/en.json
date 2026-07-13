@@ -1,0 +1,113 @@
+{
+  "app": {
+    "name": "Huginn",
+    "dev": "Dev"
+  },
+  "nav": {
+    "aria": "Primary",
+    "home": "Home",
+    "logs": "Logs",
+    "settings": "Settings"
+  },
+  "window": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "close": "Close",
+    "scrollTop": "Scroll to top",
+    "about": "About {{name}}"
+  },
+  "hotkey": {
+    "dead": "Push-to-talk is not active.",
+    "deadFallback": "The key combination could not be registered.",
+    "fix": "Fix it",
+    "armed": "Push-to-talk is armed.",
+    "change": "Change",
+    "cancel": "Cancel",
+    "recordPrompt": "Press a combination…",
+    "recordTooltip": "Record a new key combination",
+    "chooseAnother": "Choose another combination above."
+  },
+  "home": {
+    "worksTitle": "What works",
+    "works": {
+      "pushToTalk": "Push-to-talk with a focus-neutral recording overlay",
+      "injection": "Text inserted straight into the application you were working in",
+      "typedIpc": "Typed IPC surface (ts-rs bindings as the single source of truth)",
+      "logging": "Structured logging: console, rotating JSON file, live log view"
+    },
+    "buildTitle": "Build",
+    "notYetTitle": "Not yet",
+    "notYetBody": "There is no speech engine yet: holding the hotkey shows the overlay and inserts a probe string, which is what proves the path from key to text end to end. The recogniser, the model catalogue and the dictionary follow.",
+    "notYetInfo": "Speech recognition runs in a separate, deprivileged worker process — the process that holds the microphone and synthesises keystrokes must never be the one parsing a model file (ADR-PROJ-005)."
+  },
+  "logs": {
+    "title": "Logs",
+    "search": "search…",
+    "searchAria": "Search logs",
+    "newest": "Newest",
+    "oldest": "Oldest",
+    "sortTooltip": "Toggle sort order",
+    "live": "Live",
+    "paused": "Paused",
+    "pauseTooltip": "Pause the live stream",
+    "resumeTooltip": "Resume the live stream",
+    "clear": "Clear",
+    "records": "{{count}} records",
+    "loading": "Loading…",
+    "empty": "No log records.",
+    "failed": "Failed to load logs: {{message}}"
+  },
+  "settings": {
+    "sectionsAria": "Settings sections",
+    "sections": {
+      "recording": "Recording",
+      "appearance": "Appearance",
+      "background": "Background"
+    },
+    "recording": {
+      "title": "Push-to-talk",
+      "info": "Hold the combination to record, release it to insert the text into whatever application you were working in. A global shortcut is exclusive: while Huginn holds it, no other application receives it.",
+      "combination": "Key combination",
+      "combinationHint": "Hold to speak, release to insert."
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "themeHint": "Huginn follows your desktop unless you tell it otherwise.",
+      "themeSystem": "Follow system",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "language": "Language",
+      "languageHint": "The language of the interface. The language Huginn recognises is set with the model.",
+      "size": "Interface size"
+    },
+    "background": {
+      "title": "Background",
+      "info": "Huginn is a background tool: the hotkey works from any application, but only while Huginn is running. It always keeps a tray icon — that is how you open it again, and how you quit it.",
+      "autostart": "Start with the system",
+      "autostartHint": "Off by default. Nothing adds itself to your startup unasked.",
+      "autostartFailed": "The system refused to change the startup entry.",
+      "on": "On",
+      "off": "Off",
+      "onClose": "Closing the window",
+      "onCloseHint": "Closing the window does not stop dictation unless you say so — the hotkey needs Huginn to be running.",
+      "keepRunning": "Keep listening in the tray",
+      "quit": "Quit Huginn"
+    }
+  },
+  "about": {
+    "title": "About",
+    "close": "Close",
+    "version": "version",
+    "channel": "channel",
+    "commit": "commit",
+    "commitDate": "commit date"
+  },
+  "panel": {
+    "whatIsThis": "What is this?"
+  },
+  "overlay": {
+    "listening": "Listening…",
+    "releaseToInsert": "release to insert"
+  }
+}

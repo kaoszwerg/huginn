@@ -22,6 +22,7 @@ pub struct SettingsPatch {
     pub ui_scale: Option<f64>,
     pub minimize_to_tray: Option<bool>,
     pub theme: Option<ThemeChoice>,
+    pub language: Option<String>,
     /// The push-to-talk combination. Persisted only *after* the OS accepted it (see
     /// `spike::set_hotkey`): storing a shortcut that cannot be registered would leave the user with
     /// a setting that lies.
@@ -92,6 +93,9 @@ impl SettingsStore {
             }
             if let Some(theme) = patch.theme {
                 guard.theme = theme;
+            }
+            if let Some(language) = patch.language {
+                guard.language = language;
             }
             if let Some(hotkey) = patch.hotkey {
                 guard.hotkey = hotkey;

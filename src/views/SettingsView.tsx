@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { Mic, Palette, Power } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Panel } from "../components/ui/Panel";
 import { Button } from "../components/ui/Button";
 import { Notice } from "../components/ui/Notice";
@@ -5,176 +8,233 @@ import { HotkeyField } from "../components/ui/HotkeyField";
 import { useSettings, useUpdateSettings } from "../hooks/useSettings";
 import { useHotkeyStatus, useSetHotkey } from "../hooks/useHotkey";
 import { useAutostart, useSetAutostart } from "../hooks/useAutostart";
+import { LANGUAGES } from "../i18n";
 import type { ThemeChoice } from "../bindings/ThemeChoice";
+
+/**
+ * The settings sections. A rail rather than one long scroll: settings are *looked up*, not read top
+ * to bottom, and a rail lets someone hunting for the hotkey find it without passing everything else.
+ * A section is added here and rendered below — nothing else changes.
+ */
+const SECTIONS = [
+  { id: "recording", labelKey: "settings.sections.recording", Icon: Mic },
+  { id: "appearance", labelKey: "settings.sections.appearance", Icon: Palette },
+  { id: "background", labelKey: "settings.sections.background", Icon: Power },
+] as const;
+type SectionId = (typeof SECTIONS)[number]["id"];
 
 const UI_SCALES = [0.8, 0.9, 1.0, 1.1, 1.25, 1.5] as const;
 
-const THEMES: { id: ThemeChoice; label: string }[] = [
-  { id: "system", label: "Follow system" },
-  { id: "light", label: "Light" },
-  { id: "dark", label: "Dark" },
+const THEMES: { id: ThemeChoice; labelKey: string }[] = [
+  { id: "system", labelKey: "settings.appearance.themeSystem" },
+  { id: "light", labelKey: "settings.appearance.themeLight" },
+  { id: "dark", labelKey: "settings.appearance.themeDark" },
 ];
 
-/** Settings: the recording hotkey, the appearance, and what the close button does. */
 export function SettingsView() {
+  const { t } = useTranslation();
+  const [section, setSection] = useState<SectionId>("recording");
+
+  return (
+    <div className="flex h-full">
+      <nav
+        aria-label={t("settings.sectionsAria")}
+        className="bg-surface border-line flex w-44 shrink-0 flex-col gap-1 border-r p-2"
+      >
+        {SECTIONS.map(({ id, labelKey, Icon }) => (
+          <Button
+            key={id}
+            variant="ghost"
+            active={section === id}
+            aria-current={section === id ? "page" : undefined}
+            onClick={() => setSection(id)}
+            className="justify-start gap-2 px-3 py-2"
+          >
+            <Icon size={15} strokeWidth={section === id ? 2.25 : 1.75} />
+            {t(labelKey)}
+          </Button>
+        ))}
+      </nav>
+
+      <div className="flex-1 space-y-4 overflow-auto p-6">
+        {section === "recording" ? <RecordingSection /> : null}
+        {section === "appearance" ? <AppearanceSection /> : null}
+        {section === "background" ? <BackgroundSection /> : null}
+      </div>
+    </div>
+  );
+}
+
+function RecordingSection() {
+  const { t } = useTranslation();
   const settings = useSettings();
-  const update = useUpdateSettings();
   const hotkey = useHotkeyStatus();
   const setHotkey = useSetHotkey();
-  const autostart = useAutostart();
-  const setAutostart = useSetAutostart();
-
-  const scale = settings.data?.ui_scale ?? 1;
-  const theme = settings.data?.theme ?? "system";
-  const minimizeToTray = settings.data?.minimize_to_tray ?? false;
   const shortcut = hotkey.data?.shortcut ?? settings.data?.hotkey ?? "Ctrl+Space";
 
   return (
-    <div className="h-full space-y-4 overflow-auto p-6">
-      <Panel
-        label="Recording"
-        info={
-          <p>
-            Hold the combination to record, release it to insert the text into whatever application
-            you were working in. A global shortcut is exclusive: while Huginn holds it, no other
-            application receives it.
-          </p>
-        }
-      >
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-col">
-              <span className="text-fg text-sm">Push-to-talk</span>
-              <span className="text-dim text-xs">Hold to speak, release to insert.</span>
-            </div>
-            <HotkeyField
-              value={shortcut}
-              busy={setHotkey.isPending}
-              onChange={(spec) => setHotkey.mutate(spec)}
-            />
+    <Panel label={t("settings.recording.title")} info={<p>{t("settings.recording.info")}</p>}>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-fg text-sm">{t("settings.recording.combination")}</span>
+            <span className="text-dim text-xs">{t("settings.recording.combinationHint")}</span>
           </div>
+          <HotkeyField
+            value={shortcut}
+            busy={setHotkey.isPending}
+            onChange={(spec) => setHotkey.mutate(spec)}
+          />
+        </div>
 
-          {/* The failure the user must see: without this key, the product does nothing at all. */}
-          {hotkey.data && !hotkey.data.registered ? (
-            <Notice tone="danger">
-              <strong className="text-fg">Push-to-talk is not active.</strong>{" "}
-              {hotkey.data.error ?? "The combination could not be registered."} Choose another
-              combination above.
+        {/* The failure the user must see: without this key, the product does nothing at all. */}
+        {hotkey.data && !hotkey.data.registered ? (
+          <Notice tone="danger">
+            <strong className="text-fg">{t("hotkey.dead")}</strong>{" "}
+            {hotkey.data.error ?? t("hotkey.deadFallback")} {t("hotkey.chooseAnother")}
+          </Notice>
+        ) : null}
+
+        {hotkey.data?.registered && setHotkey.isSuccess ? (
+          <Notice tone="success">{t("hotkey.armed")}</Notice>
+        ) : null}
+      </div>
+    </Panel>
+  );
+}
+
+function AppearanceSection() {
+  const { t } = useTranslation();
+  const settings = useSettings();
+  const update = useUpdateSettings();
+  const scale = settings.data?.ui_scale ?? 1;
+  const theme = settings.data?.theme ?? "system";
+  const language = settings.data?.language ?? "de";
+
+  return (
+    <Panel label={t("settings.appearance.title")}>
+      <div className="flex flex-col gap-4">
+        <Field
+          label={t("settings.appearance.language")}
+          hint={t("settings.appearance.languageHint")}
+        >
+          <div className="flex flex-wrap gap-1">
+            {LANGUAGES.map((l) => (
+              <Button
+                key={l.code}
+                variant="ghost"
+                aria-pressed={language === l.code}
+                active={language === l.code}
+                onClick={() => update.mutate({ language: l.code })}
+              >
+                {l.label}
+              </Button>
+            ))}
+          </div>
+        </Field>
+
+        <Field label={t("settings.appearance.theme")} hint={t("settings.appearance.themeHint")}>
+          <div className="flex flex-wrap gap-1">
+            {THEMES.map((th) => (
+              <Button
+                key={th.id}
+                variant="ghost"
+                aria-pressed={theme === th.id}
+                active={theme === th.id}
+                onClick={() => update.mutate({ theme: th.id })}
+              >
+                {t(th.labelKey)}
+              </Button>
+            ))}
+          </div>
+        </Field>
+
+        <Field label={t("settings.appearance.size")}>
+          <div className="flex flex-wrap gap-1">
+            {UI_SCALES.map((s) => (
+              <Button
+                key={s}
+                variant="ghost"
+                aria-pressed={Math.abs(scale - s) < 0.001}
+                active={Math.abs(scale - s) < 0.001}
+                onClick={() => update.mutate({ uiScale: s })}
+                className="font-mono"
+              >
+                {Math.round(s * 100)}%
+              </Button>
+            ))}
+          </div>
+        </Field>
+      </div>
+    </Panel>
+  );
+}
+
+function BackgroundSection() {
+  const { t } = useTranslation();
+  const settings = useSettings();
+  const update = useUpdateSettings();
+  const autostart = useAutostart();
+  const setAutostart = useSetAutostart();
+  const minimizeToTray = settings.data?.minimize_to_tray ?? true;
+
+  return (
+    <Panel label={t("settings.background.title")} info={<p>{t("settings.background.info")}</p>}>
+      <div className="flex flex-col gap-4">
+        <Field
+          label={t("settings.background.autostart")}
+          hint={t("settings.background.autostartHint")}
+        >
+          <div className="flex flex-wrap gap-1">
+            <Button
+              variant="ghost"
+              aria-pressed={autostart.data === true}
+              active={autostart.data === true}
+              disabled={setAutostart.isPending}
+              onClick={() => setAutostart.mutate(true)}
+            >
+              {t("settings.background.on")}
+            </Button>
+            <Button
+              variant="ghost"
+              aria-pressed={autostart.data === false}
+              active={autostart.data === false}
+              disabled={setAutostart.isPending}
+              onClick={() => setAutostart.mutate(false)}
+            >
+              {t("settings.background.off")}
+            </Button>
+          </div>
+          {setAutostart.isError ? (
+            <Notice tone="danger" className="mt-2">
+              {t("settings.background.autostartFailed")}{" "}
+              {setAutostart.error instanceof Error ? setAutostart.error.message : ""}
             </Notice>
           ) : null}
+        </Field>
 
-          {hotkey.data?.registered && setHotkey.isSuccess ? (
-            <Notice tone="success">Push-to-talk is armed.</Notice>
-          ) : null}
-        </div>
-      </Panel>
-
-      <Panel label="Appearance">
-        <div className="flex flex-col gap-4">
-          <Field label="Theme" hint="Huginn follows your desktop unless you tell it otherwise.">
-            <div className="flex flex-wrap gap-1">
-              {THEMES.map((t) => (
-                <Button
-                  key={t.id}
-                  variant="ghost"
-                  aria-pressed={theme === t.id}
-                  active={theme === t.id}
-                  onClick={() => update.mutate({ theme: t.id })}
-                >
-                  {t.label}
-                </Button>
-              ))}
-            </div>
-          </Field>
-
-          <Field label="Interface size">
-            <div className="flex flex-wrap gap-1">
-              {UI_SCALES.map((s) => (
-                <Button
-                  key={s}
-                  variant="ghost"
-                  aria-pressed={Math.abs(scale - s) < 0.001}
-                  active={Math.abs(scale - s) < 0.001}
-                  onClick={() => update.mutate({ uiScale: s })}
-                  className="font-mono"
-                >
-                  {Math.round(s * 100)}%
-                </Button>
-              ))}
-            </div>
-          </Field>
-        </div>
-      </Panel>
-
-      <Panel
-        label="Background"
-        info={
-          <p>
-            Huginn is a background tool: the hotkey works from any application, but only while
-            Huginn is running. It always keeps a tray icon — that is how you open it again, and how
-            you quit it.
-          </p>
-        }
-      >
-        <div className="flex flex-col gap-4">
-          <Field
-            label="Start with the system"
-            hint="Off by default. Nothing adds itself to your startup unasked."
-          >
-            <div className="flex flex-wrap gap-1">
-              <Button
-                variant="ghost"
-                aria-pressed={autostart.data === true}
-                active={autostart.data === true}
-                disabled={setAutostart.isPending}
-                onClick={() => setAutostart.mutate(true)}
-              >
-                On
-              </Button>
-              <Button
-                variant="ghost"
-                aria-pressed={autostart.data === false}
-                active={autostart.data === false}
-                disabled={setAutostart.isPending}
-                onClick={() => setAutostart.mutate(false)}
-              >
-                Off
-              </Button>
-            </div>
-            {setAutostart.isError ? (
-              <Notice tone="danger" className="mt-2">
-                The system refused to change the startup entry.{" "}
-                {setAutostart.error instanceof Error ? setAutostart.error.message : ""}
-              </Notice>
-            ) : null}
-          </Field>
-
-          <Field
-            label="Closing the window"
-            hint="Closing the window does not stop dictation unless you say so — the hotkey needs Huginn to be running."
-          >
-            <div className="flex flex-wrap gap-1">
-              <Button
-                variant="ghost"
-                aria-pressed={minimizeToTray}
-                active={minimizeToTray}
-                onClick={() => update.mutate({ minimizeToTray: true })}
-              >
-                Keep listening in the tray
-              </Button>
-              <Button
-                variant="ghost"
-                aria-pressed={!minimizeToTray}
-                active={!minimizeToTray}
-                onClick={() => update.mutate({ minimizeToTray: false })}
-              >
-                Quit Huginn
-              </Button>
-            </div>
-          </Field>
-        </div>
-      </Panel>
-    </div>
+        <Field label={t("settings.background.onClose")} hint={t("settings.background.onCloseHint")}>
+          <div className="flex flex-wrap gap-1">
+            <Button
+              variant="ghost"
+              aria-pressed={minimizeToTray}
+              active={minimizeToTray}
+              onClick={() => update.mutate({ minimizeToTray: true })}
+            >
+              {t("settings.background.keepRunning")}
+            </Button>
+            <Button
+              variant="ghost"
+              aria-pressed={!minimizeToTray}
+              active={!minimizeToTray}
+              onClick={() => update.mutate({ minimizeToTray: false })}
+            >
+              {t("settings.background.quit")}
+            </Button>
+          </div>
+        </Field>
+      </div>
+    </Panel>
   );
 }
 

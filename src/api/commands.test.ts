@@ -54,6 +54,7 @@ describe("api", () => {
         uiScale: 1.25,
         minimizeToTray: null,
         theme: null,
+        language: null,
       });
     });
 
@@ -64,6 +65,7 @@ describe("api", () => {
         uiScale: null,
         minimizeToTray: true,
         theme: null,
+        language: null,
       });
     });
 
@@ -74,6 +76,7 @@ describe("api", () => {
         uiScale: null,
         minimizeToTray: null,
         theme: null,
+        language: null,
       });
     });
 
@@ -84,6 +87,7 @@ describe("api", () => {
         uiScale: 0.8,
         minimizeToTray: true,
         theme: null,
+        language: null,
       });
     });
   });

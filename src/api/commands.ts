@@ -28,11 +28,17 @@ export const api = {
    * The hotkey is not here on purpose: changing it can be refused by the OS, so it has its own
    * command that reports what actually happened (`setHotkey`).
    */
-  updateSettings: (opts: { uiScale?: number; minimizeToTray?: boolean; theme?: ThemeChoice }) =>
+  updateSettings: (opts: {
+    uiScale?: number;
+    minimizeToTray?: boolean;
+    theme?: ThemeChoice;
+    language?: string;
+  }) =>
     invoke<SettingsDto>("update_settings", {
       uiScale: opts.uiScale ?? null,
       minimizeToTray: opts.minimizeToTray ?? null,
       theme: opts.theme ?? null,
+      language: opts.language ?? null,
     }),
   /** Whether push-to-talk is actually armed — and if not, why not. */
   getHotkeyStatus: () => invoke<HotkeyStatus>("get_hotkey_status"),

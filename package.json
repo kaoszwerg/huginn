@@ -1,6 +1,6 @@
 {
   "name": "huginn",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "description": "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings.",
@@ -86,9 +86,11 @@
   "dependencies": {
     "@tanstack/react-query": "5.101.2",
     "@tauri-apps/api": "2.11.1",
+    "i18next": "^26.3.6",
     "lucide-react": "1.24.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "react-i18next": "^17.0.9",
     "zustand": "5.0.14"
   }
 }

@@ -1,17 +1,16 @@
 {
   "$comment": "The UI boundary (ADR-APP-026). Project-owned: every project has different dependencies, so this file is never pinned and never delivered by governance:update. EVERY runtime dependency must appear in exactly one list, or `npm run lint` fails — that is what makes the rule a gate instead of a reminder.",
-
   "viewSafe": [
     "@tanstack/react-query",
     "@tauri-apps/api",
+    "i18next",
     "lucide-react",
     "react",
     "react-dom",
+    "react-i18next",
     "zustand"
   ],
-
   "primitiveOnly": [],
-
   "notes": {
     "@tanstack/react-query": "Async/IPC state. Renders nothing.",
     "@tauri-apps/api": "The IPC boundary to the Rust backend. Renders nothing.",
@@ -20,6 +19,8 @@
     "react-dom": "The renderer itself.",
     "zustand": "Client state. Renders nothing.",
     "_no_webfonts": "Huginn draws in the system face (ADR-PROJ-003), so the @fontsource packages the template shipped with — Inter, JetBrains Mono, Orbitron — were removed with the neon HUD. A font is view-safe if one is ever added back.",
-    "_primitiveOnly_is_empty": "Huginn installs no UI library — every control is drawn from scratch in src/components/ui/. The day one is added it belongs here, and ESLint will then refuse to let a view import it."
+    "_primitiveOnly_is_empty": "Huginn installs no UI library — every control is drawn from scratch in src/components/ui/. The day one is added it belongs here, and ESLint will then refuse to let a view import it.",
+    "i18next": "The translation engine. Holds strings and swaps them; renders nothing.",
+    "react-i18next": "Binds i18next to React (useTranslation). A hook, not a control — it puts no surface on screen."
   }
 }

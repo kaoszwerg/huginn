@@ -28,6 +28,18 @@ minimize_to_tray: boolean,
  */
 theme: ThemeChoice, 
 /**
+ * The **interface** language (`"de"`, `"en"`). Not the language Huginn recognises — that one
+ * comes with the model (ADR-PROJ-006).
+ *
+ * German is Huginn's first language, not a translation of an English original: the product is a
+ * German dictation tool, and an untranslated key falls back to German rather than to a raw
+ * identifier.
+ *
+ * A plain string, not an enum: adding a language must mean a new locale file plus one line in
+ * the frontend — never a change to the IPC contract and a rebuilt backend.
+ */
+language: string, 
+/**
  * The push-to-talk combination, in the shortcut syntax (`"Ctrl+Space"`, `"Ctrl+Shift+KeyJ"`).
  *
  * It is a *preference*, not a fact: the combination stored here may fail to register — another

@@ -1,6 +1,7 @@
 import { useState, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { IconButton } from "./IconButton";
 
 interface PanelProps {
@@ -37,6 +38,7 @@ export function Panel({ label, info, className = "", children }: PanelProps) {
  * raw button, never a native tooltip (ADR-APP-026).
  */
 function InfoButton({ info }: { info: ReactNode }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
@@ -51,7 +53,7 @@ function InfoButton({ info }: { info: ReactNode }) {
   return (
     <>
       <IconButton
-        label="What is this?"
+        label={t("panel.whatIsThis")}
         tooltip={null}
         onClick={toggle}
         active={open}

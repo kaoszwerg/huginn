@@ -58,6 +58,17 @@ pub struct SettingsDto {
     /// Light, dark, or follow the OS (default).
     #[serde(default)]
     pub theme: ThemeChoice,
+    /// The **interface** language (`"de"`, `"en"`). Not the language Huginn recognises — that one
+    /// comes with the model (ADR-PROJ-006).
+    ///
+    /// German is Huginn's first language, not a translation of an English original: the product is a
+    /// German dictation tool, and an untranslated key falls back to German rather than to a raw
+    /// identifier.
+    ///
+    /// A plain string, not an enum: adding a language must mean a new locale file plus one line in
+    /// the frontend — never a change to the IPC contract and a rebuilt backend.
+    #[serde(default = "default_language")]
+    pub language: String,
     /// The push-to-talk combination, in the shortcut syntax (`"Ctrl+Space"`, `"Ctrl+Shift+KeyJ"`).
     ///
     /// It is a *preference*, not a fact: the combination stored here may fail to register — another
@@ -74,6 +85,11 @@ fn default_ui_scale() -> f64 {
 /// A dictation tool that stops listening when its window is closed is broken (see the field's docs).
 fn default_minimize_to_tray() -> bool {
     true
+}
+
+/// German. Huginn is a German dictation tool first; English is the second language.
+fn default_language() -> String {
+    "de".to_string()
 }
 
 /// Two keys, chosen by the maintainer. Not three: a combination you hold while speaking has to be
@@ -104,6 +120,7 @@ impl Default for SettingsDto {
             ui_scale: default_ui_scale(),
             minimize_to_tray: default_minimize_to_tray(),
             theme: ThemeChoice::default(),
+            language: default_language(),
             hotkey: default_hotkey(),
         }
     }
@@ -119,6 +136,10 @@ mod tests {
         assert_eq!(d.ui_scale, 1.0);
         // Follow the desktop rather than override it, and start with two keys, not three.
         assert_eq!(d.theme, ThemeChoice::System);
+        assert_eq!(
+            d.language, "de",
+            "German is the first language, not a translation"
+        );
         assert_eq!(d.hotkey, "Ctrl+Space");
     }
 
@@ -139,6 +160,7 @@ mod tests {
             ui_scale: 1.25,
             minimize_to_tray: true,
             theme: ThemeChoice::Dark,
+            language: "en".to_string(),
             hotkey: "Ctrl+Shift+KeyJ".to_string(),
         };
         let json = serde_json::to_string(&s).expect("serialize");
@@ -184,7 +206,13 @@ mod tests {
     fn settings_contract_field_names_are_stable() {
         // Pin the JSON keys the generated frontend binding depends on (rule:testing contract).
         let json = serde_json::to_value(SettingsDto::default()).expect("to_value");
-        for key in ["ui_scale", "minimize_to_tray", "theme", "hotkey"] {
+        for key in [
+            "ui_scale",
+            "minimize_to_tray",
+            "theme",
+            "language",
+            "hotkey",
+        ] {
             assert!(json.get(key).is_some(), "{key} key missing");
         }
     }

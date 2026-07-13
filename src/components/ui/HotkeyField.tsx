@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "./Button";
 import { humaniseShortcut, toShortcutSpec } from "./shortcut";
 
@@ -23,6 +24,7 @@ interface HotkeyFieldProps {
  * nothing.
  */
 export function HotkeyField({ value, onChange, busy = false }: HotkeyFieldProps) {
+  const { t } = useTranslation();
   const [recording, setRecording] = useState(false);
   const stop = useCallback(() => setRecording(false), []);
 
@@ -56,10 +58,10 @@ export function HotkeyField({ value, onChange, busy = false }: HotkeyFieldProps)
           role="status"
           className="border-accent text-accent rounded-[var(--radius-control)] border border-dashed px-3 py-1.5 text-xs"
         >
-          Press a combination…
+          {t("hotkey.recordPrompt")}
         </span>
         <Button variant="ghost" onClick={stop}>
-          Cancel
+          {t("hotkey.cancel")}
         </Button>
       </div>
     );
@@ -73,9 +75,9 @@ export function HotkeyField({ value, onChange, busy = false }: HotkeyFieldProps)
       <Button
         onClick={() => setRecording(true)}
         disabled={busy}
-        tooltip="Record a new key combination"
+        tooltip={t("hotkey.recordTooltip")}
       >
-        Change
+        {t("hotkey.change")}
       </Button>
     </div>
   );

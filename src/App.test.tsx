@@ -19,6 +19,7 @@ vi.mock("./api/commands", () => ({
       ui_scale: 1,
       minimize_to_tray: false,
       theme: "system",
+      language: "en",
       hotkey: "Ctrl+Space",
     }),
     updateSettings: vi.fn(),
