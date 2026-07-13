@@ -155,7 +155,8 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let store = SettingsStore::load(dir.path());
         assert_eq!(store.get().ui_scale, 1.0);
-        assert!(!store.get().minimize_to_tray);
+        // Huginn keeps running in the tray by default — the hotkey is the product (see dto.rs).
+        assert!(store.get().minimize_to_tray);
         assert_eq!(store.get().theme, ThemeChoice::System);
         assert_eq!(store.get().hotkey, "Ctrl+Space");
     }
@@ -197,18 +198,22 @@ mod tests {
     }
 
     #[test]
-    fn minimize_to_tray_persists_and_reloads() {
+    fn a_user_who_wants_huginn_to_quit_on_close_gets_that_and_it_survives_a_restart() {
         let dir = tempfile::tempdir().expect("tempdir");
         let store = SettingsStore::load(dir.path());
-        assert!(!store.get().minimize_to_tray);
+        assert!(
+            store.get().minimize_to_tray,
+            "the default is to keep running — the hotkey is the product"
+        );
+
         let next = store
             .update(SettingsPatch {
-                minimize_to_tray: Some(true),
+                minimize_to_tray: Some(false),
                 ..Default::default()
             })
             .expect("update");
-        assert!(next.minimize_to_tray);
-        assert!(SettingsStore::load(dir.path()).get().minimize_to_tray);
+        assert!(!next.minimize_to_tray);
+        assert!(!SettingsStore::load(dir.path()).get().minimize_to_tray);
     }
 
     #[test]

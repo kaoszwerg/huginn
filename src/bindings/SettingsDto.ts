@@ -14,8 +14,13 @@ export type SettingsDto = {
  */
 ui_scale: number, 
 /**
- * When true, closing the window hides the app to a system-tray icon instead of quitting, so it
- * keeps running in the background (ADR-APP-021). Default `false` — a fresh app is a normal window.
+ * When true, closing the window keeps Huginn running in the system tray instead of quitting.
+ *
+ * **Default `true`, unlike the shell it was scaffolded from.** Huginn *is* a background tool: the
+ * push-to-talk hotkey is the product, and it only works while the process lives. Quitting on a
+ * window close would mean the user closes a window they no longer need and silently loses
+ * dictation everywhere — the product would look like it worked and then stop, which is worse than
+ * an app that never started.
  */
 minimize_to_tray: boolean, 
 /**

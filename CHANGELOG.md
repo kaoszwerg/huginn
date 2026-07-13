@@ -8,6 +8,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Huginn stays alive when you close its window — and that is now the default.** The hotkey is the
+  product, and it only works while the process runs; quitting on a window close would silently take
+  dictation away system-wide. The tray icon is therefore **always** installed (an app that lives in the
+  background without one cannot be opened or quit), and its menu states, in its first line, whether
+  push-to-talk is actually armed — the user should not have to discover a dead key by speaking into it.
+- **Autostart** (`tauri-plugin-autostart`), off by default: nothing adds itself to a user's startup
+  unasked. The **operating system is the source of truth** for whether it is on — the switch reads back
+  what the OS reports rather than caching a copy that would drift the moment the user removes the entry
+  themselves. Verified on Windows only (the registry entry is absent by default, as it should be);
+  macOS is untested until the Mac (PLAN.md phase 1b).
 - **Push-to-talk, end to end — and proven.** Hold the hotkey, a focus-neutral overlay appears over the
   application you are working in, and on release text is inserted straight into it (`SendInput`, Unicode,
   so it is layout-independent). The proof is not a claim: `scripts/project/prove-focus-neutrality.ps1`

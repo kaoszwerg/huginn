@@ -6,6 +6,7 @@ import type { HotkeyStatus } from "../bindings/HotkeyStatus";
 
 const mutate = vi.fn();
 const setHotkeyMutate = vi.fn();
+const setAutostartMutate = vi.fn();
 
 vi.mock("../hooks/useSettings", () => ({
   useSettings: vi.fn(),
@@ -15,13 +16,20 @@ vi.mock("../hooks/useHotkey", () => ({
   useHotkeyStatus: vi.fn(),
   useSetHotkey: vi.fn(),
 }));
+vi.mock("../hooks/useAutostart", () => ({
+  useAutostart: vi.fn(),
+  useSetAutostart: vi.fn(),
+}));
 
 import { useSettings, useUpdateSettings } from "../hooks/useSettings";
 import { useHotkeyStatus, useSetHotkey } from "../hooks/useHotkey";
+import { useAutostart, useSetAutostart } from "../hooks/useAutostart";
 
 const DEFAULTS: SettingsDto = {
   ui_scale: 1,
-  minimize_to_tray: false,
+  // Mirrors the backend default: Huginn keeps listening when its window is closed, because the
+  // hotkey only works while the process lives.
+  minimize_to_tray: true,
   theme: "system",
   hotkey: "Ctrl+Space",
 };
@@ -46,12 +54,26 @@ function mockSettings(
     isPending: false,
     isSuccess: false,
   } as unknown as ReturnType<typeof useSetHotkey>);
+  mockAutostart();
+}
+
+/** Autostart is read from the OS, so the tests mock what the OS reports. */
+function mockAutostart(enabled = false) {
+  vi.mocked(useAutostart).mockReturnValue({
+    data: enabled,
+  } as unknown as ReturnType<typeof useAutostart>);
+  vi.mocked(useSetAutostart).mockReturnValue({
+    mutate: setAutostartMutate,
+    isPending: false,
+    isError: false,
+  } as unknown as ReturnType<typeof useSetAutostart>);
 }
 
 describe("SettingsView", () => {
   beforeEach(() => {
     mutate.mockReset();
     setHotkeyMutate.mockReset();
+    setAutostartMutate.mockReset();
   });
 
   it("shows the hotkey that is actually registered", () => {
@@ -119,11 +141,31 @@ describe("SettingsView", () => {
     expect(mutate).toHaveBeenCalledWith({ uiScale: 1.25 });
   });
 
+  it("turns autostart on, and shows what the OS reports — not what we asked for", () => {
+    mockSettings();
+    mockAutostart(false);
+    render(<SettingsView />);
+
+    expect(screen.getByRole("button", { name: "Off" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "On" }));
+    expect(setAutostartMutate).toHaveBeenCalledWith(true);
+  });
+
+  it("keeps listening in the tray by default — the hotkey needs the app alive", () => {
+    // The default that matters most for this product: closing the window must not stop dictation.
+    mockSettings();
+    render(<SettingsView />);
+    expect(screen.getByRole("button", { name: "Keep listening in the tray" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
   it("toggles the close-button behaviour", () => {
     mockSettings();
     render(<SettingsView />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Keep running in the tray" }));
+    fireEvent.click(screen.getByRole("button", { name: "Keep listening in the tray" }));
     expect(mutate).toHaveBeenCalledWith({ minimizeToTray: true });
 
     fireEvent.click(screen.getByRole("button", { name: "Quit Huginn" }));
@@ -145,6 +187,7 @@ describe("SettingsView", () => {
       isPending: false,
       isSuccess: false,
     } as unknown as ReturnType<typeof useSetHotkey>);
+    mockAutostart();
     render(<SettingsView />);
 
     expect(screen.getByRole("button", { name: "100%" })).toBeInTheDocument();

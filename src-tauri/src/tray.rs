@@ -1,10 +1,18 @@
-//! System-tray icon + close-to-tray behaviour (ADR-APP-021), gated by the `minimize_to_tray` setting
-//! (default **off**).
+//! The system tray: Huginn's real home (ADR-APP-021, ADR-PROJ-004).
 //!
-//! When enabled: a tray icon with an Open/Quit menu is installed, left-clicking the icon toggles the
-//! main window, and the window's close button hides it to the tray instead of quitting (Quit is the
-//! only real exit and saves the window geometry first). The tray installs/removes **live** when the
-//! setting changes; the window close handler consults the setting per event, so no restart is needed.
+//! Huginn is a background tool. The window is where you configure it; the *product* is a global
+//! hotkey that only works while the process lives. Two things follow, and both differ from the shell
+//! this was scaffolded from:
+//!
+//! * **The tray icon is always installed** — not only when "keep running" is on. An app that lives in
+//!   the background without a tray icon is an app the user cannot open, cannot quit, and cannot even
+//!   tell is running. That is not a preference, it is the only way out.
+//! * **The menu says whether push-to-talk is actually armed.** If another application holds the
+//!   combination, the user needs to learn that from Huginn, not from the silence where their words
+//!   should have appeared (rule:overlay-and-input).
+//!
+//! `minimize_to_tray` therefore governs only what the **close button** does: keep running (default —
+//! the hotkey is the product) or quit.
 
 use crate::state::AppState;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
@@ -12,13 +20,12 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::{AppHandle, Manager, Wry};
 
 const TRAY_ID: &str = "app-tray";
+const MENU_STATUS: &str = "tray_status";
 const MENU_OPEN: &str = "tray_open";
 const MENU_QUIT: &str = "tray_quit";
 
-/// Register the main window's close handler once. It consults `minimize_to_tray` at event time:
-/// when on, the close button hides the window to the tray (the app keeps running); when off, the
-/// close proceeds and the app exits. Registered regardless of the current setting, so toggling the
-/// setting at runtime takes effect without re-registering anything.
+/// Register the main window's close handler. It consults `minimize_to_tray` at event time, so
+/// toggling the setting takes effect without a restart.
 pub fn install_close_handler(app: &AppHandle) {
     let Some(window) = app.get_webview_window("main") else {
         tracing::warn!("no main window — close handler not installed");
@@ -27,44 +34,63 @@ pub fn install_close_handler(app: &AppHandle) {
     let handle = app.clone();
     window.clone().on_window_event(move |event| {
         if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-            let minimize = handle
+            let keep_running = handle
                 .try_state::<AppState>()
                 .map(|s| s.settings.get().minimize_to_tray)
-                .unwrap_or(false);
-            if minimize {
+                .unwrap_or(true);
+            if keep_running {
                 api.prevent_close();
                 if let Some(w) = handle.get_webview_window("main") {
                     log_if_err(w.hide(), "hide");
                 }
-                tracing::debug!("close request — hidden to tray");
+                tracing::debug!("window closed — Huginn keeps listening in the tray");
             }
-            // else: allow the close to proceed → the app exits (normal windowed behaviour).
+            // else: the close proceeds and the app exits, because the user asked for that.
         }
     });
 }
 
-/// Install or remove the tray icon to match `minimize_to_tray`. Idempotent: enabling when the tray
-/// already exists (or disabling when it is absent) is a no-op. Lets the setting take effect live.
-pub fn set_enabled(app: &AppHandle, enabled: bool) {
-    if enabled {
-        if app.tray_by_id(TRAY_ID).is_none() {
-            match build_tray(app) {
-                Ok(()) => tracing::info!("tray enabled"),
-                Err(e) => tracing::error!(error = %e, "tray install failed"),
+/// Install the tray icon. Called once at startup, unconditionally.
+pub fn install(app: &AppHandle) {
+    if app.tray_by_id(TRAY_ID).is_some() {
+        return;
+    }
+    match build_tray(app) {
+        Ok(()) => tracing::info!("tray installed"),
+        Err(e) => {
+            // Without the tray, a backgrounded Huginn is unreachable. Loud — but not fatal: the
+            // hotkey still works, and the window may still be open.
+            tracing::error!(error = %e, "tray could not be installed — Huginn will be hard to reach when its window is closed");
+        }
+    }
+}
+
+/// Rebuild the tray menu so its first line tells the truth about push-to-talk.
+///
+/// Called whenever the hotkey status changes (armed, re-armed, refused). A menu that still shows a
+/// shortcut which no longer works is worse than one that shows nothing.
+pub fn refresh_status(app: &AppHandle) {
+    let Some(tray) = app.tray_by_id(TRAY_ID) else {
+        return;
+    };
+    match build_menu(app) {
+        Ok(menu) => {
+            if let Err(e) = tray.set_menu(Some(menu)) {
+                tracing::warn!(error = %e, "could not refresh the tray menu");
             }
         }
-    } else if app.remove_tray_by_id(TRAY_ID).is_some() {
-        tracing::info!("tray disabled");
+        Err(e) => tracing::warn!(error = %e, "could not rebuild the tray menu"),
     }
 }
 
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     let Some(icon) = app.default_window_icon().cloned() else {
-        // Never panic on a missing bundled icon (rule:code-quality); skip the tray and log instead.
+        // Never panic on a missing bundled icon (rule:code-quality); log and skip.
         tracing::error!("no bundled window icon — tray not installed");
         return Ok(());
     };
     let menu = build_menu(app)?;
+
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(icon)
         .tooltip(app.package_info().name.clone())
@@ -73,8 +99,8 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
         .on_menu_event(|app, event| match event.id.as_ref() {
             MENU_OPEN => show_main_window(app),
             MENU_QUIT => {
-                // Save window geometry before exit — Quit goes straight to process exit and
-                // doesn't wait for the plugin's own CloseRequested handler.
+                // Save window geometry before exit — Quit goes straight to process exit and does not
+                // wait for the plugin's own CloseRequested handler.
                 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
                 if let Err(e) = app.save_window_state(StateFlags::all()) {
                     tracing::warn!(error = %e, "save_window_state on quit failed");
@@ -82,6 +108,7 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
                 tracing::info!("quit from tray");
                 app.exit(0);
             }
+            // MENU_STATUS is disabled; it cannot be clicked.
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
@@ -98,7 +125,19 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+/// The menu. Its first line is a disabled label carrying the one fact that matters: is the dictation
+/// key alive, and which one is it?
 fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
+    let status = crate::spike::status(app);
+    let label = if status.registered {
+        format!("Push-to-talk: {}", status.shortcut)
+    } else {
+        // Deliberately blunt. This is the state in which the product does nothing at all.
+        format!("Push-to-talk INACTIVE ({})", status.shortcut)
+    };
+
+    let status_item = MenuItem::with_id(app, MENU_STATUS, label, false, None::<&str>)?;
+    let sep = PredefinedMenuItem::separator(app)?;
     let open = MenuItem::with_id(
         app,
         MENU_OPEN,
@@ -106,9 +145,9 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
         true,
         None::<&str>,
     )?;
-    let sep = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, MENU_QUIT, "Quit", true, None::<&str>)?;
-    Menu::with_items(app, &[&open, &sep, &quit])
+
+    Menu::with_items(app, &[&status_item, &sep, &open, &quit])
 }
 
 fn show_main_window(app: &AppHandle) {
@@ -149,6 +188,7 @@ mod tests {
         // These ids are the tray-menu contract; pinning them keeps a rename from silently breaking
         // the menu-event routing (rule:testing).
         assert_eq!(TRAY_ID, "app-tray");
+        assert_eq!(MENU_STATUS, "tray_status");
         assert_eq!(MENU_OPEN, "tray_open");
         assert_eq!(MENU_QUIT, "tray_quit");
     }

@@ -69,16 +69,13 @@ pub fn update_settings(
     theme: Option<ThemeChoice>,
 ) -> Result<SettingsDto> {
     tracing::info!(?ui_scale, ?minimize_to_tray, ?theme, "update_settings");
-    let was_tray = state.settings.get().minimize_to_tray;
+    let _ = &app; // the tray is installed unconditionally now; nothing here toggles it.
     let next = state.settings.update(SettingsPatch {
         ui_scale,
         minimize_to_tray,
         theme,
         hotkey: None,
     })?;
-    if next.minimize_to_tray != was_tray {
-        crate::tray::set_enabled(&app, next.minimize_to_tray);
-    }
     tracing::debug!(
         ui_scale = next.ui_scale,
         minimize_to_tray = next.minimize_to_tray,
@@ -119,6 +116,52 @@ pub fn set_hotkey(app: tauri::AppHandle, shortcut: String) -> Result<HotkeyStatu
         )));
     }
     crate::spike::set_hotkey(&app, spec)
+}
+
+/// Whether Huginn starts with the desktop.
+///
+/// **The operating system is the source of truth**, not a field in our settings file. A copy would
+/// drift the moment the user removes the entry themselves (Task Manager on Windows, System Settings
+/// on macOS) and Huginn would then confidently show a switch that is a lie.
+#[tauri::command]
+pub fn get_autostart(app: tauri::AppHandle) -> Result<bool> {
+    use tauri_plugin_autostart::ManagerExt;
+
+    let enabled = app
+        .autolaunch()
+        .is_enabled()
+        .map_err(|e| AppError::Other(format!("cannot read the autostart state: {e}")))?;
+    tracing::debug!(enabled, "get_autostart");
+    Ok(enabled)
+}
+
+/// Turn autostart on or off, and report what the OS actually did.
+#[tauri::command]
+pub fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<bool> {
+    use tauri_plugin_autostart::ManagerExt;
+
+    tracing::info!(enabled, "set_autostart");
+    let manager = app.autolaunch();
+
+    let result = if enabled {
+        manager.enable()
+    } else {
+        manager.disable()
+    };
+    result.map_err(|e| {
+        AppError::Other(format!(
+            "the system refused to {} autostart: {e}",
+            if enabled { "enable" } else { "disable" }
+        ))
+    })?;
+
+    // Read it back rather than assuming it took: the switch must show what *is*, not what we asked
+    // for (ADR-CORE-004).
+    let now = manager
+        .is_enabled()
+        .map_err(|e| AppError::Other(format!("cannot confirm the autostart state: {e}")))?;
+    tracing::info!(enabled = now, "autostart updated");
+    Ok(now)
 }
 
 /// Open an external URL in the user's default browser. Routed through the backend so any failure

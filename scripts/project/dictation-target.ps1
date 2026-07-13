@@ -21,7 +21,10 @@ $form.Text = "Huginn Spike Target"
 $form.Width = 640
 $form.Height = 220
 $form.StartPosition = "CenterScreen"
-$form.TopMost = $true
+# NOT TopMost. This window takes the focus for a few seconds while the proof runs, and it must give
+# it back cleanly -- a test that sits permanently above everything else will swallow whatever the
+# maintainer types next. (It did. That is why this line reads the way it does.)
+$form.TopMost = $false
 
 $box = New-Object System.Windows.Forms.TextBox
 $box.Multiline = $true

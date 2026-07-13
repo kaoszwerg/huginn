@@ -26,6 +26,8 @@ vi.mock("./api/commands", () => ({
       .fn()
       .mockResolvedValue({ shortcut: "Ctrl+Space", registered: true, error: null }),
     setHotkey: vi.fn(),
+    getAutostart: vi.fn().mockResolvedValue(false),
+    setAutostart: vi.fn(),
     getRecentLogs: vi.fn().mockResolvedValue([]),
     openExternal: vi.fn(),
   },

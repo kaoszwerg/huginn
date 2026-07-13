@@ -1,6 +1,6 @@
 [package]
 name = "huginn"
-version = "0.2.0"
+version = "0.3.0"
 description = "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings."
 authors = ["kaoszwerg"]
 edition = "2021"
@@ -29,6 +29,9 @@ tauri-plugin-window-state = "2.4.1"
 # >= 2.3.2 is mandatory: earlier versions burn a full CPU core for as long as the key is held
 # (global-hotkey#176) — and push-to-talk holds it (ADR-PROJ-004, rule:overlay-and-input).
 tauri-plugin-global-shortcut = "2.3.2"
+# Start with the desktop. A dictation tool the user has to launch first is a tool they forget to
+# launch (ADR-PROJ-004). Off by default: nothing installs itself into a user's startup unasked.
+tauri-plugin-autostart = "2.5.1"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 tracing = "0.1.44"
@@ -56,6 +59,7 @@ windows = { version = "0.62.2", features = [
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_System_Threading",
     "Win32_System_LibraryLoader",
+    "Win32_Graphics_Gdi",
 ] }
 
 [dev-dependencies]

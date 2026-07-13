@@ -4,6 +4,7 @@ import { Notice } from "../components/ui/Notice";
 import { HotkeyField } from "../components/ui/HotkeyField";
 import { useSettings, useUpdateSettings } from "../hooks/useSettings";
 import { useHotkeyStatus, useSetHotkey } from "../hooks/useHotkey";
+import { useAutostart, useSetAutostart } from "../hooks/useAutostart";
 import type { ThemeChoice } from "../bindings/ThemeChoice";
 
 const UI_SCALES = [0.8, 0.9, 1.0, 1.1, 1.25, 1.5] as const;
@@ -20,6 +21,8 @@ export function SettingsView() {
   const update = useUpdateSettings();
   const hotkey = useHotkeyStatus();
   const setHotkey = useSetHotkey();
+  const autostart = useAutostart();
+  const setAutostart = useSetAutostart();
 
   const scale = settings.data?.ui_scale ?? 1;
   const theme = settings.data?.theme ?? "system";
@@ -103,30 +106,73 @@ export function SettingsView() {
         </div>
       </Panel>
 
-      <Panel label="Window">
-        <Field
-          label="Close button"
-          hint="“Keep running in the tray” leaves Huginn listening for the hotkey after the window is closed."
-        >
-          <div className="flex flex-wrap gap-1">
-            <Button
-              variant="ghost"
-              aria-pressed={!minimizeToTray}
-              active={!minimizeToTray}
-              onClick={() => update.mutate({ minimizeToTray: false })}
-            >
-              Quit Huginn
-            </Button>
-            <Button
-              variant="ghost"
-              aria-pressed={minimizeToTray}
-              active={minimizeToTray}
-              onClick={() => update.mutate({ minimizeToTray: true })}
-            >
-              Keep running in the tray
-            </Button>
-          </div>
-        </Field>
+      <Panel
+        label="Background"
+        info={
+          <p>
+            Huginn is a background tool: the hotkey works from any application, but only while
+            Huginn is running. It always keeps a tray icon — that is how you open it again, and how
+            you quit it.
+          </p>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <Field
+            label="Start with the system"
+            hint="Off by default. Nothing adds itself to your startup unasked."
+          >
+            <div className="flex flex-wrap gap-1">
+              <Button
+                variant="ghost"
+                aria-pressed={autostart.data === true}
+                active={autostart.data === true}
+                disabled={setAutostart.isPending}
+                onClick={() => setAutostart.mutate(true)}
+              >
+                On
+              </Button>
+              <Button
+                variant="ghost"
+                aria-pressed={autostart.data === false}
+                active={autostart.data === false}
+                disabled={setAutostart.isPending}
+                onClick={() => setAutostart.mutate(false)}
+              >
+                Off
+              </Button>
+            </div>
+            {setAutostart.isError ? (
+              <Notice tone="danger" className="mt-2">
+                The system refused to change the startup entry.{" "}
+                {setAutostart.error instanceof Error ? setAutostart.error.message : ""}
+              </Notice>
+            ) : null}
+          </Field>
+
+          <Field
+            label="Closing the window"
+            hint="Closing the window does not stop dictation unless you say so — the hotkey needs Huginn to be running."
+          >
+            <div className="flex flex-wrap gap-1">
+              <Button
+                variant="ghost"
+                aria-pressed={minimizeToTray}
+                active={minimizeToTray}
+                onClick={() => update.mutate({ minimizeToTray: true })}
+              >
+                Keep listening in the tray
+              </Button>
+              <Button
+                variant="ghost"
+                aria-pressed={!minimizeToTray}
+                active={!minimizeToTray}
+                onClick={() => update.mutate({ minimizeToTray: false })}
+              >
+                Quit Huginn
+              </Button>
+            </div>
+          </Field>
+        </div>
       </Panel>
     </div>
   );

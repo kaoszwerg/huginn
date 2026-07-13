@@ -46,9 +46,14 @@ pub struct SettingsDto {
     /// WebView zoom factor applied to the whole UI (ADR-APP-021). Clamped to [0.7, 1.6].
     #[serde(default = "default_ui_scale")]
     pub ui_scale: f64,
-    /// When true, closing the window hides the app to a system-tray icon instead of quitting, so it
-    /// keeps running in the background (ADR-APP-021). Default `false` — a fresh app is a normal window.
-    #[serde(default)]
+    /// When true, closing the window keeps Huginn running in the system tray instead of quitting.
+    ///
+    /// **Default `true`, unlike the shell it was scaffolded from.** Huginn *is* a background tool: the
+    /// push-to-talk hotkey is the product, and it only works while the process lives. Quitting on a
+    /// window close would mean the user closes a window they no longer need and silently loses
+    /// dictation everywhere — the product would look like it worked and then stop, which is worse than
+    /// an app that never started.
+    #[serde(default = "default_minimize_to_tray")]
     pub minimize_to_tray: bool,
     /// Light, dark, or follow the OS (default).
     #[serde(default)]
@@ -64,6 +69,11 @@ pub struct SettingsDto {
 
 fn default_ui_scale() -> f64 {
     1.0
+}
+
+/// A dictation tool that stops listening when its window is closed is broken (see the field's docs).
+fn default_minimize_to_tray() -> bool {
+    true
 }
 
 /// Two keys, chosen by the maintainer. Not three: a combination you hold while speaking has to be
@@ -92,7 +102,7 @@ impl Default for SettingsDto {
     fn default() -> Self {
         Self {
             ui_scale: default_ui_scale(),
-            minimize_to_tray: false,
+            minimize_to_tray: default_minimize_to_tray(),
             theme: ThemeChoice::default(),
             hotkey: default_hotkey(),
         }
@@ -107,10 +117,20 @@ mod tests {
     fn settings_defaults_are_the_quiet_ones() {
         let d = SettingsDto::default();
         assert_eq!(d.ui_scale, 1.0);
-        assert!(!d.minimize_to_tray);
         // Follow the desktop rather than override it, and start with two keys, not three.
         assert_eq!(d.theme, ThemeChoice::System);
         assert_eq!(d.hotkey, "Ctrl+Space");
+    }
+
+    #[test]
+    fn huginn_keeps_running_when_its_window_is_closed() {
+        // The one default that is not cosmetic: push-to-talk only works while the process lives, so
+        // quitting on a window close would silently take dictation away system-wide. If a future
+        // change flips this back, this test is the thing that says why it must not.
+        assert!(
+            SettingsDto::default().minimize_to_tray,
+            "closing the window must not stop the hotkey"
+        );
     }
 
     #[test]
@@ -134,7 +154,10 @@ mod tests {
         // A file written before `theme`/`hotkey` existed must still load without data loss.
         let s: SettingsDto = serde_json::from_str(r#"{"ui_scale":1.25}"#).expect("deserialize");
         assert_eq!(s.ui_scale, 1.25);
-        assert!(!s.minimize_to_tray);
+        assert!(
+            s.minimize_to_tray,
+            "a file that predates the field gets the safe default: keep running"
+        );
         assert_eq!(s.theme, ThemeChoice::System);
         assert_eq!(s.hotkey, "Ctrl+Space");
     }

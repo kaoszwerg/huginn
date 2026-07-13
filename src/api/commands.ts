@@ -44,6 +44,13 @@ export const api = {
    * request).
    */
   setHotkey: (shortcut: string) => invoke<HotkeyStatus>("set_hotkey", { shortcut }),
+  /**
+   * Whether Huginn starts with the desktop — read from the OS, which is the only source of truth for
+   * it (the user can remove the entry themselves).
+   */
+  getAutostart: () => invoke<boolean>("get_autostart"),
+  /** Turn autostart on or off; resolves with the state the OS *actually* reports afterwards. */
+  setAutostart: (enabled: boolean) => invoke<boolean>("set_autostart", { enabled }),
   /** Open an http(s) URL in the default browser (routed through the backend so it is logged). */
   openExternal: (url: string) => invoke<void>("open_external", { url }),
 };

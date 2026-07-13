@@ -24,11 +24,40 @@
 
 use crate::error::{AppError, Result};
 use windows::Win32::Foundation::HWND;
+use windows::Win32::Graphics::Gdi::{
+    GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
+};
 use windows::Win32::UI::WindowsAndMessaging::{
     GetWindowLongPtrW, SetForegroundWindow, SetWindowLongPtrW, SetWindowPos, ShowWindow,
     GWL_EXSTYLE, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOSIZE, SWP_SHOWWINDOW, SW_HIDE,
     WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST,
 };
+
+/// The work area (the screen minus the taskbar) of the monitor a given window sits on, in physical
+/// pixels: `(x, y, width, height)`.
+///
+/// The overlay belongs on the screen the user is **actually typing on**, not on the primary monitor.
+/// On a two-monitor desk those are routinely different, and an overlay that appears on the other
+/// screen is worse than none: it says "listening" where nobody is looking.
+///
+/// The *work area* rather than the full screen, so the bar is never placed underneath the taskbar.
+pub fn work_area_of_window(hwnd: isize) -> Result<(i32, i32, i32, i32)> {
+    let hwnd = HWND(hwnd as *mut _);
+    let monitor = unsafe { MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) };
+
+    let mut info = MONITORINFO {
+        cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+        ..Default::default()
+    };
+    if !unsafe { GetMonitorInfoW(monitor, &mut info) }.as_bool() {
+        return Err(AppError::Other(
+            "GetMonitorInfoW failed — cannot place the overlay".to_string(),
+        ));
+    }
+
+    let r = info.rcWork;
+    Ok((r.left, r.top, r.right - r.left, r.bottom - r.top))
+}
 
 /// Rewrite an extended window style so the window can never be activated.
 ///

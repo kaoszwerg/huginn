@@ -26,6 +26,6 @@ mod tests {
         let state = AppState::new(dir.path());
         // A fresh data dir yields the defaults.
         assert_eq!(state.settings.get().ui_scale, 1.0);
-        assert!(!state.settings.get().minimize_to_tray);
+        assert!(state.settings.get().minimize_to_tray);
     }
 }

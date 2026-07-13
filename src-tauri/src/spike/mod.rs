@@ -55,11 +55,20 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 /// The overlay window's label — the one place the string lives.
 pub const OVERLAY_LABEL: &str = "overlay";
 
-/// Overlay geometry, in logical pixels: a small bar, bottom-centre, out of the way of the text the
-/// user is dictating into (ADR-PROJ-003: an overlay that wants attention is a defect).
-const OVERLAY_WIDTH: f64 = 360.0;
-const OVERLAY_HEIGHT: f64 = 72.0;
-const OVERLAY_BOTTOM_MARGIN: f64 = 72.0;
+/// Overlay geometry, in logical pixels.
+///
+/// A single line of text plus a few pixels — nothing more. The window is exactly the size of the bar
+/// it draws: any spare height would render as empty space, and an overlay that takes up more room
+/// than it needs is an overlay that draws attention to itself, which is the one thing it must not do
+/// (ADR-PROJ-003).
+const OVERLAY_WIDTH: f64 = 300.0;
+const OVERLAY_HEIGHT: f64 = 34.0;
+const OVERLAY_BOTTOM_MARGIN: f64 = 64.0;
+
+/// Where the overlay waits between recordings: far enough off any real desktop that the frame or two
+/// it is unavoidably alive during creation cannot be seen anywhere.
+const OFFSCREEN_X: f64 = -10_000.0;
+const OFFSCREEN_Y: f64 = -10_000.0;
 
 /// Overrides for a spike run, so a measurement does not need a rebuild.
 const ENV_HOTKEY: &str = "HUGINN_SPIKE_HOTKEY";
@@ -203,6 +212,10 @@ fn arm(app: &AppHandle, spec: &str) -> HotkeyStatus {
     if let Err(e) = app.emit(HOTKEY_STATUS_EVENT, status.clone()) {
         tracing::error!(error = %e, "cannot publish the hotkey status to the UI");
     }
+    // And tell the tray, which is where the user looks when the window is closed — which, for a
+    // background tool, is most of the time.
+    crate::tray::refresh_status(app);
+
     status
 }
 
@@ -446,6 +459,11 @@ fn build_overlay_window(app: &AppHandle) -> Result<isize> {
         WebviewWindowBuilder::new(app, OVERLAY_LABEL, WebviewUrl::App("overlay.html".into()))
             .title("Huginn")
             .inner_size(OVERLAY_WIDTH, OVERLAY_HEIGHT)
+            // Born off-screen. `visible(false)` is not enough: creating the window makes it briefly
+            // real, and it was seen flashing at the top-left corner on startup. Its true position is
+            // set every time it is shown anyway (on the monitor the user is actually typing on), so
+            // it costs nothing to keep it out of sight until then.
+            .position(OFFSCREEN_X, OFFSCREEN_Y)
             .decorations(false)
             .transparent(true)
             .shadow(false)
@@ -500,7 +518,13 @@ fn show_overlay(
     t0: Instant,
 ) -> Result<()> {
     let hwnd = overlay_hwnd(app)?;
-    let (x, y) = bottom_centre_position(app)?;
+
+    // On the monitor the user is *typing on* — which on a multi-monitor desk is routinely not the
+    // primary one. An overlay that says "listening" on the screen nobody is looking at is worse than
+    // no overlay at all. Fall back to the overlay's own monitor when there is no target (the
+    // measurement window).
+    let anchor = target.map(|t| t.hwnd).unwrap_or(hwnd);
+    let (x, y) = bottom_centre_of_monitor(app, anchor)?;
 
     win32::overlay::show_without_activating(hwnd, x, y)?;
     let shown_ms = t0.elapsed().as_millis();
@@ -553,20 +577,41 @@ fn hide_overlay(app: &AppHandle) -> Result<()> {
     Ok(())
 }
 
-/// Bottom-centre of the primary monitor, in **physical** pixels — what `SetWindowPos` speaks.
+/// Bottom-centre of the monitor that `anchor_hwnd` sits on, in **physical** pixels — what
+/// `SetWindowPos` speaks.
+///
+/// The scale factor still comes from Tauri's monitor list (Win32 gives DPI per monitor through a
+/// different call, and Tauri already tracks it): the monitor whose bounds contain the work area we
+/// just read. If it cannot be identified, the primary monitor's scale is the fallback — a 1-pixel
+/// placement error on a mixed-DPI desk is survivable; putting the bar on the wrong screen is not.
 #[cfg(target_os = "windows")]
-fn bottom_centre_position(app: &AppHandle) -> Result<(i32, i32)> {
-    let monitor = app
-        .primary_monitor()
-        .map_err(|e| AppError::Other(format!("cannot read the primary monitor: {e}")))?
-        .ok_or_else(|| AppError::Other("no primary monitor".to_string()))?;
+fn bottom_centre_of_monitor(app: &AppHandle, anchor_hwnd: isize) -> Result<(i32, i32)> {
+    let (x, y, width, height) = win32::overlay::work_area_of_window(anchor_hwnd)?;
 
-    let scale = monitor.scale_factor();
-    let size = monitor.size();
-    let origin = monitor.position();
+    let scale = app
+        .available_monitors()
+        .ok()
+        .and_then(|monitors| {
+            monitors
+                .into_iter()
+                .find(|m| {
+                    let p = m.position();
+                    let s = m.size();
+                    // The work area sits inside the monitor's bounds; a point in the middle of it
+                    // identifies which monitor we are on.
+                    let cx = x + width / 2;
+                    let cy = y + height / 2;
+                    cx >= p.x
+                        && cx < p.x + s.width as i32
+                        && cy >= p.y
+                        && cy < p.y + s.height as i32
+                })
+                .map(|m| m.scale_factor())
+        })
+        .unwrap_or(1.0);
 
-    let (dx, dy) = centre_bottom(size.width as f64, size.height as f64, scale);
-    Ok((origin.x + dx, origin.y + dy))
+    let (dx, dy) = centre_bottom(width as f64, height as f64, scale);
+    Ok((x + dx, y + dy))
 }
 
 // ---------------------------------------------------------------------------------------------
