@@ -1,6 +1,6 @@
 {
   "name": "huginn",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "description": "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings.",
@@ -44,7 +44,8 @@
     "check:all": "npm run version:check && npm run identity:check && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run knip && npm run secrets && npm run governance:check && npm run rust:fmt && npm run rust:clippy && npm run rust:test && npm run security:deny && npm run security:audit",
     "setup:hooks": "bash scripts/setup-hooks.sh",
     "setup:memory": "bash scripts/setup-claude-memory.sh",
-    "prepare": "husky"
+    "prepare": "husky",
+    "icons": "node scripts/project/build-icons.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.1",

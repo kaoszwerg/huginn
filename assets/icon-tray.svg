@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    The tray mark: the same wave, monochrome, on no ground.
+
+    A tray icon lives at 16px on a bar whose colour the user chooses, so it carries no background and
+    no colour of its own: it is drawn in solid black with alpha, and the shipped variants are tinted
+    from this one master (npm run icons).
+
+      tray-dark.png    white, for a dark taskbar (Windows' default)
+      tray-light.png   black, for a light taskbar
+      macOS takes the black one as a template image and inverts it itself.
+
+    Four bars, not six: at 16px, six bars leave two pixels of gap between them and the whole reads as
+    a smudge. Detail that cannot survive the size it is drawn at is not detail, it is noise.
+  -->
+  <g fill="#000000">
+    <rect x="72" y="208" width="40" height="96" rx="20" />
+    <rect x="160" y="152" width="40" height="208" rx="20" />
+    <rect x="248" y="88" width="40" height="336" rx="20" />
+    <rect x="336" y="176" width="40" height="160" rx="20" />
+  </g>
+</svg>

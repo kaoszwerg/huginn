@@ -1,6 +1,6 @@
 [package]
 name = "huginn"
-version = "0.3.0"
+version = "0.4.0"
 description = "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings."
 authors = ["kaoszwerg"]
 edition = "2021"
@@ -24,7 +24,7 @@ path = "src/main.rs"
 tauri-build = { version = "2.6.2", features = [] }
 
 [dependencies]
-tauri = { version = "2.11.2", features = ["tray-icon", "macos-private-api"] }
+tauri = { version = "2.11.2", features = ["tray-icon", "macos-private-api", "image-png"] }
 tauri-plugin-window-state = "2.4.1"
 # >= 2.3.2 is mandatory: earlier versions burn a full CPU core for as long as the key is held
 # (global-hotkey#176) — and push-to-talk holds it (ADR-PROJ-004, rule:overlay-and-input).
@@ -49,6 +49,8 @@ tokio = { version = "1.52.3", features = ["rt-multi-thread", "macros", "sync"] }
 open = "5.3.5"
 
 [target.'cfg(target_os = "windows")'.dependencies]
+# The taskbar theme decides which tray tint is legible; Windows does not recolour tray icons itself.
+windows-registry = "0.6.1"
 # Win32_UI_Input_KeyboardAndMouse: SendInput (text injection).
 # Win32_System_Threading + Win32_System_LibraryLoader: identify the focus target's process, and
 # install the diagnostic keyboard hook (ADR-PROJ-004).

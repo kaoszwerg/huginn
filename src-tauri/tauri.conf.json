@@ -49,6 +49,7 @@
       "nsis": {
         "template": "windows/installer.nsi"
       }
-    }
+    },
+    "resources": ["icons/tray-light.png", "icons/tray-dark.png"]
   }
 }

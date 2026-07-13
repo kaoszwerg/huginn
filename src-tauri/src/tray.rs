@@ -16,6 +16,7 @@
 
 use crate::state::AppState;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+use tauri::path::BaseDirectory;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Wry};
 
@@ -84,15 +85,28 @@ pub fn refresh_status(app: &AppHandle) {
 }
 
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
-    let Some(icon) = app.default_window_icon().cloned() else {
-        // Never panic on a missing bundled icon (rule:code-quality); log and skip.
-        tracing::error!("no bundled window icon — tray not installed");
-        return Ok(());
-    };
     let menu = build_menu(app)?;
 
-    TrayIconBuilder::with_id(TRAY_ID)
-        .icon(icon)
+    let mut builder = TrayIconBuilder::with_id(TRAY_ID);
+    builder = match tray_icon(app) {
+        Some(icon) => builder.icon(icon),
+        None => {
+            // Never panic on a missing icon (rule:code-quality). Fall back to the app icon: a
+            // colourful tray mark is worse than the monochrome one, but no tray at all is worse
+            // still — it is the only way to open or quit a backgrounded Huginn.
+            tracing::warn!("monochrome tray icon missing — falling back to the app icon");
+            match app.default_window_icon().cloned() {
+                Some(icon) => builder.icon(icon),
+                None => {
+                    tracing::error!("no icon at all — tray not installed");
+                    return Ok(());
+                }
+            }
+        }
+    };
+
+    builder
+        .icon_as_template(cfg!(target_os = "macos"))
         .tooltip(app.package_info().name.clone())
         .menu(&menu)
         .show_menu_on_left_click(false)
@@ -123,6 +137,57 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
         })
         .build(app)?;
     Ok(())
+}
+
+/// The monochrome tray mark, in the tint the user's taskbar needs.
+///
+/// **Windows does not recolour tray icons.** An app that ships one tint is invisible or muddy on half
+/// the desktops out there, so both are bundled and the taskbar's own theme decides — read from the
+/// same registry value Explorer uses. macOS is different: it takes a black icon marked as a
+/// *template* and inverts it itself, which is why `icon_as_template` is set there and the black one
+/// is handed over unconditionally.
+fn tray_icon(app: &AppHandle) -> Option<tauri::image::Image<'static>> {
+    let file = if wants_dark_icon() {
+        "icons/tray-dark.png"
+    } else {
+        "icons/tray-light.png"
+    };
+
+    let path = app.path().resolve(file, BaseDirectory::Resource).ok()?;
+    match tauri::image::Image::from_path(&path) {
+        Ok(icon) => Some(icon),
+        Err(e) => {
+            tracing::warn!(error = %e, path = %path.display(), "tray icon could not be loaded");
+            None
+        }
+    }
+}
+
+/// Does the taskbar need the light-on-dark icon?
+///
+/// Windows: `SystemUsesLightTheme = 0` means a dark taskbar, which needs the white mark. The value is
+/// missing on older builds — dark is the safer assumption there, because Windows' own default
+/// taskbar is dark.
+///
+/// macOS: always the black template image; the system inverts it for a dark menu bar itself.
+fn wants_dark_icon() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        use windows_registry::CURRENT_USER;
+
+        const KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+        match CURRENT_USER
+            .open(KEY)
+            .and_then(|k| k.get_u32("SystemUsesLightTheme"))
+        {
+            Ok(light) => light == 0,
+            Err(_) => true,
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        false
+    }
 }
 
 /// The menu. Its first line is a disabled label carrying the one fact that matters: is the dictation
