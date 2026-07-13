@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -9,6 +10,19 @@ const host = process.env.TAURI_DEV_HOST;
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+
+  build: {
+    rollupOptions: {
+      // Two windows, two documents: the settings window (index.html) and the recording overlay
+      // (overlay.html, ADR-PROJ-004). The overlay is deliberately its own entry with no
+      // JavaScript — it must be on screen within a keystroke, and a React bundle it does not need
+      // would only slow that down.
+      input: {
+        main: resolve(__dirname, "index.html"),
+        overlay: resolve(__dirname, "overlay.html"),
+      },
+    },
+  },
 
   // Prevent Vite from clearing Rust compiler errors during `tauri dev`.
   clearScreen: false,

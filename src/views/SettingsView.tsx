@@ -1,73 +1,151 @@
-import { HudPanel } from "../components/ui/HudPanel";
+import { Panel } from "../components/ui/Panel";
 import { Button } from "../components/ui/Button";
+import { Notice } from "../components/ui/Notice";
+import { HotkeyField } from "../components/ui/HotkeyField";
 import { useSettings, useUpdateSettings } from "../hooks/useSettings";
+import { useHotkeyStatus, useSetHotkey } from "../hooks/useHotkey";
+import type { ThemeChoice } from "../bindings/ThemeChoice";
 
 const UI_SCALES = [0.8, 0.9, 1.0, 1.1, 1.25, 1.5] as const;
 
-/** Settings view: UI scale and the optional close-to-tray behaviour, persisted to app-data. */
+const THEMES: { id: ThemeChoice; label: string }[] = [
+  { id: "system", label: "Follow system" },
+  { id: "light", label: "Light" },
+  { id: "dark", label: "Dark" },
+];
+
+/** Settings: the recording hotkey, the appearance, and what the close button does. */
 export function SettingsView() {
   const settings = useSettings();
   const update = useUpdateSettings();
+  const hotkey = useHotkeyStatus();
+  const setHotkey = useSetHotkey();
+
   const scale = settings.data?.ui_scale ?? 1;
+  const theme = settings.data?.theme ?? "system";
   const minimizeToTray = settings.data?.minimize_to_tray ?? false;
+  const shortcut = hotkey.data?.shortcut ?? settings.data?.hotkey ?? "Ctrl+Space";
 
   return (
     <div className="h-full space-y-4 overflow-auto p-6">
-      <HudPanel
-        accent="cyan"
-        label="Preferences"
+      <Panel
+        label="Recording"
         info={
           <p>
-            Settings are persisted as JSON under the OS app-data directory and applied to the native
-            WebView zoom, so they survive restarts.
+            Hold the combination to record, release it to insert the text into whatever application
+            you were working in. A global shortcut is exclusive: while Huginn holds it, no other
+            application receives it.
           </p>
         }
       >
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col">
+              <span className="text-fg text-sm">Push-to-talk</span>
+              <span className="text-dim text-xs">Hold to speak, release to insert.</span>
+            </div>
+            <HotkeyField
+              value={shortcut}
+              busy={setHotkey.isPending}
+              onChange={(spec) => setHotkey.mutate(spec)}
+            />
+          </div>
+
+          {/* The failure the user must see: without this key, the product does nothing at all. */}
+          {hotkey.data && !hotkey.data.registered ? (
+            <Notice tone="danger">
+              <strong className="text-fg">Push-to-talk is not active.</strong>{" "}
+              {hotkey.data.error ?? "The combination could not be registered."} Choose another
+              combination above.
+            </Notice>
+          ) : null}
+
+          {hotkey.data?.registered && setHotkey.isSuccess ? (
+            <Notice tone="success">Push-to-talk is armed.</Notice>
+          ) : null}
+        </div>
+      </Panel>
+
+      <Panel label="Appearance">
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-dim text-xs">UI scale</span>
+          <Field label="Theme" hint="Huginn follows your desktop unless you tell it otherwise.">
+            <div className="flex flex-wrap gap-1">
+              {THEMES.map((t) => (
+                <Button
+                  key={t.id}
+                  variant="ghost"
+                  aria-pressed={theme === t.id}
+                  active={theme === t.id}
+                  onClick={() => update.mutate({ theme: t.id })}
+                >
+                  {t.label}
+                </Button>
+              ))}
+            </div>
+          </Field>
+
+          <Field label="Interface size">
             <div className="flex flex-wrap gap-1">
               {UI_SCALES.map((s) => (
                 <Button
                   key={s}
+                  variant="ghost"
                   aria-pressed={Math.abs(scale - s) < 0.001}
                   active={Math.abs(scale - s) < 0.001}
                   onClick={() => update.mutate({ uiScale: s })}
-                  className="px-3 py-1 text-xs"
+                  className="font-mono"
                 >
                   {Math.round(s * 100)}%
                 </Button>
               ))}
             </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-dim text-xs">Close button</span>
-            <div className="flex flex-wrap gap-1">
-              <Button
-                aria-pressed={!minimizeToTray}
-                active={!minimizeToTray}
-                onClick={() => update.mutate({ minimizeToTray: false })}
-                className="px-3 py-1 text-xs"
-              >
-                Quit app
-              </Button>
-              <Button
-                aria-pressed={minimizeToTray}
-                active={minimizeToTray}
-                onClick={() => update.mutate({ minimizeToTray: true })}
-                className="px-3 py-1 text-xs"
-              >
-                Minimize to tray
-              </Button>
-            </div>
-            <span className="text-dim text-xs">
-              What the window&apos;s close button does. &ldquo;Minimize to tray&rdquo; keeps the app
-              running in the system tray with an Open/Quit menu.
-            </span>
-          </div>
+          </Field>
         </div>
-      </HudPanel>
+      </Panel>
+
+      <Panel label="Window">
+        <Field
+          label="Close button"
+          hint="“Keep running in the tray” leaves Huginn listening for the hotkey after the window is closed."
+        >
+          <div className="flex flex-wrap gap-1">
+            <Button
+              variant="ghost"
+              aria-pressed={!minimizeToTray}
+              active={!minimizeToTray}
+              onClick={() => update.mutate({ minimizeToTray: false })}
+            >
+              Quit Huginn
+            </Button>
+            <Button
+              variant="ghost"
+              aria-pressed={minimizeToTray}
+              active={minimizeToTray}
+              onClick={() => update.mutate({ minimizeToTray: true })}
+            >
+              Keep running in the tray
+            </Button>
+          </div>
+        </Field>
+      </Panel>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-fg text-sm">{label}</span>
+      {children}
+      {hint ? <span className="text-dim text-xs">{hint}</span> : null}
     </div>
   );
 }

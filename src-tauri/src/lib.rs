@@ -9,6 +9,7 @@ pub mod dto;
 pub mod error;
 pub mod logging;
 pub mod settings;
+pub mod spike;
 pub mod state;
 pub mod tray;
 
@@ -21,6 +22,9 @@ pub fn run() {
     tauri::Builder::default()
         // Persist + restore window size and position across runs.
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        // Push-to-talk (ADR-PROJ-004). The hotkey is registered from Rust only, so the webview
+        // needs no global-shortcut capability at all (least privilege, ADR-CORE-011).
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
@@ -49,6 +53,15 @@ pub fn run() {
             tray::install_close_handler(app.handle());
             let tray_enabled = app.state::<AppState>().settings.get().minimize_to_tray;
             tray::set_enabled(app.handle(), tray_enabled);
+
+            // The phase-1a spike (PLAN.md). A failure to arm the hotkey — most likely because
+            // another application already holds it — must not take the app down, but it is never
+            // swallowed either: it is logged at `error` and therefore visible in the Logs view
+            // (rule:logging, rule:overlay-and-input).
+            if let Err(e) = spike::install(app.handle()) {
+                tracing::error!(error = %e, "push-to-talk is NOT available");
+            }
+
             tracing::info!("startup complete");
             Ok(())
         })
@@ -58,6 +71,8 @@ pub fn run() {
             commands::get_recent_logs,
             commands::get_settings,
             commands::update_settings,
+            commands::get_hotkey_status,
+            commands::set_hotkey,
             commands::open_external,
         ])
         .run(tauri::generate_context!())

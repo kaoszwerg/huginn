@@ -12,17 +12,14 @@ const BOTTOM_NAV: NavItem[] = [
   { id: "settings", Icon: Settings, label: "Settings" },
 ];
 
-/** Left HUD navigation rail: main views at the top, logs/settings pinned to the bottom. */
+/** The navigation rail: product views at the top, logs and settings pinned to the bottom. */
 export function Sidebar() {
   const view = useUiStore((s) => s.view);
   const setView = useUiStore((s) => s.setView);
+
   return (
     <nav
-      className="hud-strip flex w-14 shrink-0 flex-col items-center gap-1.5 py-2"
-      style={{
-        borderRight: "1px solid rgb(var(--huginn-neon-cyan-rgb) / 0.3)",
-        borderBottom: "none",
-      }}
+      className="bg-surface border-line flex w-14 shrink-0 flex-col items-center gap-1 border-r py-2"
       aria-label="Primary"
     >
       {MAIN_NAV.map((item) => (
@@ -46,8 +43,11 @@ export function Sidebar() {
   );
 }
 
-/** One nav entry, drawn as a HUD `IconButton` (ADR-APP-026): the label is the accessible name and the
- * hover tooltip (replacing the native `title`); the active view fills green and is marked current. */
+/**
+ * One nav entry (ADR-APP-026): the label is both the accessible name and the hover tooltip. The
+ * current view is marked with `aria-current` *and* visually — state must never be carried by colour
+ * alone, and a screen reader cannot see a highlight.
+ */
 function NavButton({
   item,
   active,
@@ -61,13 +61,12 @@ function NavButton({
   return (
     <IconButton
       label={item.label}
-      accent={active ? "green" : "cyan"}
       active={active}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
       className="h-9 w-9"
     >
-      <Icon size={18} strokeWidth={2} />
+      <Icon size={18} strokeWidth={active ? 2.25 : 1.75} />
     </IconButton>
   );
 }

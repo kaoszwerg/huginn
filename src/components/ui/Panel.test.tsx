@@ -1,25 +1,25 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
-import { HudPanel } from "./HudPanel";
+import { Panel } from "./Panel";
 
-describe("HudPanel", () => {
+describe("Panel", () => {
   it("renders the label and children", () => {
-    render(<HudPanel label="Build">panel body</HudPanel>);
+    render(<Panel label="Build">panel body</Panel>);
     expect(screen.getByText("Build")).toBeInTheDocument();
     expect(screen.getByText("panel body")).toBeInTheDocument();
   });
 
   it("renders children without a label or info button", () => {
-    render(<HudPanel>just children</HudPanel>);
+    render(<Panel>just children</Panel>);
     expect(screen.getByText("just children")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "What is this?" })).toBeNull();
   });
 
   it("opens the info popover on click and closes it on a second click", () => {
     render(
-      <HudPanel label="Build" info={<p>Explains the build panel</p>}>
+      <Panel label="Build" info={<p>Explains the build panel</p>}>
         panel body
-      </HudPanel>,
+      </Panel>,
     );
     expect(screen.queryByText("Explains the build panel")).toBeNull();
 
@@ -33,9 +33,9 @@ describe("HudPanel", () => {
 
   it("closes the info popover on an outside click", () => {
     render(
-      <HudPanel label="Build" info={<p>Explains the build panel</p>}>
+      <Panel label="Build" info={<p>Explains the build panel</p>}>
         panel body
-      </HudPanel>,
+      </Panel>,
     );
     fireEvent.click(screen.getByRole("button", { name: "What is this?" }));
     expect(screen.getByText("Explains the build panel")).toBeInTheDocument();

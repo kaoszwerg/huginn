@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLogs } from "../hooks/useLogs";
-import { HudPanel } from "../components/ui/HudPanel";
+import { Panel } from "../components/ui/Panel";
 import { Button } from "../components/ui/Button";
 import { TextField } from "../components/ui/TextField";
 import { PALETTE } from "../styles/palette";
@@ -9,16 +9,21 @@ import type { LogRecord } from "../bindings/LogRecord";
 const LEVELS = ["ALL", "ERROR", "WARN", "INFO", "DEBUG"] as const;
 type LevelFilter = (typeof LEVELS)[number];
 
+/**
+ * A log level is a *state*, so it is drawn in the semantic tokens — not in the accent, which belongs
+ * to interaction. The values are `var()` references, so they follow the theme (rule:design-system).
+ */
 const LEVEL_COLOR: Record<string, string> = {
   ERROR: PALETTE.danger,
-  WARN: PALETTE.gold,
-  INFO: PALETTE.cyan,
+  WARN: PALETTE.warning,
+  INFO: PALETTE.accent,
   DEBUG: PALETTE.dim,
   TRACE: PALETTE.dim,
 };
 
-/** Live log view: structured records streamed from the backend, with level filter, full-text search,
- * sort, pause and clear. */
+/** The live log: structured records streamed from the backend, with a level filter, search, sort,
+ * pause and clear. It is a developer's window into the app — never a substitute for telling the user
+ * something went wrong (that is what `Notice` is for). */
 export function LogsView() {
   const { logs, clear, paused, setPaused, error, isLoading } = useLogs();
   const [level, setLevel] = useState<LevelFilter>("ALL");
@@ -42,18 +47,17 @@ export function LogsView() {
   return (
     <div className="flex h-full flex-col gap-4 overflow-hidden p-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="hud-label" style={{ "--hud-label-size": "1rem" } as React.CSSProperties}>
-          Logs
-        </h1>
+        <h1 className="text-fg text-lg font-semibold tracking-tight">Logs</h1>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex gap-1">
             {LEVELS.map((l) => (
               <Button
                 key={l}
+                variant="ghost"
                 onClick={() => setLevel(l)}
                 aria-pressed={level === l}
                 active={level === l}
-                className="px-2.5 py-1 text-xs tracking-wide"
+                className="px-2.5 py-1 font-mono"
               >
                 {l}
               </Button>
@@ -66,29 +70,25 @@ export function LogsView() {
             aria-label="Search logs"
             className="w-40"
           />
-          <Button
-            onClick={() => setDesc((d) => !d)}
-            tooltip="Toggle sort order"
-            className="px-2.5 py-1 text-xs"
-          >
-            {desc ? "newest" : "oldest"}
+          <Button variant="ghost" onClick={() => setDesc((d) => !d)} tooltip="Toggle sort order">
+            {desc ? "Newest" : "Oldest"}
           </Button>
           <Button
+            variant="ghost"
             onClick={() => setPaused((p) => !p)}
-            accent={paused ? "gold" : "green"}
             active={paused}
-            className="px-2.5 py-1 text-xs"
+            tooltip={paused ? "Resume the live stream" : "Pause the live stream"}
           >
-            {paused ? "paused" : "live"}
+            {paused ? "Paused" : "Live"}
           </Button>
-          <Button onClick={clear} accent="danger" className="px-2.5 py-1 text-xs">
-            clear
+          <Button variant="ghost" tone="danger" onClick={clear}>
+            Clear
           </Button>
         </div>
       </header>
 
-      <HudPanel accent="cyan" label={`${rows.length} records`}>
-        <div className="flex max-h-[calc(100vh-260px)] flex-col overflow-auto font-mono text-xs">
+      <Panel label={`${rows.length} records`} className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto font-mono text-xs">
           {error ? (
             <p style={{ color: PALETTE.danger }}>Failed to load logs: {error.message}</p>
           ) : isLoading && logs.length === 0 ? (
@@ -99,7 +99,7 @@ export function LogsView() {
             rows.map((r, i) => <LogLine key={`${r.ts}-${i}`} rec={r} />)
           )}
         </div>
-      </HudPanel>
+      </Panel>
     </div>
   );
 }
@@ -109,9 +109,9 @@ function LogLine({ rec }: { rec: LogRecord }) {
   const time = new Date(rec.ts);
   const ts = Number.isNaN(time.getTime()) ? rec.ts : time.toLocaleTimeString();
   return (
-    <div className="border-elevated flex gap-2 border-b py-1 leading-relaxed">
-      <span className="text-dim shrink-0">{ts}</span>
-      <span className="w-12 shrink-0 font-bold" style={{ color }}>
+    <div className="border-line flex gap-2 border-b py-1 leading-relaxed">
+      <span className="text-dim tabular shrink-0">{ts}</span>
+      <span className="w-12 shrink-0 font-semibold" style={{ color }}>
         {rec.level}
       </span>
       <span className="min-w-0 flex-1 break-words">
@@ -122,7 +122,7 @@ function LogLine({ rec }: { rec: LogRecord }) {
   );
 }
 
-/** Inline key=value rendering of the JSON fields, lightly highlighted. */
+/** The structured fields, rendered inline as key=value. */
 function Fields({ json }: { json: string }) {
   if (!json || json === "{}") return null;
   let obj: Record<string, unknown>;
@@ -137,9 +137,9 @@ function Fields({ json }: { json: string }) {
     <>
       {entries.map(([k, v]) => (
         <span key={k} className="mr-2 text-[10px]">
-          <span className="text-cyan">{k}</span>
+          <span className="text-dim">{k}</span>
           <span className="text-dim">=</span>
-          <span className="text-green">{typeof v === "string" ? v : JSON.stringify(v)}</span>
+          <span className="text-fg">{typeof v === "string" ? v : JSON.stringify(v)}</span>
         </span>
       ))}
     </>

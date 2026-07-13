@@ -1,8 +1,9 @@
 //! Tauri command surface (typed via ts-rs DTOs). Thin layer: validate, do the work, map errors
 //! (ADR-APP-001, rule:rust-conventions). Every command logs its action and its result (rule:logging).
 
-use crate::dto::{BuildInfo, SettingsDto};
+use crate::dto::{BuildInfo, HotkeyStatus, SettingsDto, ThemeChoice};
 use crate::error::{AppError, Result};
+use crate::settings::SettingsPatch;
 use crate::state::AppState;
 use tauri::State;
 
@@ -55,25 +56,69 @@ pub fn get_settings(state: State<'_, AppState>) -> SettingsDto {
 
 /// Update the persisted user settings. Omitted fields keep their current value. Toggling
 /// `minimize_to_tray` installs/removes the tray icon immediately (no restart).
+///
+/// The push-to-talk hotkey is deliberately **not** settable here: changing it can fail (the OS may
+/// refuse the combination), and a partial update that half-succeeded is worse than a command that
+/// owns the whole operation — see [`set_hotkey`].
 #[tauri::command]
 pub fn update_settings(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
     ui_scale: Option<f64>,
     minimize_to_tray: Option<bool>,
+    theme: Option<ThemeChoice>,
 ) -> Result<SettingsDto> {
-    tracing::info!(?ui_scale, ?minimize_to_tray, "update_settings");
+    tracing::info!(?ui_scale, ?minimize_to_tray, ?theme, "update_settings");
     let was_tray = state.settings.get().minimize_to_tray;
-    let next = state.settings.update(ui_scale, minimize_to_tray)?;
+    let next = state.settings.update(SettingsPatch {
+        ui_scale,
+        minimize_to_tray,
+        theme,
+        hotkey: None,
+    })?;
     if next.minimize_to_tray != was_tray {
         crate::tray::set_enabled(&app, next.minimize_to_tray);
     }
     tracing::debug!(
         ui_scale = next.ui_scale,
         minimize_to_tray = next.minimize_to_tray,
+        theme = ?next.theme,
         "update_settings ok"
     );
     Ok(next)
+}
+
+/// Is push-to-talk actually armed? Asked by the UI on load, so the window can say so on sight
+/// instead of leaving the user to discover a dead key (rule:overlay-and-input).
+#[tauri::command]
+pub fn get_hotkey_status(app: tauri::AppHandle) -> HotkeyStatus {
+    let status = crate::spike::status(&app);
+    tracing::debug!(
+        shortcut = %status.shortcut,
+        registered = status.registered,
+        "get_hotkey_status"
+    );
+    status
+}
+
+/// Change the push-to-talk hotkey and try to register it with the OS.
+///
+/// Returns the resulting [`HotkeyStatus`] — including the failure case. "That combination is
+/// already taken" is a state the user must see and act on, not an exception: an `Err` here would
+/// make the UI show a red toast and forget, when what it must do is *keep showing* that the key is
+/// dead until it is fixed.
+#[tauri::command]
+pub fn set_hotkey(app: tauri::AppHandle, shortcut: String) -> Result<HotkeyStatus> {
+    // Validate at the boundary: the webview is treated as hostile even though we wrote it
+    // (ADR-CORE-011). A shortcut is a short string; anything longer is not one.
+    let spec = shortcut.trim();
+    if spec.is_empty() || spec.len() > 64 {
+        return Err(AppError::Other(format!(
+            "not a plausible shortcut ({} chars)",
+            spec.len()
+        )));
+    }
+    crate::spike::set_hotkey(&app, spec)
 }
 
 /// Open an external URL in the user's default browser. Routed through the backend so any failure

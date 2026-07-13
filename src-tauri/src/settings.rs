@@ -1,17 +1,32 @@
 //! Persisted user settings — a small JSON document under `<app_data_dir>/settings.json`.
 //!
-//! The shell has no database on purpose: settings are a handful of scalar preferences, so a single
-//! JSON file (written atomically via a temp file + rename) is the honest fit. Reads are served from
-//! an in-memory copy behind an `RwLock`; every write persists immediately, so a crash can never
-//! lose more than the write in flight.
+//! There is no database on purpose: settings are a handful of scalar preferences, so a single JSON
+//! file (written atomically via a temp file + rename) is the honest fit. Reads are served from an
+//! in-memory copy behind an `RwLock`; every write persists immediately, so a crash can never lose
+//! more than the write in flight.
 
-use crate::dto::SettingsDto;
+use crate::dto::{SettingsDto, ThemeChoice};
 use crate::error::{AppError, Result};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 
 pub const MIN_UI_SCALE: f64 = 0.7;
 pub const MAX_UI_SCALE: f64 = 1.6;
+
+/// A partial update: every field is optional, and `None` means "leave it alone".
+///
+/// A struct rather than a growing list of positional `Option`s — the fourth `Option<bool>` in a
+/// signature is the one a caller passes in the wrong slot, and the compiler cannot see it.
+#[derive(Debug, Default, Clone)]
+pub struct SettingsPatch {
+    pub ui_scale: Option<f64>,
+    pub minimize_to_tray: Option<bool>,
+    pub theme: Option<ThemeChoice>,
+    /// The push-to-talk combination. Persisted only *after* the OS accepted it (see
+    /// `spike::set_hotkey`): storing a shortcut that cannot be registered would leave the user with
+    /// a setting that lies.
+    pub hotkey: Option<String>,
+}
 
 /// Thread-safe settings store: in-memory state + the JSON file it is persisted to.
 pub struct SettingsStore {
@@ -20,9 +35,9 @@ pub struct SettingsStore {
 }
 
 impl SettingsStore {
-    /// Load `<data_dir>/settings.json`. A missing or unreadable file yields the defaults — a
-    /// corrupt settings file must never stop the app from starting; it is logged and replaced on
-    /// the next write.
+    /// Load `<data_dir>/settings.json`. A missing or unreadable file yields the defaults — a corrupt
+    /// settings file must never stop the app from starting; it is logged and replaced on the next
+    /// write.
     pub fn load(data_dir: &Path) -> Self {
         let path = data_dir.join("settings.json");
         let current = match std::fs::read_to_string(&path) {
@@ -32,6 +47,8 @@ impl SettingsStore {
                         path = %path.display(),
                         ui_scale = s.ui_scale,
                         minimize_to_tray = s.minimize_to_tray,
+                        theme = ?s.theme,
+                        hotkey = %s.hotkey,
                         "settings loaded"
                     );
                     sanitize(s)
@@ -60,22 +77,24 @@ impl SettingsStore {
         }
     }
 
-    /// Apply a partial update (every field optional), persist it, and return the new state.
-    pub fn update(
-        &self,
-        ui_scale: Option<f64>,
-        minimize_to_tray: Option<bool>,
-    ) -> Result<SettingsDto> {
+    /// Apply a partial update, persist it, and return the new state.
+    pub fn update(&self, patch: SettingsPatch) -> Result<SettingsDto> {
         let next = {
             let mut guard = self
                 .current
                 .write()
                 .map_err(|_| AppError::Other("settings lock poisoned".into()))?;
-            if let Some(scale) = ui_scale {
+            if let Some(scale) = patch.ui_scale {
                 guard.ui_scale = scale.clamp(MIN_UI_SCALE, MAX_UI_SCALE);
             }
-            if let Some(tray) = minimize_to_tray {
+            if let Some(tray) = patch.minimize_to_tray {
                 guard.minimize_to_tray = tray;
+            }
+            if let Some(theme) = patch.theme {
+                guard.theme = theme;
+            }
+            if let Some(hotkey) = patch.hotkey {
+                guard.hotkey = hotkey;
             }
             guard.clone()
         };
@@ -83,6 +102,8 @@ impl SettingsStore {
         tracing::info!(
             ui_scale = next.ui_scale,
             minimize_to_tray = next.minimize_to_tray,
+            theme = ?next.theme,
+            hotkey = %next.hotkey,
             "settings updated"
         );
         Ok(next)
@@ -104,13 +125,17 @@ impl SettingsStore {
     }
 }
 
-/// Clamp values coming from disk — a hand-edited file must not be able to push the UI to an
-/// unusable zoom level.
+/// Clamp values coming from disk — a hand-edited file must not be able to push the UI to an unusable
+/// zoom level, and an empty hotkey string would leave the app with no way to record at all.
 fn sanitize(mut s: SettingsDto) -> SettingsDto {
     if !s.ui_scale.is_finite() {
         s.ui_scale = 1.0;
     }
     s.ui_scale = s.ui_scale.clamp(MIN_UI_SCALE, MAX_UI_SCALE);
+    if s.hotkey.trim().is_empty() {
+        tracing::warn!("settings carried an empty hotkey — falling back to the default");
+        s.hotkey = SettingsDto::default().hotkey;
+    }
     s
 }
 
@@ -118,19 +143,28 @@ fn sanitize(mut s: SettingsDto) -> SettingsDto {
 mod tests {
     use super::*;
 
+    fn scale(v: f64) -> SettingsPatch {
+        SettingsPatch {
+            ui_scale: Some(v),
+            ..Default::default()
+        }
+    }
+
     #[test]
     fn defaults_when_no_file_exists() {
         let dir = tempfile::tempdir().expect("tempdir");
         let store = SettingsStore::load(dir.path());
         assert_eq!(store.get().ui_scale, 1.0);
         assert!(!store.get().minimize_to_tray);
+        assert_eq!(store.get().theme, ThemeChoice::System);
+        assert_eq!(store.get().hotkey, "Ctrl+Space");
     }
 
     #[test]
     fn update_persists_and_reloads() {
         let dir = tempfile::tempdir().expect("tempdir");
         let store = SettingsStore::load(dir.path());
-        let next = store.update(Some(1.25), None).expect("update");
+        let next = store.update(scale(1.25)).expect("update");
         assert_eq!(next.ui_scale, 1.25);
 
         let reloaded = SettingsStore::load(dir.path());
@@ -142,10 +176,14 @@ mod tests {
     fn ui_scale_is_clamped_on_write_and_read() {
         let dir = tempfile::tempdir().expect("tempdir");
         let store = SettingsStore::load(dir.path());
-        let high = store.update(Some(9.0), None).expect("update");
-        assert_eq!(high.ui_scale, MAX_UI_SCALE);
-        let low = store.update(Some(0.1), None).expect("update");
-        assert_eq!(low.ui_scale, MIN_UI_SCALE);
+        assert_eq!(
+            store.update(scale(9.0)).expect("update").ui_scale,
+            MAX_UI_SCALE
+        );
+        assert_eq!(
+            store.update(scale(0.1)).expect("update").ui_scale,
+            MIN_UI_SCALE
+        );
 
         std::fs::write(dir.path().join("settings.json"), r#"{"ui_scale":42.0}"#).expect("write");
         assert_eq!(SettingsStore::load(dir.path()).get().ui_scale, MAX_UI_SCALE);
@@ -163,17 +201,55 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let store = SettingsStore::load(dir.path());
         assert!(!store.get().minimize_to_tray);
-        let next = store.update(None, Some(true)).expect("update");
+        let next = store
+            .update(SettingsPatch {
+                minimize_to_tray: Some(true),
+                ..Default::default()
+            })
+            .expect("update");
         assert!(next.minimize_to_tray);
         assert!(SettingsStore::load(dir.path()).get().minimize_to_tray);
     }
 
     #[test]
-    fn older_file_without_tray_field_loads_with_default() {
+    fn theme_and_hotkey_persist_and_reload() {
         let dir = tempfile::tempdir().expect("tempdir");
-        std::fs::write(dir.path().join("settings.json"), r#"{"ui_scale":1.25}"#).expect("write");
+        let store = SettingsStore::load(dir.path());
+        store
+            .update(SettingsPatch {
+                theme: Some(ThemeChoice::Light),
+                hotkey: Some("Ctrl+Shift+KeyJ".into()),
+                ..Default::default()
+            })
+            .expect("update");
+
+        let reloaded = SettingsStore::load(dir.path()).get();
+        assert_eq!(reloaded.theme, ThemeChoice::Light);
+        assert_eq!(reloaded.hotkey, "Ctrl+Shift+KeyJ");
+    }
+
+    #[test]
+    fn older_file_without_the_newer_fields_loads_with_defaults() {
+        // A settings file written before `theme` and `hotkey` existed must still load — and must not
+        // silently discard the preferences it *does* carry.
+        let dir = tempfile::tempdir().expect("tempdir");
+        std::fs::write(
+            dir.path().join("settings.json"),
+            r#"{"ui_scale":1.25,"minimize_to_tray":true}"#,
+        )
+        .expect("write");
         let s = SettingsStore::load(dir.path()).get();
         assert_eq!(s.ui_scale, 1.25);
-        assert!(!s.minimize_to_tray);
+        assert!(s.minimize_to_tray);
+        assert_eq!(s.theme, ThemeChoice::System);
+        assert_eq!(s.hotkey, "Ctrl+Space");
+    }
+
+    #[test]
+    fn an_empty_hotkey_on_disk_falls_back_to_the_default() {
+        // A hand-edited file must not be able to leave the app with no way to start recording.
+        let dir = tempfile::tempdir().expect("tempdir");
+        std::fs::write(dir.path().join("settings.json"), r#"{"hotkey":"   "}"#).expect("write");
+        assert_eq!(SettingsStore::load(dir.path()).get().hotkey, "Ctrl+Space");
     }
 }

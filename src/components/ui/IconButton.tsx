@@ -1,34 +1,31 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { hudButtonClass, type HudAccent } from "./hudButton";
+import { controlClass, type ControlVariant, type Tone } from "./controlClass";
 import { Tooltip } from "./Tooltip";
 
 export interface IconButtonProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   "title" | "aria-label"
 > {
-  /** Accessible name — the icon is decorative, so this is required. Also the default tooltip. */
+  /** Accessible name. Required: the icon carries no text, so without this the control is unnamed. */
   label: string;
-  /** HUD accent colour (ADR-APP-020). Defaults to cyan. */
-  accent?: HudAccent;
-  /** Locks the button into its filled state (e.g. the active nav item). */
+  tone?: Tone;
+  /** Defaults to `ghost` — an icon control usually sits in a strip and should not carry a surface. */
+  variant?: ControlVariant;
   active?: boolean;
-  /** `solid` (default) is the chamfered neon button; `ghost` is a borderless icon control. */
-  variant?: "solid" | "ghost";
-  /** Custom HUD tooltip (ADR-APP-026). Defaults to `label`; pass `null` for none (aria-label remains). */
+  /** Defaults to `label`. Pass `null` for no tooltip (the accessible name remains). */
   tooltip?: ReactNode;
 }
 
 /**
- * Icon-only button in the HUD design system (ADR-APP-020, ADR-APP-026). Wraps `Button`'s surface but forces
- * an accessible `label` (there is no visible text) and, by default, surfaces that label as a `Tooltip`
- * on hover/focus — replacing the native `title` attribute. Window controls, nav rails and inline
- * icon actions all route through this instead of styling a raw `<button>`.
+ * The icon-only button (ADR-APP-026). Same surface as `Button`, but it forces an accessible `label`
+ * and surfaces that label as a `Tooltip` on hover and on keyboard focus — replacing the native
+ * `title` attribute, whose OS-drawn bubble is a stock element we do not ship.
  */
 export function IconButton({
   label,
-  accent,
+  tone,
+  variant = "ghost",
   active,
-  variant = "solid",
   tooltip,
   className = "",
   type,
@@ -39,7 +36,7 @@ export function IconButton({
     <button
       type={type ?? "button"}
       aria-label={label}
-      className={`${hudButtonClass({ accent, active, variant })} flex items-center justify-center ${className}`.trim()}
+      className={`${controlClass({ tone, variant, active })} ${className}`.trim()}
       {...rest}
     >
       {children}

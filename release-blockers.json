@@ -37,8 +37,8 @@
       "id": "visual-identity",
       "resolved": false,
       "title": "Huginn's own design system replaces the template's HUD look",
-      "why": "The repo currently carries saga's neon/chamfer palette as an inherited placeholder (ADR-PROJ-003). Shipping it would be shipping another product's face.",
-      "how": "Land Huginn's design system (tokens in globals.css + palette.ts, primitives in src/components/ui/**, new icons), then set resolved:true.",
+      "why": "The repo carried saga's neon/chamfer palette as an inherited placeholder (ADR-PROJ-003). Shipping it would be shipping another product's face.",
+      "how": "DONE (2026-07-13): the design system landed — slate palette with a single steel accent in globals.css + palette.ts, light and dark, quiet radii, hairline borders, system typeface; the neon glow, the chamfer clip-paths, the animated window frame and the Orbitron font are gone; every control rebuilt as a primitive in src/components/ui/**. STILL OPEN: the app icon (src-tauri/icons/**) is still the template's mark. Replace it, then set resolved:true.",
       "resolution": null
     }
   ]

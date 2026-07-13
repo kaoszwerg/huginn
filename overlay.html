@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Huginn</title>
+    <!--
+      The recording overlay (ADR-PROJ-004, phase-1a spike).
+
+      It sits on top of someone else's work: it states the state and gets out of the way. No
+      controls, therefore no UI primitives and no IPC — the window has no capability at all, which
+      is the least privilege it can have (ADR-CORE-011).
+
+      Colour comes only from the design-system tokens in globals.css (rule:design-system). Raw hex
+      here would be a defect — and would also survive the palette replacement that ADR-PROJ-003
+      still owes this project.
+    -->
+    <link rel="stylesheet" href="/src/styles/globals.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        /* The window is transparent; anything opaque here would paint a rectangle over the user's
+           application. */
+        background: transparent;
+        overflow: hidden;
+        /* The window is click-through (set_ignore_cursor_events); this keeps the caret cursor from
+           ever appearing over it in the split second before that call lands. */
+        user-select: none;
+        cursor: default;
+      }
+
+      .overlay {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        height: 100%;
+        padding: 0 1.25rem;
+        box-sizing: border-box;
+        border-radius: 0.625rem;
+        /* The overlay is dark in BOTH themes: it lies on top of a stranger's window, and flashing it
+           white would be worse than useless (ADR-PROJ-004). It carries its own tokens for exactly
+           this reason. */
+        background: var(--huginn-overlay-bg);
+        border: 1px solid var(--huginn-overlay-border);
+        color: var(--huginn-overlay-text);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        font-size: 0.9375rem;
+      }
+
+      /* No backdrop-filter: it is weak on Linux WebKitGTK and this must degrade to something solid
+         (rule:cross-platform, rule:ui-design). */
+
+      .pulse {
+        width: 0.5rem;
+        height: 0.5rem;
+        flex: none;
+        border-radius: 50%;
+        background: var(--huginn-accent);
+        animation: breathe 1.8s ease-in-out infinite;
+      }
+
+      .hint {
+        margin-left: auto;
+        color: var(--huginn-overlay-dim);
+        font-size: 0.8125rem;
+      }
+
+      @keyframes breathe {
+        0%,
+        100% {
+          opacity: 0.35;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .pulse {
+          animation: none;
+          opacity: 0.9;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay">
+      <span class="pulse" aria-hidden="true"></span>
+      <span role="status">Listening…</span>
+      <span class="hint">release to insert</span>
+    </div>
+  </body>
+</html>

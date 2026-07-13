@@ -27,7 +27,12 @@ describe("useSettings", () => {
   });
 
   it("loads the persisted settings via the settings query", async () => {
-    const settings: SettingsDto = { ui_scale: 1.1, minimize_to_tray: false };
+    const settings: SettingsDto = {
+      ui_scale: 1.1,
+      minimize_to_tray: false,
+      theme: "system",
+      hotkey: "Ctrl+Space",
+    };
     vi.mocked(api.getSettings).mockResolvedValue(settings);
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -57,7 +62,12 @@ describe("useUpdateSettings", () => {
   });
 
   it("calls api.updateSettings with the given options and writes the result into the settings cache", async () => {
-    const updated: SettingsDto = { ui_scale: 1.25, minimize_to_tray: false };
+    const updated: SettingsDto = {
+      ui_scale: 1.25,
+      minimize_to_tray: false,
+      theme: "system",
+      hotkey: "Ctrl+Space",
+    };
     vi.mocked(api.updateSettings).mockResolvedValue(updated);
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 

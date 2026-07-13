@@ -66,9 +66,8 @@ Verified, July 2026:
 - **The overlay window is created and configured with platform-native code from day one**, not retrofitted:
   `WS_EX_NOACTIVATE` on Windows; a non-activating `NSPanel` on macOS. It is a permanent, owned part of
   `huginn-platform`, behind one trait.
-- **The overlay exists only while recording** and is destroyed afterwards. This is the privacy promise
-  ("Huginn works only during an active recording") and it also sidesteps tauri#15471, where a transparent
-  window costs ~8× GPU power on macOS for as long as it exists, even when nothing moves.
+- **The overlay window is built once, at startup, and is shown and hidden — not created and destroyed**
+  (amended 2026-07-13; see "What the spike changed" below). It is on screen only while recording.
 - **Click-through is per window** (`set_ignore_cursor_events`): the overlay ignores the cursor, the
   settings window does not.
 - **Push-to-talk is the interaction model**: hold to speak, release to transcribe. The hotkey default
@@ -81,6 +80,39 @@ Verified, July 2026:
 - **Nothing here is believed until it is proven in a signed release build**, not `tauri dev` — tauri#13415
   reports transparency working in dev and turning opaque in a bundled DMG. The spike in `PLAN.md` is the
   gate.
+
+## What the spike changed (2026-07-13, measured — `docs/spike-1a-windows.md`)
+
+This ADR originally said the overlay is **created when recording starts and destroyed afterwards**.
+The phase-1a spike proved that cannot work on Windows, and the decision above is amended accordingly.
+
+**The measurement:** the overlay window owns the foreground the instant `WebviewWindowBuilder::build()`
+returns — built with `.visible(false)` *and* `.focused(false)`, before it has a single pixel:
+
+```
+focus trace  step="after build (hidden)"  overlay_hwnd=0x1622e4  focus_hwnd=0x1622e4  huginn.exe
+```
+
+`WS_EX_NOACTIVATE` applied afterwards is too late: the extended style governs activation by a click or
+by `ShowWindow`, not the activation that **creating** the window performs. It is not a Tauri flag we
+missed — `focused(false)` reaches both builders, and wry only calls `MoveFocus` when `focused` is true.
+
+**Therefore:** the window is built once at startup (where the stolen foreground is handed straight back
+with `SetForegroundWindow`), and a recording only shows it (`SetWindowPos` + `SWP_NOACTIVATE`) and
+hides it (`SW_HIDE`). Neither can take the foreground. Time from keypress to overlay on screen fell
+from **158 ms to 3 ms** as a side effect.
+
+**What this costs, honestly:**
+
+- The two reasons for destroying it are re-examined, not waved away. The **privacy promise** is about
+  the microphone, the audio buffers and the text — a hidden window renders nothing, receives nothing
+  and holds no audio, so the promise is intact. **tauri#15471** (a transparent window costing ~8× GPU
+  power on macOS for as long as it *exists*) is the real open question, and it now applies to a window
+  that exists permanently. It is **measured, not assumed**: `scripts/project/measure-idle.mjs`, and it
+  is still open (PLAN.md 1a.3 / 1b).
+- If that measurement comes back bad on macOS, the macOS implementation may have to destroy its panel
+  and pay the focus cost differently — the platform trait is where that divergence belongs, and this
+  is precisely why the trait exists.
 
 ## Alternatives
 

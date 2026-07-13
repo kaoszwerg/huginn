@@ -4,16 +4,19 @@ import type { InputHTMLAttributes } from "react";
 export type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "title">;
 
 /**
- * Single-line text input in the HUD design system (ADR-APP-026). A raw `<input>` is banned outside
- * `src/components/ui`; every text field routes through this so the chamfered surface and the neon
- * focus ring (in place of the native focus outline) stay consistent. Pass an `aria-label` (or wire a
- * `<label>`) so the field has an accessible name.
+ * The text input (ADR-APP-026). A raw `<input>` is lint-banned outside `src/components/ui`; every
+ * field routes through this, so the surface, the radius and the focus ring are the same everywhere
+ * and follow the theme. The focus ring comes from the global `:focus-visible` rule — one ring, one
+ * token, no per-component invention.
+ *
+ * Pass an `aria-label` (or wire a `<label>`): a field without an accessible name is invisible to a
+ * screen reader.
  */
 export function TextField({ className = "", ...rest }: TextFieldProps) {
   return (
     <input
       type="text"
-      className={`hud-clip-sm bg-elevated text-fg focus:ring-cyan/60 px-2 py-1 text-xs outline-none focus:ring-1 ${className}`.trim()}
+      className={`bg-elevated text-fg border-line placeholder:text-dim rounded-[var(--radius-control)] border px-2.5 py-1.5 text-xs outline-none ${className}`.trim()}
       {...rest}
     />
   );

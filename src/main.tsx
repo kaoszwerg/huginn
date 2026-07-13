@@ -1,12 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/jetbrains-mono/400.css";
-import "@fontsource/orbitron/600.css";
 import App from "./App";
 import "./styles/globals.css";
+
+// No webfont is loaded on purpose (ADR-PROJ-003): Huginn draws in the system face, so it reads like
+// part of the user's desktop rather than like a brand — and ships nothing to download or embed.
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,7 +19,8 @@ const queryClient = new QueryClient({
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("root element not found");
 
-// The main window is transparent so its chamfered corners reveal the desktop.
+// The window is transparent, so its rounded corners reveal the desktop behind them. The body must
+// stay transparent or it would paint a hard rectangle straight over them.
 document.body.classList.add("main-window");
 
 ReactDOM.createRoot(rootElement).render(

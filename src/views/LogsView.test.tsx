@@ -95,16 +95,16 @@ describe("LogsView", () => {
     mockLogsState({ logs: [rec()] });
     render(<LogsView />);
 
-    fireEvent.click(screen.getByRole("button", { name: "live" }));
+    fireEvent.click(screen.getByRole("button", { name: "Live" }));
     expect(setPaused).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole("button", { name: "clear" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
     expect(clear).toHaveBeenCalledTimes(1);
   });
 
   it("shows the paused state as its own button label", () => {
     mockLogsState({ logs: [rec()], paused: true });
     render(<LogsView />);
-    expect(screen.getByRole("button", { name: "paused" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Paused" })).toBeInTheDocument();
   });
 });

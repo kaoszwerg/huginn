@@ -59,9 +59,23 @@ never runes as body type, never a gaming HUD.
 
 ## The state of the repo right now
 
-**The colours in `globals.css` are still the template's.** They are inherited placeholders and a tracked
-**release blocker** (`npm run release:check`, ADR-PROJ-002). Do not build new UI in that style and do not
-deepen the debt: what exists is being replaced, not extended.
+**The design system has landed** (2026-07-13). The template's neon palette, chamfered `clip-path`
+corners, glow shadows, animated conic-gradient window frame and Orbitron font are **gone**. What is
+there now:
+
+- **A slate palette with exactly one accent** (steel blue), in **light and dark** — both defined in
+  `globals.css` `:root`, switched by `prefers-color-scheme` and overridden by `data-theme` on `<html>`
+  when the user chooses explicitly. A token that exists in only one theme is a bug.
+- **Quiet radii and hairline borders.** Shared surfaces (`.surface-panel`, `.surface-popover`) are
+  defined once and reused (ADR-CORE-005). Nothing glows. Nothing is chamfered. The only animation in the
+  product is the pulse on the recording overlay, because it means something.
+- **The system typeface**, no webfont. Huginn reads like part of the user's desktop, not like a brand.
+- **Tone is a role, never a hue.** A control asks for `accent` / `neutral` / `danger`
+  (`src/components/ui/controlClass.ts`) — never for a colour, because the same control must work on both
+  grounds.
+
+**Still open:** the app icon (`src-tauri/icons/**`) is still the template's mark — the last piece of the
+`visual-identity` release blocker.
 
 ## One system, two surfaces
 

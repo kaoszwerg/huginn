@@ -53,6 +53,7 @@ describe("api", () => {
       expect(mockInvoke).toHaveBeenCalledWith("update_settings", {
         uiScale: 1.25,
         minimizeToTray: null,
+        theme: null,
       });
     });
 
@@ -62,6 +63,7 @@ describe("api", () => {
       expect(mockInvoke).toHaveBeenCalledWith("update_settings", {
         uiScale: null,
         minimizeToTray: true,
+        theme: null,
       });
     });
 
@@ -71,6 +73,7 @@ describe("api", () => {
       expect(mockInvoke).toHaveBeenCalledWith("update_settings", {
         uiScale: null,
         minimizeToTray: null,
+        theme: null,
       });
     });
 
@@ -80,6 +83,7 @@ describe("api", () => {
       expect(mockInvoke).toHaveBeenCalledWith("update_settings", {
         uiScale: 0.8,
         minimizeToTray: true,
+        theme: null,
       });
     });
   });

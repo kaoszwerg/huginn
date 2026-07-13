@@ -3,39 +3,74 @@ import { TitleBar } from "./components/layout/TitleBar";
 import { StatusBar } from "./components/layout/StatusBar";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { AboutDialog } from "./components/AboutDialog";
+import { Notice } from "./components/ui/Notice";
+import { Button } from "./components/ui/Button";
 import { HomeView } from "./views/HomeView";
 import { LogsView } from "./views/LogsView";
 import { SettingsView } from "./views/SettingsView";
 import { useScrollTop } from "./hooks/useScrollTop";
 import { useApplyUiScale } from "./hooks/useUiScale";
+import { useApplyTheme } from "./hooks/useTheme";
+import { useHotkeyStatus } from "./hooks/useHotkey";
 import { useNativeContextMenuGuard } from "./hooks/useNativeContextMenuGuard";
 import { useUiStore } from "./store/ui";
 
-/** Application shell: frameless HUD chrome with a sidebar and the routed views. Product views are
- * registered here and in the Sidebar's nav list — nothing else in the shell needs to change. */
+/**
+ * The application shell (ADR-PROJ-003): a frameless window with a quiet hairline border and soft
+ * corners — no chamfer, no glow, no animated frame. The window is transparent, so the rounded
+ * corners reveal the desktop behind them; everything the user sees is drawn inside this container.
+ *
+ * A product view is registered here and in the sidebar's nav list — nothing else in the shell
+ * changes when one is added.
+ */
 export default function App() {
   const view = useUiStore((s) => s.view);
+  const setView = useUiStore((s) => s.setView);
   const aboutOpen = useUiStore((s) => s.aboutOpen);
   const setAboutOpen = useUiStore((s) => s.setAboutOpen);
   const mainRef = useRef<HTMLElement>(null);
   const { canTop, scrollToTop } = useScrollTop(mainRef, view);
+  const hotkey = useHotkeyStatus();
+  useApplyTheme();
   useApplyUiScale();
   useNativeContextMenuGuard();
 
+  // Push-to-talk is the whole product. If it did not arm — because another application already owns
+  // the combination — the app looks alive and does nothing, and the user has no way to know. So it
+  // is said here, in the window, on sight (rule:overlay-and-input). A line in a log file is not a
+  // message to a user: nobody reads it.
+  const hotkeyDead = hotkey.data && !hotkey.data.registered;
+
   return (
-    <div className="window-frame h-full">
-      <div className="window-frame-inner hud-grid-bg flex h-full flex-col">
-        <TitleBar />
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar />
-          <main ref={mainRef} className="flex-1 overflow-hidden">
-            {view === "home" ? <HomeView /> : null}
-            {view === "logs" ? <LogsView /> : null}
-            {view === "settings" ? <SettingsView /> : null}
-          </main>
-        </div>
-        <StatusBar canScrollTop={canTop} onScrollTop={scrollToTop} />
+    <div className="bg-bg border-line flex h-full flex-col overflow-hidden rounded-[10px] border">
+      <TitleBar />
+
+      {hotkeyDead ? (
+        <Notice
+          tone="danger"
+          className="mx-3 mt-3 rounded-[var(--radius-panel)]"
+          action={
+            view === "settings" ? undefined : (
+              <Button tone="danger" onClick={() => setView("settings")}>
+                Fix it
+              </Button>
+            )
+          }
+        >
+          <strong className="text-fg">Push-to-talk is not active.</strong>{" "}
+          {hotkey.data?.error ?? "The key combination could not be registered."}
+        </Notice>
+      ) : null}
+
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <main ref={mainRef} className="flex-1 overflow-hidden">
+          {view === "home" ? <HomeView /> : null}
+          {view === "logs" ? <LogsView /> : null}
+          {view === "settings" ? <SettingsView /> : null}
+        </main>
       </div>
+      <StatusBar canScrollTop={canTop} onScrollTop={scrollToTop} />
       {aboutOpen ? <AboutDialog onClose={() => setAboutOpen(false)} /> : null}
     </div>
   );

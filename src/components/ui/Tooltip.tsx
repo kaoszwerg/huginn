@@ -19,9 +19,9 @@ interface TriggerProps {
 }
 
 /**
- * HUD tooltip (ADR-APP-026): the replacement for the native `title` attribute, whose OS-drawn bubble is a
- * visual break in the HUD. Shows a chamfered popover on hover and on keyboard focus, links it to the
- * trigger via `aria-describedby`, and dismisses on blur, pointer-leave or Escape.
+ * The tooltip (ADR-APP-026): the replacement for the native `title` attribute, whose OS-drawn bubble
+ * is a stock element we do not ship. Shows a quiet popover on hover **and on keyboard focus**, links
+ * it to the trigger via `aria-describedby`, and dismisses on blur, pointer-leave or Escape.
  *
  * Layout-neutral: it clones the single child trigger and attaches handlers rather than wrapping it in
  * a box, so it never disturbs a flex/grid parent. The popover renders through a portal so a parent's
@@ -79,7 +79,7 @@ export function Tooltip({ content, children }: TooltipProps) {
             <div
               role="tooltip"
               id={id}
-              className="hud-popover hud-clip-sm hud-accent-cyan text-fg pointer-events-none fixed z-[70] max-w-[240px] -translate-x-1/2 px-2 py-1 text-xs whitespace-nowrap"
+              className="surface-popover text-fg pointer-events-none fixed z-[70] max-w-[240px] -translate-x-1/2 px-2 py-1 text-xs whitespace-nowrap"
               style={{ top: pos.top, left: pos.left }}
             >
               {content}

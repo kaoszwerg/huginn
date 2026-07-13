@@ -3,7 +3,7 @@ import { useBuildInfo } from "../../hooks/useBuildInfo";
 import { useUiStore } from "../../store/ui";
 import { APP_NAME } from "../../lib/app";
 
-/** Bottom status strip: build identity (click → About dialog) and the scroll-to-top control. */
+/** The bottom strip: which build is running (click for the About dialog) and the scroll-to-top action. */
 export function StatusBar({
   canScrollTop = false,
   onScrollTop,
@@ -15,8 +15,13 @@ export function StatusBar({
   const setAboutOpen = useUiStore((s) => s.setAboutOpen);
 
   return (
-    <div className="hud-strip hud-strip-bottom flex h-7 shrink-0 items-center justify-between px-3 font-mono text-[10px] text-[var(--huginn-text-dim)]">
-      <Button variant="ghost" onClick={() => setAboutOpen(true)} tooltip={`About ${APP_NAME}`}>
+    <footer className="bg-surface border-line text-dim flex h-7 shrink-0 items-center justify-between border-t px-2 text-[11px]">
+      <Button
+        variant="ghost"
+        onClick={() => setAboutOpen(true)}
+        tooltip={`About ${APP_NAME}`}
+        className="px-2 py-0.5 font-mono"
+      >
         {APP_NAME} {build ? `v${build.version}` : ""}
         {build ? (
           <span className="text-dim ml-1">
@@ -24,21 +29,20 @@ export function StatusBar({
             {build.git_dirty ? "+" : ""})
           </span>
         ) : null}
-        {build?.channel === "dev" ? <span className="text-gold ml-1">· dev</span> : null}
+        {build?.channel === "dev" ? <span className="text-warning ml-1">· dev</span> : null}
       </Button>
-      <div className="flex items-center gap-3">
-        {canScrollTop ? (
-          <Button
-            variant="ghost"
-            onClick={onScrollTop}
-            aria-label="Scroll to top"
-            tooltip="Scroll to top"
-            className="tracking-wider uppercase"
-          >
-            ↑ top
-          </Button>
-        ) : null}
-      </div>
-    </div>
+
+      {canScrollTop ? (
+        <Button
+          variant="ghost"
+          onClick={onScrollTop}
+          aria-label="Scroll to top"
+          tooltip="Scroll to top"
+          className="px-2 py-0.5"
+        >
+          ↑ Top
+        </Button>
+      ) : null}
+    </footer>
   );
 }

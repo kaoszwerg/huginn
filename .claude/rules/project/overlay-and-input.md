@@ -45,11 +45,24 @@ applies-to: ["src-tauri/**", "src/components/overlay/**"]
 - **A plain `NSWindow` cannot draw over a fullscreen app** (tauri#9556). Dictating into a fullscreen
   editor needs the same `NSPanel`.
 
-## Window lifecycle
+## Window lifecycle — **do not "fix" this back**
 
-- **The overlay exists only while recording**, and is destroyed afterwards. Two reasons and both are
-  binding: the privacy promise ("Huginn works only during an active recording"), and tauri#15471 — a
-  transparent window costs ~8× GPU power on macOS for as long as it exists, even when nothing moves.
+- **The overlay window is built ONCE, at startup, and afterwards only shown and hidden.** Never create
+  it when the key goes down. This is not a preference — it is a measurement (2026-07-13,
+  `docs/spike-1a-windows.md`): **`WebviewWindowBuilder::build()` takes the keyboard focus the instant it
+  returns**, even with `.visible(false)` and `.focused(false)`, and `WS_EX_NOACTIVATE` set afterwards is
+  too late. Creating it per recording sends every dictated word to the wrong window.
+  Showing (`SetWindowPos` + `SWP_NOACTIVATE`) and hiding (`SW_HIDE`) cannot take the focus. It is also
+  50× faster: 3 ms to appear instead of 158 ms.
+- **Building it at startup still steals the foreground** — so hand it straight back
+  (`SetForegroundWindow`, which Windows grants only to the process that currently holds it: us, right
+  then).
+- **It is on screen only while recording.** The window exists; it is not *visible*. The privacy promise
+  is about the microphone, the audio and the text — a hidden window renders nothing and holds nothing.
+- **tauri#15471 is now the open question, not a settled one**: a transparent window costing ~8× GPU power
+  on macOS for as long as it *exists* applies to a window that exists permanently. Measure it
+  (`scripts/project/measure-idle.mjs`), do not assume it. On macOS the panel may have to be handled
+  differently — that is what the platform trait is for.
 - **Click-through is per window** (`set_ignore_cursor_events`): the overlay ignores the cursor; the
   settings window does not.
 - **Prove it in a signed release build, never in `tauri dev`** — tauri#13415 reports transparency working
@@ -60,12 +73,21 @@ applies-to: ["src-tauri/**", "src/components/overlay/**"]
 - **Pin `tauri-plugin-global-shortcut >= 2.3.2`.** Earlier versions burn a whole CPU core for as long as
   the key is held (global-hotkey#176).
 - **Push-to-talk needs key-up**: use `ShortcutState::Pressed` **and** `::Released`. On Windows, key-up is
-  polled every 50 ms — that latency is expected and acceptable.
+  polled every 50 ms — measured at ~60 ms overshoot on a 1500 ms hold; expected and acceptable.
+- **The hotkey is a user setting, and the default is only a default.** `Ctrl+Alt+Space` was already taken
+  on the maintainer's machine — assume any combination can be. The recorder lives in the settings
+  (`HotkeyField`), and the string it produces (`Ctrl+Shift+KeyJ` — the *physical* `KeyboardEvent.code`,
+  never `key`, which moves with the keyboard layout) is a **contract pinned by tests on both sides**.
 - **Never bind a media key** as the default: it routes through a `CGEventTap` on macOS and triggers the
   Input-Monitoring permission prompt. Regular combinations need **no** permission.
 - **Never bind Option alone** (or Option+Shift): macOS Sequoia rejects it (`-9868`), an anti-keylogger
   measure.
-- A registration failure (`AlreadyRegistered`) is **shown to the user**, never swallowed (rule:logging).
+- **`Fn` cannot be bound at all.** `Code::Fn` exists in `keyboard-types` but `global-hotkey` maps it to
+  no platform keycode on either OS — a registration answers `FailedToRegister("Unknown VKCode for Fn")`.
+  Huginn refuses it up front, with a reason a user can read.
+- **A registration failure is SHOWN IN THE WINDOW, not logged.** `HotkeyStatus` carries
+  `registered` + a human-readable `error`; the UI renders a `Notice` with the way out. Nobody reads a log
+  file — and a dictation app whose only key silently does nothing is indistinguishable from a broken one.
 
 ## Injection
 

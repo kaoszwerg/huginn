@@ -52,7 +52,7 @@ describe("AboutDialog", () => {
 
   it("closes on the close button", () => {
     const onClose = renderDialog();
-    fireEvent.click(screen.getByRole("button", { name: "close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

@@ -31,19 +31,24 @@ What follows from that, and it is not negotiable (ADR-CORE-004):
   a deferred decision stands open.
 - `check:all` green.
 
-## Phase 1 — The spike that decides the architecture (next)
+## Phase 1 — The spike that decides the architecture
 
 **Nothing else starts before this is answered.** If the overlay cannot be made focus-neutral, ADR-PROJ-001
 and ADR-PROJ-004 are reopened before a single line of product code exists.
 
-### 1a — Windows (here, now)
+### 1a — Windows — **PASSED** (2026-07-13, report: [`docs/spike-1a-windows.md`](docs/spike-1a-windows.md))
 
-1. A transparent, borderless, always-on-top, click-through overlay that **does not take focus**
-   (`WS_EX_NOACTIVATE` via `hwnd()`). **Proof:** the caret stays in another application's text box while
-   the overlay is up, and synthesised keystrokes land _there_.
-2. **Push-to-talk**: `ShortcutState::Pressed` / `::Released` with `tauri-plugin-global-shortcut >= 2.3.2`.
-   Confirm key-up actually fires (Windows polls it every 50 ms).
-3. **Idle cost**, measured over ≥ 1 h, with and without the overlay open.
+1. ✅ A transparent, borderless, always-on-top, click-through overlay that **does not take focus**.
+   Proven end to end by `scripts/project/prove-focus-neutrality.ps1`: the caret stayed in the target
+   window and the injected text landed *there*.
+   **It cost a decision:** the window cannot be created per recording — `build()` takes the foreground
+   even hidden and unfocusable. It is built **once**, then shown/hidden. ADR-PROJ-004 is amended.
+2. ✅ **Push-to-talk** with key-up (`hold_ms=1561` for a 1500 ms hold — the ~50 ms is the documented
+   Windows polling interval). `Ctrl+Alt+Space` turned out to be **taken** on the dev machine, so the
+   hotkey is now configurable and its failure is **shown in the window**, not logged.
+3. ⏳ **Idle cost over ≥ 1 h** — open. The tool exists (`scripts/project/measure-idle.mjs`); the question
+   changed, because the overlay window now always exists (hidden). Must be measured on a **release**
+   build: a debug build with the Vite dev server attached is not an honest number.
 
 A green 1a is enough to start Phase 2 on the Windows line. It is **not** enough to claim the architecture
 works — that needs 1b.

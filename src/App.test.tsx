@@ -15,8 +15,17 @@ vi.mock("./api/commands", () => ({
       git_dirty: false,
       commit_date: "2026-07-11T00:00:00Z",
     }),
-    getSettings: vi.fn().mockResolvedValue({ ui_scale: 1 }),
+    getSettings: vi.fn().mockResolvedValue({
+      ui_scale: 1,
+      minimize_to_tray: false,
+      theme: "system",
+      hotkey: "Ctrl+Space",
+    }),
     updateSettings: vi.fn(),
+    getHotkeyStatus: vi
+      .fn()
+      .mockResolvedValue({ shortcut: "Ctrl+Space", registered: true, error: null }),
+    setHotkey: vi.fn(),
     getRecentLogs: vi.fn().mockResolvedValue([]),
     openExternal: vi.fn(),
   },
@@ -52,7 +61,7 @@ function renderApp() {
 }
 
 describe("App shell", () => {
-  it("renders the HUD title bar with the app name", async () => {
+  it("renders the title bar with the app name", async () => {
     renderApp();
     expect(await screen.findAllByText(APP_NAME, { exact: false })).toBeTruthy();
   });
@@ -63,5 +72,29 @@ describe("App shell", () => {
     expect(screen.getByLabelText("Home")).toBeInTheDocument();
     expect(screen.getByLabelText("Logs")).toBeInTheDocument();
     expect(screen.getByLabelText("Settings")).toBeInTheDocument();
+  });
+
+  it("says nothing when push-to-talk is armed", async () => {
+    renderApp();
+    await screen.findAllByText(APP_NAME, { exact: false });
+    expect(screen.queryByText(/not active/)).toBeNull();
+  });
+
+  it("tells the user in the window when push-to-talk is dead", async () => {
+    // This is the failure that makes the whole product silently useless. It has to be impossible to
+    // miss — a log line is not a message to a user (rule:overlay-and-input).
+    const { api } = await import("./api/commands");
+    vi.mocked(api.getHotkeyStatus).mockResolvedValueOnce({
+      shortcut: "Ctrl+Space",
+      registered: false,
+      error: "“Ctrl+Space” is already used by another application. Pick a different combination.",
+    });
+
+    renderApp();
+
+    expect(await screen.findByText(/Push-to-talk is not active/)).toBeInTheDocument();
+    expect(screen.getByText(/already used by another application/)).toBeInTheDocument();
+    // …and it offers the way out, not just the bad news.
+    expect(screen.getByRole("button", { name: "Fix it" })).toBeInTheDocument();
   });
 });
