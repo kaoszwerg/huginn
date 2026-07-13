@@ -1,0 +1,361 @@
+{
+  "generated": true,
+  "governanceVersion": "0.1.0",
+  "upstream": null,
+  "layers": [
+    {
+      "id": "core",
+      "source": null,
+      "version": "0.1.0"
+    }
+  ],
+  "optedOut": [],
+  "count": 69,
+  "files": [
+    {
+      "path": ".claude/memory/README.md",
+      "hash": "b02ba7e984eefa44",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/memory/repo-is-memory-home.md",
+      "hash": "99305e6a6a7f1bf0",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/memory/response-prelude.md",
+      "hash": "3d97772ea313ec6c",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/memory/user-conventions.md",
+      "hash": "cacacd061b81a11d",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/memory/version-bump-trigger.md",
+      "hash": "343f73e74c7918ae",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/agent-delegation.md",
+      "hash": "ddfb034be2602a2f",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/automation.md",
+      "hash": "bdbbe1aef008dcf3",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/clarify-and-plan.md",
+      "hash": "8af369ded5d88b6e",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/code-quality.md",
+      "hash": "d00730b0c418023c",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/context-loading.md",
+      "hash": "7f8f128b57f7eb6a",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/core-principles.md",
+      "hash": "ba01983ccce89e55",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/dependencies.md",
+      "hash": "f03446ae73499c96",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/documentation.md",
+      "hash": "25b2828345bac8ce",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/editing-workflow.md",
+      "hash": "89274df1e2f2d6fe",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/git-workflow.md",
+      "hash": "83e74bce1f6babe7",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/knowledge-handover.md",
+      "hash": "be146671328c7858",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/logging.md",
+      "hash": "fec401e9a5f11717",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/no-guessing.md",
+      "hash": "68b6a8662a4ab96f",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/privacy.md",
+      "hash": "a73ff9a2488ff19c",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/project/README.md",
+      "hash": "c0c1bccd0aa7214d",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/response-format.md",
+      "hash": "4abe9505f5f7c3d8",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/reusability.md",
+      "hash": "b77274d9b144f62b",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/rule-maintenance.md",
+      "hash": "ea5ca98fd94e7c38",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/security.md",
+      "hash": "d16e1c9e78602ce1",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/testing.md",
+      "hash": "21c291cf8a2a4bb6",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/verification.md",
+      "hash": "e2f9ce4569157bd6",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/versioning.md",
+      "hash": "e20fb482c43276da",
+      "layer": "core"
+    },
+    {
+      "path": ".editorconfig",
+      "hash": "87ddf36acc629820",
+      "layer": "core"
+    },
+    {
+      "path": ".gitattributes",
+      "hash": "4a3cb5a2e9c659ba",
+      "layer": "core"
+    },
+    {
+      "path": ".husky/commit-msg",
+      "hash": "ba793c27e4dd0c45",
+      "layer": "core"
+    },
+    {
+      "path": ".husky/pre-commit",
+      "hash": "be2c74790e50099c",
+      "layer": "core"
+    },
+    {
+      "path": ".husky/pre-push",
+      "hash": "2e6ee521c33ff297",
+      "layer": "core"
+    },
+    {
+      "path": ".secretlintrc.json",
+      "hash": "1c0e86ca72216c22",
+      "layer": "core"
+    },
+    {
+      "path": "CLAUDE.md",
+      "hash": "b0ea762e7eb41a18",
+      "layer": "core"
+    },
+    {
+      "path": "commitlint.config.js",
+      "hash": "95a94c1571078a68",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/002-best-solution-principle.md",
+      "hash": "e11bd88c85ca799b",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/003-repo-single-source-of-truth.md",
+      "hash": "a70f536d5de35b6e",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/004-verify-first-no-guessing.md",
+      "hash": "5013540798557d5a",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/005-reusability-policy.md",
+      "hash": "08fcfba418a1a9c4",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/006-context-budget-selective-loading.md",
+      "hash": "7af831c3a9a06a01",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/007-generated-indexes-staleness-gate.md",
+      "hash": "a013df6cc6ca4043",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/008-quality-pipeline.md",
+      "hash": "d7e5fabb4010b3d7",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/009-dependency-policy.md",
+      "hash": "6ec785a729ce6028",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/010-testing-strategy.md",
+      "hash": "c1c964dd03448bc6",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/011-security-by-design.md",
+      "hash": "b6f430abe75f3c7c",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/022-agent-delegation-governance.md",
+      "hash": "5df82d85443294db",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/024-versioning-and-build-channels.md",
+      "hash": "0ecdf1c97d64eddc",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/030-portable-governance-core.md",
+      "hash": "c573b60476ef02d2",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/032-config-layering-project-overlays.md",
+      "hash": "05385eb6a811e5d0",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/033-governance-layers-cascade.md",
+      "hash": "8ed6beb3828181c3",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/project/README.md",
+      "hash": "6f898abf77de22cb",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/001-config-layering.md",
+      "hash": "cdc459d7ccb91557",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/002-versioning-per-change.md",
+      "hash": "899f5d4a11b5c4d9",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/003-governance-layers.md",
+      "hash": "3472063403c510e0",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/README.md",
+      "hash": "74246affc37b1a0c",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/check-index.mjs",
+      "hash": "f871fa0bc5b39d36",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/context-for.mjs",
+      "hash": "ff20a9aae1edb4eb",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/governance-init.mjs",
+      "hash": "3c235c5861ccca3d",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/governance-manifest.mjs",
+      "hash": "a81f8a8c649bb64b",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/governance-update.mjs",
+      "hash": "47b79b7ea321e507",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/lib/governance-core.mjs",
+      "hash": "192753274da9e289",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/lib/governance-core.test.mjs",
+      "hash": "d985c25c577a38ed",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/lib/governance.mjs",
+      "hash": "109d510572a031fe",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/lib/governance.test.mjs",
+      "hash": "1bce7b8757044fb9",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/lint-memory.mjs",
+      "hash": "807f703b63ba393a",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/post-compact-reminder.sh",
+      "hash": "a734544499d6340a",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/setup-claude-memory.sh",
+      "hash": "27530a0bc0b5854e",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/setup-hooks.sh",
+      "hash": "8d10ac13e6e226ed",
+      "layer": "core"
+    },
+    {
+      "path": "scripts/sync-index.mjs",
+      "hash": "c07d0f0be1e3c230",
+      "layer": "core"
+    }
+  ]
+}

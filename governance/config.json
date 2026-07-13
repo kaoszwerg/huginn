@@ -1,0 +1,26 @@
+{
+  "upstream": null,
+  "layer": "core",
+  "owns": {
+    "memory": [
+      "README.md",
+      "user-conventions.md",
+      "response-prelude.md",
+      "repo-is-memory-home.md",
+      "version-bump-trigger.md"
+    ],
+    "config": [
+      "CLAUDE.md",
+      ".editorconfig",
+      ".gitattributes",
+      "commitlint.config.js",
+      ".secretlintrc.json",
+      ".husky/pre-commit",
+      ".husky/commit-msg",
+      ".husky/pre-push",
+      ".claude/rules/project/README.md",
+      "docs/adr/project/README.md"
+    ]
+  },
+  "exclude": [".github/workflows/**"]
+}

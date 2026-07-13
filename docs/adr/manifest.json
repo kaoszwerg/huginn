@@ -1,0 +1,391 @@
+{
+  "generated": true,
+  "count": 15,
+  "adrs": [
+    {
+      "id": "ADR-002",
+      "title": "Always the best solution, never the easiest",
+      "tldr": "Best, senior-level, production-grade — no shortcuts or unfinished leftovers; fix, never silently remove a feature (removal needs the owner's consent).",
+      "scope": "global",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "principle",
+        "quality",
+        "shortcut",
+        "architecture",
+        "decision",
+        "remove",
+        "removal",
+        "delete",
+        "fix"
+      ],
+      "applies-to": [],
+      "supersededBy": null,
+      "path": "docs/adr/002-best-solution-principle.md",
+      "hash": "4bd8dabcff75c6bf"
+    },
+    {
+      "id": "ADR-003",
+      "title": "Repository is the single source of truth; memory is repo-resident",
+      "tldr": "All decisions/rules/memory live in the repo; agent memory sits in .claude/memory and is symlinked into the user memory dir, so there is one truth and no drift.",
+      "scope": "governance",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "memory",
+        "ssot",
+        "documentation",
+        "drift",
+        "symlink",
+        "governance"
+      ],
+      "applies-to": [
+        ".claude/memory/**",
+        "docs/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/003-repo-single-source-of-truth.md",
+      "hash": "1313999bda923f82"
+    },
+    {
+      "id": "ADR-004",
+      "title": "Verify first, never guess — every claim must be provable",
+      "tldr": "Every claim must be verified and provable (source/test/measurement); no guessing; unverified items are marked 'open', never asserted as fact.",
+      "scope": "global",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "verify",
+        "proof",
+        "evidence",
+        "assumption",
+        "version",
+        "api"
+      ],
+      "applies-to": [],
+      "supersededBy": null,
+      "path": "docs/adr/004-verify-first-no-guessing.md",
+      "hash": "0cca87cad135fd88"
+    },
+    {
+      "id": "ADR-005",
+      "title": "Reusability policy — no structural duplication, shared single sources",
+      "tldr": "Reuse over copy-paste; one source for cross-cutting concerns (ts-rs types, HUD theme, command wrappers) — no duplicated structure.",
+      "scope": "global",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "reuse",
+        "duplication",
+        "dry",
+        "component",
+        "ssot",
+        "types",
+        "theme"
+      ],
+      "applies-to": [],
+      "supersededBy": null,
+      "path": "docs/adr/005-reusability-policy.md",
+      "hash": "50cc7da6973df4b5"
+    },
+    {
+      "id": "ADR-006",
+      "title": "Context budget — TLDR index + selective on-demand loading + compact-survival",
+      "tldr": "Boot loads only CLAUDE.md + TLDR indexes + core docs; full ADRs/rules load on demand via tldr/triggers/applies-to; hooks force a reload after compact.",
+      "scope": "governance",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "context",
+        "loading",
+        "tldr",
+        "manifest",
+        "hook",
+        "compact",
+        "budget"
+      ],
+      "applies-to": [
+        ".claude/**",
+        "docs/adr/**",
+        "CLAUDE.md"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/006-context-budget-selective-loading.md",
+      "hash": "d566f382056aef87"
+    },
+    {
+      "id": "ADR-007",
+      "title": "Generated indexes + staleness gate",
+      "tldr": "One generator builds all indexes from doc front-matter; a content-hash scanner fails CI on drift.",
+      "scope": "governance",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "generator",
+        "index",
+        "manifest",
+        "staleness",
+        "hash",
+        "sync"
+      ],
+      "applies-to": [
+        "scripts/**",
+        "docs/adr/**",
+        ".claude/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/007-generated-indexes-staleness-gate.md",
+      "hash": "56b2dc0c67b8961d"
+    },
+    {
+      "id": "ADR-008",
+      "title": "Unified quality pipeline (check:all), pre-commit and CI",
+      "tldr": "One check:all gate (TS + Rust + governance) runs locally via pre-commit + pre-push; CI is last-line backstop and builds only final releases, never dev builds.",
+      "scope": "governance",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "ci",
+        "lint",
+        "test",
+        "pipeline",
+        "husky",
+        "quality",
+        "gate",
+        "coverage"
+      ],
+      "applies-to": [
+        ".github/**",
+        "package.json",
+        "scripts/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/008-quality-pipeline.md",
+      "hash": "23bad7e06b025be2"
+    },
+    {
+      "id": "ADR-009",
+      "title": "Dependency policy — latest stable everything, verified, lockfiles committed",
+      "tldr": "Latest stable of every dependency (verified vs crates.io/npm), lockfiles committed — current versions minimise known CVEs and avoid an update cycle.",
+      "scope": "governance",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "dependency",
+        "version",
+        "crate",
+        "npm",
+        "security",
+        "supply-chain",
+        "lockfile",
+        "cve"
+      ],
+      "applies-to": [
+        "Cargo.toml",
+        "package.json",
+        "src-tauri/Cargo.toml"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/009-dependency-policy.md",
+      "hash": "817f1383f2a7f874"
+    },
+    {
+      "id": "ADR-010",
+      "title": "Testing strategy — test-first (TDD), unit tests from the first module, contracts pinned both sides",
+      "tldr": "Test-first (TDD): the failing test comes before the code; every module ships unit tests; IPC contracts pinned both sides; coverage gated in check:all.",
+      "scope": "governance",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "test",
+        "vitest",
+        "coverage",
+        "tdd"
+      ],
+      "applies-to": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "src-tauri/**",
+        "tests/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/010-testing-strategy.md",
+      "hash": "184b968c679a7a2a"
+    },
+    {
+      "id": "ADR-011",
+      "title": "Security by design — hardened Tauri, validated IPC, no secret leakage",
+      "tldr": "Credentials in the OS keyring and never in the frontend; least-privilege capabilities, strict CSP, validated IPC inputs, app-data-only writes, HTTPS-only.",
+      "scope": "global",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "security",
+        "secret",
+        "redaction",
+        "csp",
+        "capabilities",
+        "network",
+        "privacy",
+        "ipc",
+        "keyring"
+      ],
+      "applies-to": [
+        "src-tauri/**",
+        "src/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/011-security-by-design.md",
+      "hash": "ad2969d1908a3c56"
+    },
+    {
+      "id": "ADR-022",
+      "title": "Agent delegation — model selection and subagent governance inheritance",
+      "tldr": "Pick the right model per task (Opus/Sonnet/Haiku), brief each subagent with a task-fit senior persona, and make it inherit + never bypass project governance.",
+      "scope": "governance",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "agent",
+        "subagent",
+        "delegation",
+        "model",
+        "opus",
+        "sonnet",
+        "haiku",
+        "task"
+      ],
+      "applies-to": [],
+      "supersededBy": null,
+      "path": "docs/adr/022-agent-delegation-governance.md",
+      "hash": "451f8bb9138a4c84"
+    },
+    {
+      "id": "ADR-024",
+      "title": "Versioning (SSOT + SemVer) and dev/release build channels",
+      "tldr": "package.json is the version SSOT (synced into Cargo.toml + Cargo.lock, gated in check:all); every change bumps SemVer; releasing is a separate, instructed act.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "version",
+        "semver",
+        "release",
+        "bump",
+        "dev",
+        "release-build",
+        "channel",
+        "changelog",
+        "cargo-lock",
+        "locked"
+      ],
+      "applies-to": [
+        "package.json",
+        "src-tauri/Cargo.toml",
+        "src-tauri/Cargo.lock",
+        "src-tauri/tauri.conf.json",
+        "scripts/sync-version.mjs",
+        "src-tauri/tauri.dev.conf.json"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/024-versioning-and-build-channels.md",
+      "hash": "bd25a3882784eba7"
+    },
+    {
+      "id": "ADR-030",
+      "title": "Portable governance core — versioned, hash-pinned, updatable across template forks",
+      "tldr": "SUPERSEDED by ADR-033: two layers became N ordered layers. The hash pin, drift gate and self-updating governance:update are retained there.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "superseded",
+      "triggers": [
+        "template",
+        "fork",
+        "sync",
+        "governance-update",
+        "drift",
+        "manifest",
+        "core",
+        "bootstrap",
+        "portable"
+      ],
+      "applies-to": [
+        "governance/**",
+        "scripts/governance-manifest.mjs",
+        "scripts/governance-update.mjs"
+      ],
+      "supersededBy": "ADR-033",
+      "path": "docs/adr/030-portable-governance-core.md",
+      "hash": "73e154ac26a3a2c2"
+    },
+    {
+      "id": "ADR-032",
+      "title": "Config layering — pinned core config, project overlays, explicit opt-out",
+      "tldr": "Core config stays pinned; project-specific config is project-owned; eslint/knip take a project overlay; governance/opt-out.json opts a core path out of the pin.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "config",
+        "eslint",
+        "knip",
+        "tsconfig",
+        "vite",
+        "prettier",
+        "deny",
+        "drift",
+        "opt-out",
+        "overlay",
+        "fork",
+        "pinning"
+      ],
+      "applies-to": [
+        "scripts/lib/governance-core.mjs",
+        "scripts/governance-manifest.mjs",
+        "scripts/governance-update.mjs",
+        "eslint.config.mjs",
+        "knip.config.js",
+        "governance/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/032-config-layering-project-overlays.md",
+      "hash": "ced0520124711136"
+    },
+    {
+      "id": "ADR-033",
+      "title": "Governance layers — an agnostic core, an application layer, and a publishing cascade",
+      "tldr": "Governance is N ordered layers (core → app → project); a repo consumes upstream layers, may own one, and republishes the union to its own forks.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "layer",
+        "layers",
+        "core",
+        "app",
+        "althing",
+        "cascade",
+        "upstream",
+        "publisher",
+        "consumer",
+        "fork",
+        "template",
+        "governance-update",
+        "drift",
+        "manifest",
+        "portable"
+      ],
+      "applies-to": [
+        "governance/**",
+        "scripts/lib/governance-core.mjs",
+        "scripts/governance-manifest.mjs",
+        "scripts/governance-update.mjs",
+        "scripts/check-index.mjs"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/033-governance-layers-cascade.md",
+      "hash": "3078e33a818061bd"
+    }
+  ]
+}

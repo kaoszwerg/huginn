@@ -1,0 +1,37 @@
+{
+  "name": "althing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The portable agent-governance core: stack-agnostic rules, ADRs and the layered drift-gate, distributed to every project that adopts it.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "secrets": "secretlint \"**/*\"",
+    "governance:sync": "node scripts/sync-index.mjs && node scripts/governance-manifest.mjs --sync",
+    "governance:check": "node scripts/check-index.mjs && node scripts/lint-memory.mjs && node scripts/governance-manifest.mjs --check",
+    "governance:update": "node scripts/governance-update.mjs",
+    "governance:init": "node scripts/governance-init.mjs",
+    "check:all": "npm run format:check && npm run test && npm run secrets && npm run governance:check",
+    "setup:hooks": "bash scripts/setup-hooks.sh",
+    "setup:memory": "bash scripts/setup-claude-memory.sh",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.1",
+    "@commitlint/config-conventional": "21.2.0",
+    "@secretlint/secretlint-rule-preset-recommend": "13.0.2",
+    "gray-matter": "4.0.3",
+    "husky": "9.1.7",
+    "lint-staged": "17.0.8",
+    "prettier": "3.9.5",
+    "secretlint": "13.0.2",
+    "vitest": "4.1.10"
+  }
+}
