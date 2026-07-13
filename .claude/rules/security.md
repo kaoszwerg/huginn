@@ -8,7 +8,7 @@ triggers: [security, secret, redaction, capability, permission, network, path, b
 applies-to: []
 ---
 
-# Security (ADR-011)
+# Security (ADR-CORE-011)
 
 - **Every boundary validates its input.** Anything crossing from a less-trusted context (a UI, a
   network, a file, a user) is validated at the point it enters — never deeper, never "the caller checked

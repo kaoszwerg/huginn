@@ -8,11 +8,11 @@ triggers: [workflow, commit, edit, change, pr]
 applies-to: []
 ---
 
-# Editing workflow (ADR-008)
+# Editing workflow (ADR-CORE-008)
 
 - Treat a change as complete only when it includes: code, its tests, any docs/ADR updates, and a green
   `check:all`.
 - Touched a governance doc (ADR/rule/memory)? run `npm run governance:sync`, then `governance:check`.
 - One logical change per commit; **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, `test:`,
   `refactor:`, …). Pre-commit (husky/lint-staged) must pass — do not bypass with `--no-verify`.
-- Never leave a half-finished or stubbed change behind (ADR-002).
+- Never leave a half-finished or stubbed change behind (ADR-CORE-002).

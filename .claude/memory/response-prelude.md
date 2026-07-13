@@ -28,7 +28,7 @@ prelude makes the footprint visible per-step without having to read every Read/G
 **How to apply:**
 
 - One short prelude per task. Don't repeat it for every tool inside the same task.
-- Cite ADRs/rules/memory by name, not by path. Example: "ADR-024 + rule:versioning".
+- Cite ADRs/rules/memory by name, not by path. Example: "ADR-CORE-024 + rule:versioning".
 - If I pull in nothing new (the loaded `core` set is enough), say so: `Kontext: core set`.
 - Use `path:line` references for code anchors as required by rule:response-format.
 - Skip the prelude for one-line clarifying questions or for purely conversational replies.

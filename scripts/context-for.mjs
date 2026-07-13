@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-// Deterministically resolve which ADRs/rules an agent should load for a task (ADR-006).
+// Deterministically resolve which ADRs/rules an agent should load for a task (ADR-CORE-006).
 // Usage: node scripts/context-for.mjs "<keywords>" [file ...]
 //   - always lists load:core docs
 //   - lists conditional docs whose triggers match a keyword OR whose applies-to glob matches a file
-import { loadAdrs, loadRules } from "./lib/governance.mjs";
+//   - NEVER lists a superseded doc — it names what replaced it instead (ADR-CORE-035)
+import { loadAdrs, loadMemory, loadRules, resolveSupersessions } from "./lib/governance.mjs";
 
 const args = process.argv.slice(2);
 const keywordArg = (args[0] ?? "").toLowerCase();
@@ -44,19 +45,32 @@ function matches(doc) {
   return { hit: false };
 }
 
+const adrs = loadAdrs();
+const rules = loadRules();
+// A superseded document must not be loaded — otherwise the supersession is a note in an index nobody
+// reads, and the agent still acts on a decision the project has retired (ADR-CORE-035). This is the one
+// place that decides what an agent actually reads, so this is where it has to be true.
+const supersededBy = resolveSupersessions([...adrs, ...rules, ...loadMemory()]);
+
 function report(label, docs) {
   console.log(`\n${label}:`);
   let any = false;
   for (const d of docs) {
     const m = matches(d);
-    if (m.hit) {
-      any = true;
-      console.log(`  ${d.rel}  (${m.why})  — ${d.data.tldr}`);
+    if (!m.hit) continue;
+    const by = supersededBy.get(String(d.data.id));
+    if (by) {
+      console.log(
+        `  ${d.rel}  — SUPERSEDED by ${by.data.id} (${by.rel}). Do NOT load it; load that one instead.`,
+      );
+      continue;
     }
+    any = true;
+    console.log(`  ${d.rel}  (${m.why})  — ${d.data.tldr}`);
   }
   if (!any) console.log("  (none)");
 }
 
 console.log(`context-for: keywords=[${keywords.join(", ")}] files=[${files.join(", ")}]`);
-report("ADRs to load", loadAdrs());
-report("Rules to load", loadRules());
+report("ADRs to load", adrs);
+report("Rules to load", rules);

@@ -8,7 +8,7 @@ triggers: [privacy, telemetry, analytics, tracking, egress, network, consent, ph
 applies-to: []
 ---
 
-# Privacy & data egress (ADR-011)
+# Privacy & data egress (ADR-CORE-011)
 
 - **No egress by default.** The app sends **no** data off the device — no telemetry, analytics,
   crash/usage reporting, auto-update pings or remote logging — unless a specific feature requires it.

@@ -1,0 +1,435 @@
+@import "tailwindcss";
+
+/* ============================================================
+   HUD design system (ADR-020). Palette tokens live in :root, are exposed as
+   Tailwind colour tokens via @theme, and are mirrored once in palette.ts for
+   the few JS call sites that cannot resolve a CSS var(). Single dark theme.
+   ============================================================ */
+
+:root {
+  /* Palette (saga THEME_DEFAULT_COLORS) as hex + rgb triples for opacity modifiers. */
+  --huginn-bg-deep: #0a0a0f;
+  --huginn-bg-deep-rgb: 10 10 15;
+  --huginn-bg-surface: #12121a;
+  --huginn-bg-surface-rgb: 18 18 26;
+  --huginn-bg-elevated: #1a1a2e;
+  --huginn-bg-elevated-rgb: 26 26 46;
+  --huginn-neon-green: #00ff88;
+  --huginn-neon-green-rgb: 0 255 136;
+  --huginn-neon-cyan: #00e5ff;
+  --huginn-neon-cyan-rgb: 0 229 255;
+  --huginn-gold: #ffd700;
+  --huginn-gold-rgb: 255 215 0;
+  --huginn-rune-purple: #b44aff;
+  --huginn-rune-purple-rgb: 180 74 255;
+  --huginn-danger: #ff3366;
+  --huginn-danger-rgb: 255 51 102;
+  --huginn-text: #e0e0e0;
+  --huginn-text-dim: #9aa4b2;
+  --huginn-glass: rgb(var(--huginn-bg-surface-rgb) / 0.7);
+  color-scheme: dark;
+}
+
+/* SSOT: expose the palette as Tailwind color tokens (text-fg, bg-elevated, …) that reference the
+   :root variables above — change a colour in ONE place. Inline styles use the same var(--huginn-*). */
+@theme inline {
+  --color-fg: var(--huginn-text);
+  --color-dim: var(--huginn-text-dim);
+  --color-cyan: var(--huginn-neon-cyan);
+  --color-green: var(--huginn-neon-green);
+  --color-gold: var(--huginn-gold);
+  --color-purple: var(--huginn-rune-purple);
+  --color-danger: var(--huginn-danger);
+  --color-deep: var(--huginn-bg-deep);
+  --color-surface: var(--huginn-bg-surface);
+  --color-elevated: var(--huginn-bg-elevated);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background-color: var(--huginn-bg-deep);
+    color: var(--huginn-text);
+  }
+  /* The transparent main window needs a transparent body so the chamfered corners of .window-frame
+     reveal the desktop; the popup window keeps the solid background above (set in main.tsx). */
+  body.main-window {
+    background-color: transparent;
+    font-family:
+      "Inter",
+      system-ui,
+      -apple-system,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--huginn-bg-deep);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--huginn-bg-elevated);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--huginn-neon-green);
+  }
+  ::selection {
+    background-color: rgb(var(--huginn-neon-green-rgb) / 0.2);
+    color: var(--huginn-text);
+  }
+}
+
+/* Neon glow + text glow helpers. */
+.neon-glow-cyan {
+  box-shadow:
+    0 0 5px rgb(var(--huginn-neon-cyan-rgb) / 0.4),
+    0 0 10px rgb(var(--huginn-neon-cyan-rgb) / 0.2),
+    0 0 20px rgb(var(--huginn-neon-cyan-rgb) / 0.1);
+}
+.text-glow-cyan {
+  text-shadow:
+    0 0 7px rgb(var(--huginn-neon-cyan-rgb) / 0.5),
+    0 0 10px rgb(var(--huginn-neon-cyan-rgb) / 0.3);
+}
+.text-glow-green {
+  text-shadow:
+    0 0 7px rgb(var(--huginn-neon-green-rgb) / 0.5),
+    0 0 10px rgb(var(--huginn-neon-green-rgb) / 0.3);
+}
+
+/* ── HUD primitives (plain CSS so the build never drops them) ── */
+.hud-clip {
+  --hud-clip: polygon(
+    14px 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    6px 100%,
+    0 calc(100% - 6px),
+    0 14px
+  );
+  clip-path: var(--hud-clip);
+}
+.hud-clip-sm {
+  --hud-clip: polygon(
+    8px 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    4px 100%,
+    0 calc(100% - 4px),
+    0 8px
+  );
+  clip-path: var(--hud-clip);
+}
+.hud-panel {
+  position: relative;
+  isolation: isolate;
+  background: color-mix(in srgb, var(--hud-accent, var(--huginn-neon-cyan)) 55%, transparent);
+}
+.hud-panel::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: var(--huginn-bg-surface);
+  clip-path: var(--hud-clip, none);
+  pointer-events: none;
+  z-index: -1;
+}
+/* Dropdown / popover variant of hud-panel: same chamfered-border trick (outer accent layer +
+   inner inset background via ::before, both clipped to the same polygon) but with a lighter
+   surface so it floats convincingly over the parent. Use together with hud-clip-sm and one of
+   the hud-accent-* utilities. Replaces inline `border: 1px solid …` on clipped popovers, where
+   the CSS border would be cut off by clip-path and the chamfered corners turn rectangular.
+   Caller is responsible for `position: absolute|fixed` (Tailwind `absolute`/`fixed` utility) —
+   we intentionally don't pin `position` here so the utility class wins. `position: absolute`
+   still gives ::before the positioned ancestor it needs for `inset: 1px`. */
+.hud-popover {
+  isolation: isolate;
+  background: color-mix(in srgb, var(--hud-accent, var(--huginn-neon-cyan)) 45%, transparent);
+}
+.hud-popover::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: var(--huginn-bg-elevated);
+  clip-path: var(--hud-clip, none);
+  pointer-events: none;
+  z-index: -1;
+}
+.hud-panel::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  box-shadow: inset 0 0 14px
+    color-mix(in srgb, var(--hud-accent, var(--huginn-neon-cyan)) 18%, transparent);
+  clip-path: var(--hud-clip, none);
+  pointer-events: none;
+  z-index: 0;
+}
+.hud-label {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--hud-label-size, 0.75rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--hud-accent, var(--huginn-neon-cyan));
+  text-shadow: 0 0 8px
+    color-mix(in srgb, var(--hud-accent, var(--huginn-neon-cyan)) 40%, transparent);
+}
+.hud-divider {
+  height: 10px;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--hud-accent, var(--huginn-neon-cyan)) 0 1px,
+    transparent 1px 6px
+  );
+  opacity: 0.45;
+}
+.hud-accent-cyan {
+  --hud-accent: var(--huginn-neon-cyan);
+}
+.hud-accent-green {
+  --hud-accent: var(--huginn-neon-green);
+}
+.hud-accent-gold {
+  --hud-accent: var(--huginn-gold);
+}
+.hud-accent-danger {
+  --hud-accent: var(--huginn-danger);
+}
+.hud-accent-purple {
+  --hud-accent: var(--huginn-rune-purple);
+}
+.hud-grid-bg {
+  background-color: var(--huginn-bg-deep);
+  background-image:
+    linear-gradient(rgb(var(--huginn-neon-cyan-rgb) / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--huginn-neon-cyan-rgb) / 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.hud-strip {
+  position: relative;
+  background: var(--huginn-bg-surface);
+  border-bottom: 1px solid rgb(var(--huginn-neon-cyan-rgb) / 0.3);
+}
+.hud-strip-bottom {
+  border-bottom: none;
+  border-top: 1px solid rgb(var(--huginn-neon-cyan-rgb) / 0.3);
+}
+.hud-btn {
+  position: relative;
+  isolation: isolate;
+  background: color-mix(in srgb, var(--hud-accent, var(--huginn-neon-cyan)) 40%, transparent);
+  /* Accent-coloured label on the dark core so it stays legible at rest. */
+  color: var(--hud-accent, var(--huginn-neon-cyan));
+  transition:
+    background-color 0.15s,
+    box-shadow 0.15s,
+    color 0.15s;
+}
+.hud-btn::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: var(--huginn-bg-deep);
+  clip-path: var(--hud-clip, none);
+  pointer-events: none;
+  z-index: -1;
+}
+/* Hover + active: fill the whole chamfer solid with the accent and switch to a dark label. No 1px
+   border is shown in these states, so the asymmetric clip-path can't make it look uneven. The dark
+   label on the bright accent stays perfectly legible. */
+.hud-btn:hover {
+  background: color-mix(in srgb, var(--hud-accent, var(--huginn-neon-cyan)) 80%, transparent);
+  color: var(--huginn-bg-deep);
+  box-shadow: 0 0 10px
+    color-mix(in srgb, var(--hud-accent, var(--huginn-neon-cyan)) 35%, transparent);
+}
+.hud-btn-active {
+  background: color-mix(in srgb, var(--hud-accent, var(--huginn-neon-cyan)) 80%, transparent);
+  color: var(--huginn-bg-deep);
+  box-shadow: 0 0 12px
+    color-mix(in srgb, var(--hud-accent, var(--huginn-neon-cyan)) 35%, transparent);
+}
+/* Hide the dark core in hover/active → solid accent fill (no uneven border). */
+.hud-btn:hover::before,
+.hud-btn-active::before {
+  background: transparent;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── HUD-styled range sliders ──
+   Native browser thumbs (Windows blue, macOS pill) and tracks clash with the HUD palette.
+   We rebuild both via the WebKit + Gecko pseudo-elements so styling sticks in WebView2 on
+   Windows and WebKitGTK on Linux.
+   - The element itself is sized to the thumb (12px) so the browser auto-centres the thumb
+     against the track midline — `margin-top` tricks weren't reliable on WebView2.
+   - The visible 4px track is rendered by `::-webkit-slider-runnable-track` /
+     `::-moz-range-track`, which read the per-slider fill gradient from the `--slider-fill`
+     CSS custom property set inline on the input. */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  /* Element height = thumb height. The 4px track sits centred in this 12px box. */
+  height: 12px;
+}
+input[type="range"]:focus {
+  outline: none;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--slider-fill, rgb(var(--huginn-bg-elevated-rgb)));
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--slider-fill, rgb(var(--huginn-bg-elevated-rgb)));
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  background: var(--huginn-neon-green);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgb(var(--huginn-neon-green-rgb) / 0.7);
+  /* Offset relative to the runnable-track top, not the element top — re-centres on the 4px
+     track. (4 - 12) / 2 = -4. */
+  margin-top: -4px;
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgb(var(--huginn-neon-green-rgb) / 0.9);
+}
+input[type="range"]::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  background: var(--huginn-neon-green);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgb(var(--huginn-neon-green-rgb) / 0.7);
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgb(var(--huginn-neon-green-rgb) / 0.9);
+}
+input[type="range"]:disabled::-webkit-slider-thumb,
+input[type="range"]:disabled::-moz-range-thumb {
+  background: var(--huginn-text-dim);
+  box-shadow: none;
+}
+
+/* ── Neon glow helpers ── */
+.neon-glow-green {
+  box-shadow:
+    0 0 5px rgb(var(--huginn-neon-green-rgb) / 0.4),
+    0 0 10px rgb(var(--huginn-neon-green-rgb) / 0.2),
+    0 0 20px rgb(var(--huginn-neon-green-rgb) / 0.1);
+}
+.neon-glow-gold {
+  box-shadow:
+    0 0 5px rgb(var(--huginn-gold-rgb) / 0.4),
+    0 0 10px rgb(var(--huginn-gold-rgb) / 0.2),
+    0 0 20px rgb(var(--huginn-gold-rgb) / 0.1);
+}
+.text-glow-gold {
+  text-shadow:
+    0 0 7px rgb(var(--huginn-gold-rgb) / 0.5),
+    0 0 10px rgb(var(--huginn-gold-rgb) / 0.3);
+}
+
+/* ── Animated neon window frame around the app shell. ──
+   Implemented as a 1.5px padding band filled with a slowly rotating conic-gradient; the inner wrapper
+   (.hud-grid-bg in App.tsx) sits on top and covers the gradient everywhere but that band. This needs
+   NO CSS `mask` — the earlier mask + mask-composite ring was silently broken by the production CSS
+   minifier (Tailwind v4 / lightningcss) and flooded the whole window. Padding survives minification. */
+@property --frame-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes frame-rotate {
+  to {
+    --frame-angle: 360deg;
+  }
+}
+.window-frame {
+  /* Chamfered window outline matching the HUD buttons/panels (same asymmetric clip signature, scaled
+     up for the window). The inner wrapper reuses this same polygon (inherited custom property), so the
+     1.5px animated band follows the chamfer cleanly — the corners outside it are clipped to transparent
+     and reveal the desktop (main window is transparent). */
+  --hud-window-clip: polygon(
+    20px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 20px),
+    calc(100% - 20px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 20px
+  );
+  position: relative;
+  overflow: hidden;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--frame-angle, 0deg),
+    var(--huginn-neon-green),
+    var(--huginn-neon-cyan),
+    var(--huginn-rune-purple),
+    var(--huginn-gold),
+    var(--huginn-neon-green)
+  );
+  animation: frame-rotate 12s linear infinite;
+  clip-path: var(--hud-window-clip);
+}
+/* Inner content shell: same chamfer (inset by the 1.5px padding) + inner glow on the content edge.
+   Scoped to the explicit wrapper so it never applies to sibling overlays (e.g. the About dialog), which
+   must keep their own position: fixed. */
+.window-frame > .window-frame-inner {
+  position: relative;
+  overflow: hidden;
+  clip-path: var(--hud-window-clip);
+  box-shadow:
+    inset 0 0 15px rgb(var(--huginn-neon-green-rgb) / 0.06),
+    inset 0 0 30px rgb(var(--huginn-neon-cyan-rgb) / 0.04);
+}
+@media (prefers-reduced-motion: reduce) {
+  .window-frame {
+    animation: none;
+  }
+}

@@ -22,7 +22,7 @@ and a core principle (rule:core-principles §7).
   act on it.
 - **No silent failures.** Every caught error is logged *and* surfaced (returned to the caller, shown to
   the user, or recorded). Swallowing an error is a defect, not a style choice.
-- **Never log secrets** (credentials, tokens) or user content (ADR-011, rule:privacy).
+- **Never log secrets** (credentials, tokens) or user content (ADR-CORE-011, rule:privacy).
 - **Levels:** `error` for failures, `warn` for recoverable anomalies (an unexpected but handled input),
   `info` for lifecycle, `debug` for detail. Default level in a release build: `info`.
 - **One chokepoint beats N call sites.** Where errors cross a boundary (IPC, HTTP, a queue), log them

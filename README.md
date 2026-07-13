@@ -1,84 +1,60 @@
-# althing
+# Huginn
 
-**The portable agent-governance core.** Stack-agnostic rules, ADRs and memory for AI coding agents, plus
-the tooling that indexes, pins, gates and distributes them — maintained once, synced into every project.
+**Local voice input. Private by design.**
 
-> _Þing_ — the Norse assembly that set the law. The **Althing** was the highest of them: where the rules
-> were decided, and from where they travelled outward.
+Huginn is a fully local, system-wide voice input for Windows and macOS. Hold a hotkey, speak, release —
+the recognised text is inserted into whatever application has focus. Speech is turned into text **on the
+device**: no cloud, no telemetry, no stored recordings.
 
-## What this is
+The name is Odin's raven of thought — the one that takes in what is spoken and brings back something
+usable. It is a reason for the name, not a licence to listen.
 
-An agent working in a repo needs to know how to behave: what "done" means, what may never be guessed,
-what must be tested, how a decision is recorded, what it may not silently remove. That knowledge is
-governance, and keeping a separate copy of it in every project means keeping N diverging copies.
+> **Status: scaffold.** The governance, the decisions and the quality gate are in place; the product is
+> not built yet. Start at [`PLAN.md`](PLAN.md).
 
-althing holds **one** copy — the half that is true for _any_ project:
+## What it does — and what it will never do
 
-- **Rules** (`.claude/rules/`) — the operating contract: verify first, fix don't remove, one pass, log
-  everything, test first, hand the knowledge over.
-- **ADRs** (`docs/adr/`) — the decisions behind them, with their alternatives and consequences.
-- **The gate** (`scripts/`) — generated indexes with a staleness hash (ADR-007), front-matter and
-  reachability validation, and a layered content-hash pin with a drift gate (ADR-033).
+- Records **only** while you hold the hotkey. No wake word. No always-listening.
+- Transcribes **on your machine**, in a separate, deprivileged process that has no network access.
+- Ships with a model, so it works offline from the first launch. Bigger models are an explicit,
+  user-clicked download.
+- **Exactly one** outbound network activity exists in the entire product: that download. No telemetry, no
+  crash reporting, no auto-update ping.
+- **Never writes the recognised text to a log.** A log full of transcripts is a diary of everything you
+  have ever said; Huginn does not keep one.
 
-It holds **no** stack knowledge. No framework, no build tool, no design system. That is not an omission —
-it is the whole point, and `governance:check` enforces it.
-
-## Layers (ADR-033)
-
-Governance is a stack of ordered layers. Each is owned by exactly one repo and published downstream:
-
-```
-althing                     owns 'core'   — agnostic; no upstream
-  └── saga-rust-template    owns 'app'    — the Tauri 2 + Rust + React desktop shell
-        └── ivaldi          owns nothing  — a leaf project
-```
-
-A repo **consumes** the layers of its upstream (read-only here — an in-place edit is drift), **may own**
-one layer of its own, and **publishes the union** to its consumers. `ivaldi` therefore receives the
-agnostic core _and_ the desktop shell in one update, and never talks to althing directly.
-
-A **lower layer may never cite a higher one.** A core rule that referenced a HUD design ADR would hand a
-dangling reference to every project that adopts the core alone — so the gate rejects it. The core stays
-portable because it is checked, not because everyone remembered.
-
-## Starting a new project from it
-
-Create the repo from this one (GitHub → **Use this template**), then **immediately**:
+## Development
 
 ```bash
-npm install
-npm run governance:init -- --from kaoszwerg/althing
+npm ci
+npm run app:dev      # run the app (dev build — its own identity, its own data directory)
+npm run check:all    # the full gate; everything must be green before anything lands
 ```
 
-`governance:init` is not a convenience — it closes a trap. A fresh copy inherits this repo's
-`governance/config.json`, which says `"upstream": null`: *"I am the root of the cascade, I own everything
-I ship."* That is a perfectly valid state, so the drift-gate stays **green** while your copy quietly owns
-a private fork of the core and never receives another update. Nothing would ever tell you. `init` rewrites
-the config, re-attributes every governed file to the layer that really owns it, and pins it — deleting
-nothing.
+The gate runs `typecheck`, `eslint`, `prettier`, `vitest`, `knip`, `secretlint`, the governance checks,
+`cargo fmt`, `clippy -D warnings`, `cargo test`, `cargo-deny` and `cargo-audit`. It runs pre-commit and
+pre-push; CI is a backstop, not the first line of defence.
 
-Then do the three things it prints: rewrite `.claude/memory/project-scope.md` (it still describes
-*althing*, and every agent reads it at boot), reset the version and changelog, and get `check:all` green.
-
-A repo that will **publish a layer of its own** downstream passes `--layer <name>`; a leaf project — the
-usual case — passes nothing.
-
-## Living with it
+A **bundled** build additionally runs `npm run release:check`, which refuses while any deferred decision
+is still open ([`release-blockers.json`](release-blockers.json), ADR-PROJ-002). Need a bundled build to
+_test_ something? Say so, and the artefact labels itself:
 
 ```bash
-npm run governance:update   # pull the upstream's improvements in
-npm run governance:check    # front-matter, index freshness, links, layer boundaries, drift
+HUGINN_UNRELEASABLE_BUILD=1 npm run app:build     # PowerShell: $env:HUGINN_UNRELEASABLE_BUILD=1
 ```
 
-The drift-gate makes silent divergence impossible. Diverging from a governed file is still possible —
-through a project overlay, by upstreaming the change, or with an explicit, visible opt-out (ADR-032) —
-but never by quietly editing it in place.
+## For the agent working here
 
-## Working in this repo
+Read [`CLAUDE.md`](CLAUDE.md) first, then the indexes it names, then
+[`.claude/memory/project-scope.md`](.claude/memory/project-scope.md) — it says what this project is and
+which decisions you may not contradict without reading their ADR.
 
-Read [`CLAUDE.md`](CLAUDE.md) first, then the indexes it names. Every change here reaches every project
-downstream, so:
+Huginn is a leaf in a governance cascade: `althing` (the stack-agnostic core) → `saga-rust-template` (the
+Tauri 2 + Rust + React shell, CI, the version and identity SSOTs) → **huginn**. Everything those layers
+own is pinned and **read-only** here; Huginn's own governance lives in `docs/adr/project/`,
+`.claude/rules/project/` and `scripts/project/`.
 
-- A change a consumer must **act** on ships a briefing in [`docs/migrations/`](docs/migrations/README.md).
-  `governance:update` prints it — the one moment an agent is certainly looking.
-- The gate must be green (`npm run check:all`) before anything lands.
+## Licence
+
+Undecided, deliberately — it is a tracked release blocker (ADR-PROJ-002). Until it is decided, no
+copyleft dependency enters the project, so every option stays open.

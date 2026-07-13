@@ -20,5 +20,5 @@ applies-to: []
   it is stated explicitly in the reply.
 - **Plan is visible.** The plan and the decisions are surfaced per rule:response-format and the prelude
   convention (mem:response-prelude), so the maintainer can approve the direction before code exists.
-- **One pass after the decision.** Once decided, implement fully in one pass (ADR-002) — the gate is
+- **One pass after the decision.** Once decided, implement fully in one pass (ADR-CORE-002) — the gate is
   *before* coding, not a licence to leave the implementation half-done.

@@ -1,4 +1,4 @@
-// Layered governance (ADR-033), config layering (ADR-032), hash pin + drift gate (ADR-030).
+// Layered governance (ADR-CORE-033), config layering (ADR-CORE-032), hash pin + drift gate (ADR-CORE-030).
 //
 // Governance is a stack of ordered, named layers. Each layer is owned by exactly one repo:
 //
@@ -29,7 +29,7 @@ export const OPT_OUT_REL = "governance/opt-out.json";
 export const CONFIG_REL = "governance/config.json";
 
 /**
- * Pre-ADR-033 defaults, used ONLY when `governance/config.json` is absent.
+ * Pre-ADR-CORE-033 defaults, used ONLY when `governance/config.json` is absent.
  *
  * A leaf consumer that predates this ADR (ivaldi) has no config file and must keep behaving exactly as
  * it did before — otherwise the update that delivers the new logic is the one that breaks it. The
@@ -119,14 +119,14 @@ function listDir(root, rel, { ext, exclude = [], excludeDirs = [], recursive = f
 }
 
 /**
- * This repo's governance config (ADR-033) — project-owned, hand-written, never generated, never pulled.
+ * This repo's governance config (ADR-CORE-033) — project-owned, hand-written, never generated, never pulled.
  *
  *   { "upstream": "kaoszwerg/althing",   // null in the root repo of a cascade
  *     "layer": "app",                     // null in a leaf project that owns no layer
  *     "owns":  { "memory": [...], "config": [...] },
  *     "exclude": [".github/workflows/**"] }   // governed paths this repo keeps to itself
  *
- * Absent → the legacy shape is derived from the manifest, so a consumer that predates ADR-033 needs no
+ * Absent → the legacy shape is derived from the manifest, so a consumer that predates ADR-CORE-033 needs no
  * config file at all: `upstream` from the manifest, `layer = upstream ? null : "core"`.
  */
 export function readConfig(root) {
@@ -199,17 +199,19 @@ export function readConfig(root) {
  * Rules, ADRs, migrations and `scripts/**` are DISCOVERED by scanning — they are governance by
  * construction. Memory and config files are DECLARED (`owns.*`), because neither directory is
  * exhaustively governed: a memory may be project state (`project-scope.md`), and a config file may
- * describe the project's own shape rather than a shared gate (ADR-032). Declaring them is what stopped
- * HUD vocabulary and `src-tauri/deny.toml` from being pinned as "portable core" (ADR-033).
+ * describe the project's own shape rather than a shared gate (ADR-CORE-032). Declaring them is what stopped
+ * HUD vocabulary and `src-tauri/deny.toml` from being pinned as "portable core" (ADR-CORE-033).
  */
 export function governedPaths(root, config = readConfig(root)) {
   const candidates = [
     ...listDir(root, ".claude/rules", { ext: ".md", exclude: ["INDEX.md"] }),
+    // An ADR file is `<layer>-NNN-<slug>.md` (ADR-CORE-034); the bare `NNN-` form is the legacy shape and
+    // is still recognised so a repo mid-rename does not silently drop its ADRs out of the governed set.
     ...listDir(root, "docs/adr", { ext: ".md", exclude: ["README.md"] }).filter((p) =>
-      /\/\d{3}-/.test(p),
+      /\/(?:[a-z][a-z0-9-]*-)?\d{3}-/.test(p),
     ),
     // `scripts/` is governance-owned — EXCEPT `scripts/project/`, the reserved home for a project's own
-    // tooling (ADR-032). Without that reservation a project script lives in a governed directory, where
+    // tooling (ADR-CORE-032). Without that reservation a project script lives in a governed directory, where
     // a future upstream script of the same name would silently overwrite it on update.
     ...listDir(root, "scripts", { recursive: true, excludeDirs: ["project"] }),
     // Migration briefings (rule:knowledge-handover): what a consumer's agent must know and DO after a
@@ -248,18 +250,44 @@ export function readManifest(root) {
 
 /**
  * The paths this repo does NOT own — i.e. everything a manifest attributes to a layer other than
- * `ownLayer`. A manifest written before ADR-033 has no `layer` field at all; for a leaf consumer that
+ * `ownLayer`. A manifest written before ADR-CORE-033 has no `layer` field at all; for a leaf consumer that
  * is exactly right (it owns nothing, so every entry is upstream-owned) and the `?? null` below yields
  * it without a migration step.
  */
+/**
+ * The layer a governed path belongs to — `null` if the governance does not know the path at all
+ * (a project's own file, which the caller treats as the project layer).
+ *
+ * **An opt-out does not change a document's layer.** It changes who owns the *file* — the project keeps
+ * its edits and stops receiving updates (ADR-CORE-032). The *decision* still comes from the layer that
+ * published it: `docs/adr/app-020-…md` is an app-layer ADR whether or not this project pinned it.
+ *
+ * Reading the layer only from `files[]` — which is what this did — silently reclassified every opted-out
+ * path to `project`, and that single mistake made opt-out unusable for anything that carries a layer:
+ *
+ *   • an opted-out ADR's id claims `APP` while the gate computes `project` → ADR-CORE-034 fails;
+ *   • an opted-out rule counts as `project`, so the app-layer rule that CITES it suddenly "depends on a
+ *     higher layer" → the acyclicity gate fails.
+ *
+ * Both were reproduced on a real consumer. The layer is an identity, not a pin.
+ */
+export function layerOfPath(manifest, relPath) {
+  if (!manifest) return null;
+  const pinned = (manifest.files ?? []).find((f) => f.path === relPath);
+  if (pinned) return pinned.layer ?? "core";
+  const opted = (manifest.optedOut ?? []).find((o) => o.path === relPath);
+  if (opted) return opted.layer ?? "core";
+  return null;
+}
+
 export function upstreamEntries(manifest, ownLayer) {
-  // An entry with no `layer` predates ADR-033. It came from an upstream, so it reads as `core` — which
+  // An entry with no `layer` predates ADR-CORE-033. It came from an upstream, so it reads as `core` — which
   // is what makes a leaf consumer's existing manifest work unchanged, with no migration step.
   return (manifest?.files ?? []).filter((f) => (f.layer ?? "core") !== ownLayer);
 }
 
 /**
- * The project's opt-out list (ADR-032): upstream-owned paths this repo has taken out of the pin, so it
+ * The project's opt-out list (ADR-CORE-032): upstream-owned paths this repo has taken out of the pin, so it
  * owns them outright. Project-owned and hand-written — never generated, never pulled by an update.
  * Returns `{ paths, errors }`; a malformed file yields errors rather than a silent empty list.
  */
@@ -311,7 +339,7 @@ function buildLayers({ root, config, prev, upstream, upstreamSlug }) {
       ...l,
       source: l.source ?? upstreamSlug ?? null,
     }));
-    // An upstream that predates ADR-033 declares no layers — everything it ships is one inherited layer.
+    // An upstream that predates ADR-CORE-033 declares no layers — everything it ships is one inherited layer.
     if (!inherited.length) {
       inherited = [
         { id: "core", source: upstreamSlug ?? null, version: upstream.governanceVersion ?? null },
@@ -362,7 +390,7 @@ export function writeManifest(root, { upstream = null } = {}) {
     .sort((a, b) => a.path.localeCompare(b.path));
 
   // An opted-out path leaves the pin — but not the record. Without this, nothing downstream can tell
-  // whether the path was opted out of an UPSTREAM layer (legitimate, ADR-032) or quietly dropped from
+  // whether the path was opted out of an UPSTREAM layer (legitimate, ADR-CORE-032) or quietly dropped from
   // the layer this repo publishes, which would silently stop shipping a file to every consumer.
   const optedOut = [...inherited, ...own]
     .filter((f) => excluded.has(f.path))
@@ -371,7 +399,7 @@ export function writeManifest(root, { upstream = null } = {}) {
 
   const manifest = {
     generated: true,
-    // A repo that owns a layer versions it with its own SemVer (ADR-024). A leaf owns none, so the
+    // A repo that owns a layer versions it with its own SemVer (ADR-CORE-024). A leaf owns none, so the
     // number it carries is the governance it received — never its own app version, which would make
     // `governanceVersion` mean two different things depending on who you ask.
     governanceVersion: config.layer
@@ -394,7 +422,7 @@ export function writeManifest(root, { upstream = null } = {}) {
  * The drift-gate. Recomputes the hashes and reports every problem found; pure — no output, no exit.
  *
  * - A file owned by an UPSTREAM layer must not be edited or deleted here. Diverge via an overlay, by
- *   upstreaming the change, or with an explicit opt-out (ADR-032).
+ *   upstreaming the change, or with an explicit opt-out (ADR-CORE-032).
  * - A file in this repo's OWN layer must be pinned and current — a stale or missing pin means the repo
  *   is about to publish a manifest that does not describe what it ships.
  */
@@ -446,7 +474,41 @@ export function checkCore(root) {
     );
   }
 
-  // --- shadowing (ADR-032) ----------------------------------------------------------------------
+  // --- line endings: LF, on every platform, enforced -------------------------------------------------
+  //
+  // `.gitattributes` declares `* text=auto eol=lf`, so a fresh checkout gives LF even on Windows. But a
+  // declaration only governs what GIT writes. Any tool that writes a file afterwards can undo it — a
+  // Python script's `write_text`, an editor, a generator — and git then normalises it back on commit
+  // without a word. The working tree drifts to CRLF while the repository holds LF, and two things break
+  // that nobody can see locally:
+  //
+  //   • the governance HASHES document content, so the same file hashes differently on a CRLF working
+  //     tree than on a Linux CI runner — `check:all` green on the maintainer's machine, red in CI, for
+  //     every push, and no local run can ever reproduce it (this happened);
+  //   • a `.husky` hook with CRLF simply does not run under bash.
+  //
+  // So LF is not a preference to declare; it is an invariant to enforce, on the files the governance
+  // actually owns.
+  const crlf = [];
+  const optedOutPaths = new Set(optOut);
+  for (const entry of manifest.files ?? []) {
+    if (optedOutPaths.has(entry.path)) continue;
+    const abs = path.join(root, entry.path);
+    if (!fs.existsSync(abs)) continue;
+    if (fs.readFileSync(abs, "utf8").includes("\r\n")) crlf.push(entry.path);
+  }
+  if (crlf.length) {
+    problems.push(
+      `${crlf.length} governed file(s) have CRLF line endings — the governance hashes content (so CI ` +
+        `and your machine would disagree) and a shell hook does not run with CRLF. LF is required on ` +
+        `every platform (.gitattributes: \`* text=auto eol=lf\`).\n` +
+        crlf.map((p) => `      - ${p}`).join("\n") +
+        `\n    Fix: \`git add --renormalize . && git checkout-index -f -a\` (or convert them in your ` +
+        `editor). A tool that wrote them — a script, a generator — is the usual cause.`,
+    );
+  }
+
+  // --- shadowing (ADR-CORE-032) ----------------------------------------------------------------------
   for (const { core: coreFile, shadows, overlay } of SHADOWING_CONFIG) {
     if (excludedOrMissing(root, coreFile, optOut)) continue;
     for (const name of shadows) {
@@ -586,7 +648,7 @@ export function applyUpstream({ root, srcDir, upstream, local, optOut = [] }) {
   // there must not linger here. The deletion is visible in `git diff` for review.
   //
   // Leaving the manifest is NOT the same as being deleted: a path can be reclassified to the project
-  // layer (ADR-032 did this to tsconfig/vite/.prettierignore) — the upstream still ships it, it is simply
+  // layer (ADR-CORE-032 did this to tsconfig/vite/.prettierignore) — the upstream still ships it, it is simply
   // no longer pinned. Such a path is *released*: its file stays exactly as this repo has it, edits and
   // all. Deleting it here would silently destroy a project's own config.
   const upstreamPaths = new Set((upstream.files ?? []).map((f) => f.path));

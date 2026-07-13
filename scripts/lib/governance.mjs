@@ -1,5 +1,5 @@
 // Shared governance library: parse ADR/rule/memory front-matter and (re)generate all indexes.
-// Single source of truth for sync-index.mjs and check-index.mjs (ADR-005, ADR-007).
+// Single source of truth for sync-index.mjs and check-index.mjs (ADR-CORE-005, ADR-CORE-007).
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -10,7 +10,7 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 export const ADR_DIR = path.join(ROOT, "docs", "adr");
 export const RULES_DIR = path.join(ROOT, ".claude", "rules");
 export const MEMORY_DIR = path.join(ROOT, ".claude", "memory");
-// Project-owned governance line (ADR-030): indexed + validated by the same scripts, but NOT part of
+// Project-owned governance line (ADR-CORE-030): indexed + validated by the same scripts, but NOT part of
 // the pinned core manifest, so a project owns and freely changes these.
 export const RULES_PROJECT_DIR = path.join(RULES_DIR, "project");
 export const ADR_PROJECT_DIR = path.join(ADR_DIR, "project");
@@ -32,9 +32,16 @@ export function listMarkdown(dir, exclude = []) {
     .map((f) => path.join(dir, f));
 }
 
-/** Parse one governance document. Returns { file, rel, data, body, hash }. */
+/** Parse one governance document. Returns { file, rel, data, body, hash }.
+ *
+ * Line endings are normalised BEFORE hashing, exactly as `hashFile` does in governance-core. Without it
+ * the content hash is platform-dependent: a Windows working tree holds CRLF, git stores LF, a Linux CI
+ * runner checks out LF — so the same document hashes differently there, `docs/adr/manifest.json`
+ * regenerates differently, and the staleness gate reports it stale. That is not a flaky test, it is a gate
+ * that is green on the maintainer's machine and red in CI **forever**, and no local run can ever see it
+ * (rule:cross-platform). */
 export function parseDoc(file) {
-  const raw = fs.readFileSync(file, "utf8");
+  const raw = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
   const { data, content } = matter(raw);
   const hash = crypto
     .createHash("sha256")
@@ -63,7 +70,7 @@ export function validateCommon(doc, { kind }) {
   if (d.load && !LOAD_TIERS.includes(d.load)) {
     e.push(`${doc.rel}: invalid load '${d.load}' (expected ${LOAD_TIERS.join("|")})`);
   }
-  // Reachability (rule:knowledge-handover, ADR-006): a `conditional` document is loaded ONLY when its
+  // Reachability (rule:knowledge-handover, ADR-CORE-006): a `conditional` document is loaded ONLY when its
   // triggers or applies-to match the task. Declaring neither makes it unreachable — the knowledge is in
   // the repo but never reaches the agent who needs it, which is the same as not writing it down.
   if (d.load === "conditional") {
@@ -80,17 +87,46 @@ export function validateCommon(doc, { kind }) {
       e.push(`${doc.rel}: invalid/missing status (expected ${ADR_STATUSES.join("|")})`);
     }
   }
+  // `supersedes` is how a document retires another — including one in a layer it may not edit
+  // (ADR-CORE-035). It is available to ADRs, rules and memory alike, so it is validated here, once.
+  if (d.supersedes !== undefined) {
+    if (!Array.isArray(d.supersedes) || d.supersedes.some((s) => typeof s !== "string")) {
+      e.push(`${doc.rel}: 'supersedes' must be a list of document ids, e.g. [ADR-APP-020]`);
+    }
+  }
   return e;
 }
 
 const tagLine = (doc, line) => ({ ...doc, line });
-const isAdrFile = (f) => /\/\d{3}-/.test(f.replace(/\\/g, "/"));
+
+/**
+ * An ADR id carries the layer that owns it: `ADR-CORE-004`, `ADR-APP-026`, `ADR-PROJ-105` (ADR-CORE-034).
+ *
+ * Number blocks (core 001–099, project 100–199, …) were the alternative, and they were already broken:
+ * the app layer historically holds 001/020/021/023/025/026/031, all inside the core's block. A block is a
+ * convention a human has to keep; a prefix is a property of the identifier — and it lets the gate check
+ * that a document's id agrees with the layer that actually owns it, which a number never could.
+ */
+export const ADR_ID_RE = /^ADR-([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*)-(\d{3})$/;
+
+/** The layer an ADR id claims: `ADR-APP-026` → "app". Null if the id is not well-formed. */
+export function adrLayerOf(id) {
+  const m = ADR_ID_RE.exec(String(id ?? ""));
+  return m ? m[1].toLowerCase() : null;
+}
+
+/** The prefix a layer uses. The project layer is the one that is never published, hence the short form. */
+export function prefixOfLayer(layer) {
+  return layer === "project" ? "PROJ" : String(layer).toUpperCase();
+}
 
 export function loadAdrs() {
   const load = (dir, line) =>
     listMarkdown(dir, ["README.md"])
-      .filter(isAdrFile)
+      // Identify an ADR by its id, not by its filename: the filename now carries the layer prefix too
+      // (`core-004-…md`), and a pattern match on `NNN-` would simply have stopped seeing them.
       .map((f) => tagLine(parseDoc(f), line))
+      .filter((d) => String(d.data.id ?? "").startsWith("ADR-"))
       .sort(byId);
   // Core line first, then the project line (both indexed by the same generator).
   return [...load(ADR_DIR, "core"), ...load(ADR_PROJECT_DIR, "project")];
@@ -111,18 +147,57 @@ function byId(a, b) {
 
 const esc = (s) => String(s ?? "").replace(/\|/g, "\\|");
 
+/**
+ * Who supersedes whom — derived from the `supersedes` list of every document, and from nothing else
+ * (ADR-CORE-035).
+ *
+ * Supersession used to be declared in **both** documents: `status: superseded` + `superseded-by` in the
+ * old one, `supersedes` in the new one. Across a layer boundary that procedure is not merely awkward, it
+ * is **impossible**: the old document belongs to an upstream layer, is hash-pinned, and the drift-gate
+ * refuses the edit. A consumer therefore had no legal way to say "this upstream decision does not apply
+ * to me" — the one thing layers exist to permit. It worked around it by writing a parallel rule whose
+ * first paragraph said "the pinned rule does not apply here"; every further consumer would have
+ * reinvented that.
+ *
+ * So the declaration lives in the **superseding** document only. The old file is never touched; the
+ * generated indexes carry the result. Direction is checked in `check-index.mjs`: a HIGHER layer may
+ * supersede a lower one (a project may retire an app decision), never the reverse.
+ *
+ * Returns `Map<supersededId, supersedingDoc>`. Ids are namespaced (`ADR-…`, `rule:…`, `mem:…`), so one
+ * map serves all three kinds.
+ */
+export function resolveSupersessions(docs) {
+  const by = new Map();
+  for (const d of docs) {
+    const list = Array.isArray(d.data.supersedes) ? d.data.supersedes : [];
+    for (const target of list) by.set(String(target), d);
+  }
+  return by;
+}
+
+/** A document's status after supersession is applied — the file's own `status` is only a starting point. */
+export function effectiveStatus(doc, supersededBy) {
+  return supersededBy.has(String(doc.data.id)) ? "superseded" : doc.data.status;
+}
+
+const supersederId = (doc, supersededBy) =>
+  supersededBy.get(String(doc.data.id))?.data.id ?? doc.data["superseded-by"] ?? null;
+
 /** docs/adr/manifest.json (machine index). */
-export function genAdrManifest(adrs) {
+export function genAdrManifest(adrs, supersededBy = new Map()) {
   const entries = adrs.map((d) => ({
     id: d.data.id,
+    // The layer is not a separate fact to keep in sync — it is read straight off the id (ADR-CORE-034).
+    layer: adrLayerOf(d.data.id),
     title: d.data.title,
     tldr: d.data.tldr,
     scope: d.data.scope,
     load: d.data.load,
-    status: d.data.status,
+    // Derived, not copied: a downstream layer can retire this ADR without ever touching its file.
+    status: effectiveStatus(d, supersededBy),
     triggers: d.data.triggers ?? [],
     "applies-to": d.data["applies-to"] ?? [],
-    supersededBy: d.data["superseded-by"] ?? null,
+    supersededBy: supersederId(d, supersededBy),
     path: d.rel,
     hash: d.hash,
   }));
@@ -130,19 +205,23 @@ export function genAdrManifest(adrs) {
 }
 
 /** docs/adr/README.md (human index). */
-export function genAdrReadme(adrs) {
+export function genAdrReadme(adrs, supersededBy = new Map()) {
   const rows = adrs
-    .map(
-      (d) =>
-        `| [${d.data.id}](${path.relative(ADR_DIR, d.file).split(path.sep).join("/")}) | ${esc(d.data.title)} | ${esc(d.data.tldr)} | ${d.data.status} | ${d.data.load} |`,
-    )
+    .map((d) => {
+      const by = supersededBy.get(String(d.data.id));
+      const status = by
+        ? `superseded by ${by.data.id}`
+        : effectiveStatus(d, supersededBy) +
+          (d.data["superseded-by"] ? ` by ${d.data["superseded-by"]}` : "");
+      return `| [${d.data.id}](${path.relative(ADR_DIR, d.file).split(path.sep).join("/")}) | ${adrLayerOf(d.data.id) ?? "?"} | ${esc(d.data.title)} | ${esc(d.data.tldr)} | ${esc(status)} | ${d.data.load} |`;
+    })
     .join("\n");
   return `${GENERATED_NOTICE}
 
 # Architecture Decision Records
 
 Every agent MUST read the ADRs relevant to its task before changing code. ADRs document **why**
-decisions were made. Loading follows the contract in \`.claude/rules/context-loading.md\` and ADR-006:
+decisions were made. Loading follows the contract in \`.claude/rules/context-loading.md\` and ADR-CORE-006:
 always read \`load: core\`; read \`conditional\` when scope/triggers match; read \`archival\` only on
 demand.
 
@@ -159,19 +238,27 @@ Run \`npm run governance:sync\` after adding or editing an ADR; \`npm run govern
 
 ## Index
 
-| ADR | Title | TL;DR | Status | Load |
-| --- | --- | --- | --- | --- |
+The **Layer** column is read straight off the id (\`ADR-CORE-004\`, \`ADR-APP-026\`, \`ADR-PROJ-105\`) —
+it is not a second fact that could drift. A document in a lower layer may never cite one in a higher
+layer; \`governance:check\` rejects it (ADR-CORE-033, ADR-CORE-034).
+
+**Status is derived** (ADR-CORE-035): an ADR reads \`superseded by X\` when **X** declares
+\`supersedes: [it]\` — including when X sits in a higher layer. The superseded file itself is never
+edited, which is what lets a project retire an upstream decision it does not follow.
+
+| ADR | Layer | Title | TL;DR | Status | Load |
+| --- | --- | --- | --- | --- | --- |
 ${rows}
 `;
 }
 
 /** docs/adr/current/README.md (operational snapshot of accepted ADRs). */
-export function genAdrCurrent(adrs) {
-  const accepted = adrs.filter((d) => d.data.status === "accepted");
+export function genAdrCurrent(adrs, supersededBy = new Map()) {
+  const accepted = adrs.filter((d) => effectiveStatus(d, supersededBy) === "accepted");
   const rows = accepted
     .map(
       (d) =>
-        `| [${d.data.id}](../${path.relative(ADR_DIR, d.file).split(path.sep).join("/")}) | ${esc(d.data.title)} | ${d.data.load} |`,
+        `| [${d.data.id}](../${path.relative(ADR_DIR, d.file).split(path.sep).join("/")}) | ${adrLayerOf(d.data.id) ?? "?"} | ${esc(d.data.title)} | ${d.data.load} |`,
     )
     .join("\n");
   return `${GENERATED_NOTICE}
@@ -181,19 +268,24 @@ export function genAdrCurrent(adrs) {
 ${accepted.length} accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
 in [../README.md](../README.md).
 
-| ADR | Title | Load |
-| --- | --- | --- |
+| ADR | Layer | Title | Load |
+| --- | --- | --- | --- |
 ${rows}
 `;
 }
 
 /** .claude/rules/INDEX.md (rule TLDR bootstrap list). */
-export function genRulesIndex(rules) {
+export function genRulesIndex(rules, supersededBy = new Map()) {
   const rows = rules
-    .map(
-      (d) =>
-        `| [${esc(d.data.id)}](${path.relative(RULES_DIR, d.file).split(path.sep).join("/")}) | ${esc(d.data.tldr)} | ${d.data.load} | ${(d.data.triggers ?? []).join(", ")} |`,
-    )
+    .map((d) => {
+      const by = supersededBy.get(String(d.data.id));
+      // A superseded rule must not be loaded — saying so in the very column an agent reads to decide.
+      const tldr = by
+        ? `**SUPERSEDED by ${by.data.id} — do not load this rule.** ${d.data.tldr}`
+        : d.data.tldr;
+      const load = by ? "superseded" : d.data.load;
+      return `| [${esc(d.data.id)}](${path.relative(RULES_DIR, d.file).split(path.sep).join("/")}) | ${esc(tldr)} | ${load} | ${(d.data.triggers ?? []).join(", ")} |`;
+    })
     .join("\n");
   return `${GENERATED_NOTICE}
 
@@ -202,6 +294,10 @@ export function genRulesIndex(rules) {
 Generated from rule front-matter by \`scripts/sync-index.mjs\`. Always load \`core\` rules; load others
 when their triggers/applies-to match (see \`context-loading.md\`).
 
+A rule marked **superseded** was retired by another rule that declares \`supersedes\` (ADR-CORE-035) —
+including one in a higher layer. **Do not load it**; load the rule named in its row instead. The retired
+file is left untouched, which is how a project can decline a rule an upstream layer publishes.
+
 | Rule | TL;DR | Load | Triggers |
 | --- | --- | --- | --- |
 ${rows}
@@ -209,15 +305,21 @@ ${rows}
 }
 
 /** .claude/memory/MEMORY.md (memory index). */
-export function genMemoryIndex(memos) {
+export function genMemoryIndex(memos, supersededBy = new Map()) {
   const rows = memos
-    .map((d) => `- [${esc(d.data.title)}](${path.basename(d.rel)}) — ${esc(d.data.tldr)}`)
+    .map((d) => {
+      const by = supersededBy.get(String(d.data.id));
+      const tldr = by
+        ? `**SUPERSEDED by ${by.data.id} — do not load.** ${d.data.tldr}`
+        : d.data.tldr;
+      return `- [${esc(d.data.title)}](${path.basename(d.rel)}) — ${esc(tldr)}`;
+    })
     .join("\n");
   return `${GENERATED_NOTICE}
 
 # Memory index
 
-Repo-resident agent memory (ADR-003). Generated by \`scripts/sync-index.mjs\`; see
+Repo-resident agent memory (ADR-CORE-003). Generated by \`scripts/sync-index.mjs\`; see
 [README.md](README.md) for what belongs here.
 
 ${rows}
@@ -260,12 +362,19 @@ export function computeArtifacts() {
   const rules = loadRules();
   const memos = loadMemory();
 
+  // One map across all three kinds: ids are namespaced, and a project rule may retire an app rule exactly
+  // as a project ADR retires an app ADR (ADR-CORE-035).
+  const supersededBy = resolveSupersessions([...adrs, ...rules, ...memos]);
+
   const artifacts = [
-    { path: path.join(ADR_DIR, "manifest.json"), content: genAdrManifest(adrs) },
-    { path: path.join(ADR_DIR, "README.md"), content: genAdrReadme(adrs) },
-    { path: path.join(ADR_DIR, "current", "README.md"), content: genAdrCurrent(adrs) },
-    { path: path.join(RULES_DIR, "INDEX.md"), content: genRulesIndex(rules) },
-    { path: path.join(MEMORY_DIR, "MEMORY.md"), content: genMemoryIndex(memos) },
+    { path: path.join(ADR_DIR, "manifest.json"), content: genAdrManifest(adrs, supersededBy) },
+    { path: path.join(ADR_DIR, "README.md"), content: genAdrReadme(adrs, supersededBy) },
+    {
+      path: path.join(ADR_DIR, "current", "README.md"),
+      content: genAdrCurrent(adrs, supersededBy),
+    },
+    { path: path.join(RULES_DIR, "INDEX.md"), content: genRulesIndex(rules, supersededBy) },
+    { path: path.join(MEMORY_DIR, "MEMORY.md"), content: genMemoryIndex(memos, supersededBy) },
   ];
 
   if (fs.existsSync(BLUEPRINT)) {
@@ -275,14 +384,14 @@ export function computeArtifacts() {
     artifacts.push({ path: BLUEPRINT, content: blueprint });
   }
 
-  return { adrs, rules, memos, artifacts };
+  return { adrs, rules, memos, supersededBy, artifacts };
 }
 
 /**
  * Collect the governance ids a document cites in its BODY — `ADR-NNN` and `rule:<slug>` — excluding its
  * own id. These bare citations are how the rules and ADRs actually reference each other in prose, so a
- * layer gate that only looked at markdown links (ADR-033) would miss most of the dependencies it exists
- * to police: `core-principles.md` cites ADR-026 in plain text, not as a link.
+ * layer gate that only looked at markdown links (ADR-CORE-033) would miss most of the dependencies it exists
+ * to police: `core-principles.md` cites ADR-APP-026 in plain text, not as a link.
  *
  * Front-matter is skipped on purpose: `id`, `supersedes` and `superseded-by` are metadata about the
  * document, not dependencies of it.
@@ -291,11 +400,24 @@ export function collectIdRefs(file) {
   const { data, content } = matter(fs.readFileSync(file, "utf8"));
   const self = String(data.id ?? "");
   const found = new Set();
-  for (const [re, prefix] of [
-    [/\bADR-\d{3}\b/g, ""],
-    [/\brule:[a-z0-9][a-z0-9-]*/g, ""],
+
+  // An id inside a code fence or a code span is an ILLUSTRATION, not a citation — the documents that
+  // explain the id scheme are full of `ADR-APP-026`-style examples, and treating those as references
+  // would make it impossible to document the scheme in the layer that defines it. Prose citations, which
+  // is how these documents actually reference each other, are unaffected.
+  const prose = content
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/~~~[\s\S]*?~~~/g, "")
+    .replace(/`[^`\n]*`/g, "");
+  for (const re of [
+    // Both the layered form (ADR-CORE-004) and the bare legacy one (ADR-APP-026) are collected on purpose.
+    // The legacy form resolves to nothing once the ids carry their layer, so the gate reports it as a
+    // dead citation instead of leaving a stale reference silently pointing at a document that no longer
+    // answers to that name (ADR-CORE-034).
+    /\bADR-(?:[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-)?\d{3}\b/g,
+    /\brule:[a-z0-9][a-z0-9-]*/g,
   ]) {
-    for (const m of content.matchAll(re)) found.add(prefix + m[0]);
+    for (const m of prose.matchAll(re)) found.add(m[0]);
   }
   found.delete(self);
   return [...found];

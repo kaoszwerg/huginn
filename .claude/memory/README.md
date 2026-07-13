@@ -1,6 +1,6 @@
 # `.claude/memory/` — repo-resident context for agents
 
-These notes are committed to the repo and survive a fresh clone. Per ADR-003 the repository is the
+These notes are committed to the repo and survive a fresh clone. Per ADR-CORE-003 the repository is the
 single source of truth, and this directory is symlinked into the per-user Claude memory location by
 `scripts/setup-claude-memory.sh` (run from the `SessionStart:new` hook) — so local and repo memory are
 the same files.

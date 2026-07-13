@@ -2,22 +2,39 @@
 
 # Current ADRs (accepted snapshot)
 
-14 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
+31 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
 in [../README.md](../README.md).
 
-| ADR | Title | Load |
-| --- | --- | --- |
-| [ADR-002](../002-best-solution-principle.md) | Always the best solution, never the easiest | core |
-| [ADR-003](../003-repo-single-source-of-truth.md) | Repository is the single source of truth; memory is repo-resident | core |
-| [ADR-004](../004-verify-first-no-guessing.md) | Verify first, never guess — every claim must be provable | core |
-| [ADR-005](../005-reusability-policy.md) | Reusability policy — no structural duplication, shared single sources | core |
-| [ADR-006](../006-context-budget-selective-loading.md) | Context budget — TLDR index + selective on-demand loading + compact-survival | core |
-| [ADR-007](../007-generated-indexes-staleness-gate.md) | Generated indexes + staleness gate | core |
-| [ADR-008](../008-quality-pipeline.md) | Unified quality pipeline (check:all), pre-commit and CI | core |
-| [ADR-009](../009-dependency-policy.md) | Dependency policy — latest stable everything, verified, lockfiles committed | core |
-| [ADR-010](../010-testing-strategy.md) | Testing strategy — test-first (TDD), unit tests from the first module, contracts pinned both sides | core |
-| [ADR-011](../011-security-by-design.md) | Security by design — hardened Tauri, validated IPC, no secret leakage | core |
-| [ADR-022](../022-agent-delegation-governance.md) | Agent delegation — model selection and subagent governance inheritance | core |
-| [ADR-024](../024-versioning-and-build-channels.md) | Versioning (SSOT + SemVer) and dev/release build channels | conditional |
-| [ADR-032](../032-config-layering-project-overlays.md) | Config layering — pinned core config, project overlays, explicit opt-out | conditional |
-| [ADR-033](../033-governance-layers-cascade.md) | Governance layers — an agnostic core, an application layer, and a publishing cascade | conditional |
+| ADR | Layer | Title | Load |
+| --- | --- | --- | --- |
+| [ADR-APP-001](../app-001-tauri-rust-react-stack.md) | app | Tauri 2 + Rust backend + React/TypeScript frontend | core |
+| [ADR-APP-021](../app-021-tauri-window-chrome.md) | app | Frameless Tauri window with custom HUD title bar | conditional |
+| [ADR-APP-023](../app-023-cross-platform-release-signing.md) | app | Cross-platform release builds + optional macOS signing | conditional |
+| [ADR-APP-025](../app-025-logging-architecture.md) | app | Logging architecture — JSON file + ring buffer + live UI stream | conditional |
+| [ADR-APP-026](../app-026-no-native-ui-primitives.md) | app | No native UI defaults — every control is a reusable HUD primitive | conditional |
+| [ADR-APP-031](../app-031-app-identity-ssot.md) | app | App-identity single source of truth (app.identity.json) with sync + drift gate | conditional |
+| [ADR-CORE-002](../core-002-best-solution-principle.md) | core | Always the best solution, never the easiest | core |
+| [ADR-CORE-003](../core-003-repo-single-source-of-truth.md) | core | Repository is the single source of truth; memory is repo-resident | core |
+| [ADR-CORE-004](../core-004-verify-first-no-guessing.md) | core | Verify first, never guess — every claim must be provable | core |
+| [ADR-CORE-005](../core-005-reusability-policy.md) | core | Reusability policy — no structural duplication, shared single sources | core |
+| [ADR-CORE-006](../core-006-context-budget-selective-loading.md) | core | Context budget — TLDR index + selective on-demand loading + compact-survival | core |
+| [ADR-CORE-007](../core-007-generated-indexes-staleness-gate.md) | core | Generated indexes + staleness gate | core |
+| [ADR-CORE-008](../core-008-quality-pipeline.md) | core | Unified quality pipeline (check:all), pre-commit and CI | core |
+| [ADR-CORE-009](../core-009-dependency-policy.md) | core | Dependency policy — latest stable everything, verified, lockfiles committed | core |
+| [ADR-CORE-010](../core-010-testing-strategy.md) | core | Testing strategy — test-first (TDD), unit tests from the first module, contracts pinned both sides | core |
+| [ADR-CORE-011](../core-011-security-by-design.md) | core | Security by design — hardened Tauri, validated IPC, no secret leakage | core |
+| [ADR-CORE-022](../core-022-agent-delegation-governance.md) | core | Agent delegation — model selection and subagent governance inheritance | core |
+| [ADR-CORE-024](../core-024-versioning-and-build-channels.md) | core | Versioning (SSOT + SemVer) and dev/release build channels | conditional |
+| [ADR-CORE-032](../core-032-config-layering-project-overlays.md) | core | Config layering — pinned core config, project overlays, explicit opt-out | conditional |
+| [ADR-CORE-033](../core-033-governance-layers-cascade.md) | core | Governance layers — an agnostic core, an application layer, and a publishing cascade | conditional |
+| [ADR-CORE-034](../core-034-layered-adr-identifiers.md) | core | The layer is part of the ADR id — ADR-<LAYER>-<NNN>, not a number block | conditional |
+| [ADR-CORE-035](../core-035-cross-layer-supersession.md) | core | Cross-layer supersession — declared in the superseding document, never in the superseded one | conditional |
+| [ADR-PROJ-001](../project/proj-001-ui-stack-tauri-over-rust-toolkits.md) | proj | UI stack — Tauri 2 + React on the saga shell, not a pure-Rust GUI toolkit | conditional |
+| [ADR-PROJ-002](../project/proj-002-provisional-identity-and-release-blockers.md) | proj | The publisher is undecided — the identity is provisional and the release build refuses to run | conditional |
+| [ADR-PROJ-003](../project/proj-003-visual-identity.md) | proj | Huginn's visual identity replaces the template's HUD look | conditional |
+| [ADR-PROJ-004](../project/proj-004-overlay-and-input.md) | proj | Overlay and input — a focus-neutral HUD, push-to-talk, and platform-native window code | conditional |
+| [ADR-PROJ-005](../project/proj-005-speech-pipeline-process-isolation.md) | proj | Speech pipeline — whisper.cpp behind a trait, in a separate deprivileged worker process | conditional |
+| [ADR-PROJ-006](../project/proj-006-model-assets-and-the-only-network-call.md) | proj | Model assets — a bundled base model, a catalogue compiled into the binary, and the only network call in the product | conditional |
+| [ADR-PROJ-007](../project/proj-007-storage-layout-and-logging-boundaries.md) | proj | Storage layout, lowercase paths — and the text is never written to a log | conditional |
+| [ADR-PROJ-008](../project/proj-008-jobs-and-the-process-monitor.md) | proj | Every long operation is a Job — asynchronous, observable, cancellable — and the footer shows them | conditional |
+| [ADR-PROJ-009](../project/proj-009-crate-structure.md) | proj | Crate structure — one Cargo workspace, rooted at src-tauri/ | conditional |

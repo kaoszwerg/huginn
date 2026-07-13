@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Regenerate all governance indexes from ADR/rule/memory front-matter (ADR-007).
+// Regenerate all governance indexes from ADR/rule/memory front-matter (ADR-CORE-007).
 // Writes: docs/adr/manifest.json, docs/adr/README.md, docs/adr/current/README.md,
 //         .claude/rules/INDEX.md, .claude/memory/MEMORY.md, and the blueprint AUTO-GENERATED blocks.
 import fs from "node:fs";

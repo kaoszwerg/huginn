@@ -17,5 +17,5 @@ applies-to: []
   a boundary contract, the reason the obvious approach does not work. Never restate what the code plainly
   says. No commented-out code (rule:code-quality).
 - **Docs travel with the code.** A signature or behaviour change updates its doc comment in the **same**
-  change (ADR-003). A stale doc comment is a defect, not cosmetics — it is worse than no comment, because
+  change (ADR-CORE-003). A stale doc comment is a defect, not cosmetics — it is worse than no comment, because
   it is trusted.

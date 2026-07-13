@@ -1,0 +1,30 @@
+{
+  "$comment": "The UI boundary (ADR-APP-026). Project-owned: every project has different dependencies, so this file is never pinned and never delivered by governance:update. EVERY runtime dependency must appear in exactly one list, or `npm run lint` fails — that is what makes the rule a gate instead of a reminder.",
+
+  "viewSafe": [
+    "@fontsource/inter",
+    "@fontsource/jetbrains-mono",
+    "@fontsource/orbitron",
+    "@tanstack/react-query",
+    "@tauri-apps/api",
+    "lucide-react",
+    "react",
+    "react-dom",
+    "zustand"
+  ],
+
+  "primitiveOnly": [],
+
+  "notes": {
+    "@fontsource/inter": "A font: CSS + woff2. Puts no control on screen.",
+    "@fontsource/jetbrains-mono": "A font.",
+    "@fontsource/orbitron": "A font.",
+    "@tanstack/react-query": "Async/IPC state. Renders nothing.",
+    "@tauri-apps/api": "The IPC boundary to the Rust backend. Renders nothing.",
+    "lucide-react": "Icon glyphs — SVG paths, no chrome, no behaviour, and they inherit the HUD's colour. An icon is not a control; the control around it is a HUD primitive.",
+    "react": "The renderer itself.",
+    "react-dom": "The renderer itself.",
+    "zustand": "Client state. Renders nothing.",
+    "_primitiveOnly_is_empty": "This shell installs no UI library — every control is drawn from scratch in src/components/ui/. The day one is added it belongs here, and ESLint will then refuse to let a view import it."
+  }
+}

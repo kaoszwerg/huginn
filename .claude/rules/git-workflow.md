@@ -16,5 +16,5 @@ applies-to: []
   `main`), the agent **stops and asks**; it does not branch on its own initiative.
 - **No history rewriting or destructive git ops** without an explicit instruction: no `push --force`,
   no history rewrite on shared branches, no `reset --hard` / `clean` that discards the maintainer's work.
-- **Commit & push only when asked** (ADR-008, rule:editing-workflow): the agent does not commit or push
+- **Commit & push only when asked** (ADR-CORE-008, rule:editing-workflow): the agent does not commit or push
   unprompted, and never bypasses pre-commit with `--no-verify`.

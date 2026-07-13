@@ -8,7 +8,7 @@ triggers: [guess, assume, api, version, unknown, invent, hallucination]
 applies-to: []
 ---
 
-# No guessing (ADR-004)
+# No guessing (ADR-CORE-004)
 
 - **Do not invent an interface.** Function signatures, config keys, payload shapes, CLI flags — read the
   actual source, schema or sample data before you use them. A plausible name is not a verified one.

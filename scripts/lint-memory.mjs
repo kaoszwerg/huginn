@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Validate the repo-resident memory schema and MEMORY.md consistency (ADR-003).
+// Validate the repo-resident memory schema and MEMORY.md consistency (ADR-CORE-003).
 // Exits non-zero on any problem; runs in check:all and CI.
 import fs from "node:fs";
 import path from "node:path";

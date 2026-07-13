@@ -1,4 +1,4 @@
-# 001 — Config layering, project overlays, explicit opt-out (ADR-032)
+# 001 — Config layering, project overlays, explicit opt-out (ADR-CORE-032)
 
 **Audience: the agent working in a project built on this template.** Read this before you touch any
 tooling config or write a rule. Everything below is enforced by `npm run check:all` — ignoring it does

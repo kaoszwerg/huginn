@@ -8,7 +8,7 @@ triggers: [context, loading, tldr, manifest, compact, resume]
 applies-to: [".claude/**", "docs/adr/**"]
 ---
 
-# Context loading contract (operational form of ADR-006)
+# Context loading contract (operational form of ADR-CORE-006)
 
 1. **Boot:** read `CLAUDE.md`; then `docs/adr/manifest.json`, `.claude/rules/INDEX.md`,
    `.claude/memory/MEMORY.md` (TLDRs only); then the full text of every `load: core` document.

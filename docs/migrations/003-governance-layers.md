@@ -1,4 +1,4 @@
-# 003 — Governance is layered now; your upstream did NOT change (ADR-033)
+# 003 — Governance is layered now; your upstream did NOT change (ADR-CORE-033)
 
 Audience: the agent working in a project built on `saga-rust-template` (e.g. `ivaldi`).
 
@@ -41,7 +41,7 @@ something that was already broken:
 ## What is now forbidden
 
 - **Editing a file that belongs to the `core` or `app` layer.** Unchanged from before, but the error
-  message now names the layer and its source. Your three options are the same (ADR-032): a project
+  message now names the layer and its source. Your three options are the same (ADR-CORE-032): a project
   overlay (`eslint.config.project.mjs`, `knip.project.json`), upstreaming the change, or an explicit
   opt-out in `governance/opt-out.json`.
 - **A lower layer citing a higher one.** If you ever contribute upstream: a core rule may not cite an app
@@ -64,4 +64,4 @@ project is stays where it always was: `.claude/memory/project-scope.md`, project
 One repo can now be a consumer and a publisher at the same time. Without that, the agnostic core could
 never have been extracted: either the stack governance would have had to move into althing (making the
 "portable" core own a HUD design system), or it would have been frozen into a copy inside every desktop
-project and diverged. See [ADR-033](../adr/033-governance-layers-cascade.md).
+project and diverged. See [ADR-CORE-033](../adr/core-033-governance-layers-cascade.md).

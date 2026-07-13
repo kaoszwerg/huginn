@@ -1,9 +1,195 @@
 {
   "generated": true,
-  "count": 15,
+  "count": 33,
   "adrs": [
     {
-      "id": "ADR-002",
+      "id": "ADR-APP-001",
+      "layer": "app",
+      "title": "Tauri 2 + Rust backend + React/TypeScript frontend",
+      "tldr": "Desktop app on Tauri 2: Rust owns state, IO and the domain services, React+TS+Vite renders the HUD UI; small native binaries, one web UI for all OSes.",
+      "scope": "global",
+      "load": "core",
+      "status": "accepted",
+      "triggers": [
+        "stack",
+        "tauri",
+        "rust",
+        "react",
+        "vite",
+        "frontend",
+        "backend",
+        "architecture"
+      ],
+      "applies-to": [],
+      "supersededBy": null,
+      "path": "docs/adr/app-001-tauri-rust-react-stack.md",
+      "hash": "64ce93109773fd08"
+    },
+    {
+      "id": "ADR-APP-020",
+      "layer": "app",
+      "title": "HUD design system — palette, chamfers, neon panels, no charting library",
+      "tldr": "One HUD design system: palette in :root + Tailwind @theme tokens, clip-path chamfers, neon panels/buttons, Orbitron/Inter fonts; no charting library.",
+      "scope": "frontend",
+      "load": "conditional",
+      "status": "superseded",
+      "triggers": [
+        "ui",
+        "hud",
+        "design",
+        "theme",
+        "canvas",
+        "dashboard",
+        "color"
+      ],
+      "applies-to": [
+        "src/styles/**",
+        "src/components/**",
+        "src/views/**"
+      ],
+      "supersededBy": "ADR-PROJ-003",
+      "path": "docs/adr/app-020-hud-design-system.md",
+      "hash": "4aef535e63c392e2"
+    },
+    {
+      "id": "ADR-APP-021",
+      "layer": "app",
+      "title": "Frameless Tauri window with custom HUD title bar",
+      "tldr": "Frameless window; custom HUD TitleBar draggable via data-tauri-drag-region; window controls via the Tauri window API, drawn for all OSes.",
+      "scope": "frontend",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "window",
+        "titlebar",
+        "frameless",
+        "chrome",
+        "decorations",
+        "drag"
+      ],
+      "applies-to": [
+        "src/components/layout/**",
+        "src-tauri/tauri.conf.json"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/app-021-tauri-window-chrome.md",
+      "hash": "c55ed553ba7316f6"
+    },
+    {
+      "id": "ADR-APP-023",
+      "layer": "app",
+      "title": "Cross-platform release builds + optional macOS signing",
+      "tldr": "tauri-action matrix builds macOS (arm+intel), Linux and Windows on tag/dispatch; macOS is signed+notarised when APPLE secrets are set, else unsigned.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "release",
+        "ci",
+        "build",
+        "signing",
+        "notarize",
+        "macos",
+        "tauri-action"
+      ],
+      "applies-to": [
+        ".github/workflows/release.yml",
+        "docs/releasing.md"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/app-023-cross-platform-release-signing.md",
+      "hash": "97fea2d18c2acbc3"
+    },
+    {
+      "id": "ADR-APP-025",
+      "layer": "app",
+      "title": "Logging architecture — JSON file + ring buffer + live UI stream",
+      "tldr": "tracing fans out to a pretty console layer, a rotating JSON file, and an in-memory ring buffer broadcast live to the UI log view; secret-free per ADR-CORE-011.",
+      "scope": "backend",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "logging",
+        "logs",
+        "tracing",
+        "observability",
+        "log-view",
+        "json-logs"
+      ],
+      "applies-to": [
+        "src-tauri/src/logging.rs",
+        "src/views/LogsView.tsx",
+        "src/hooks/useLogs.ts"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/app-025-logging-architecture.md",
+      "hash": "da8c13519816a260"
+    },
+    {
+      "id": "ADR-APP-026",
+      "layer": "app",
+      "title": "No native UI defaults — every control is a reusable HUD primitive",
+      "tldr": "No stock controls: every control the user touches is a HUD primitive, whatever it is built on; native chrome suppressed or replaced; lint gate enforces it.",
+      "scope": "frontend",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "button",
+        "dropdown",
+        "menu",
+        "context-menu",
+        "right-click",
+        "tooltip",
+        "select",
+        "dialog",
+        "native",
+        "primitive",
+        "control",
+        "form",
+        "library",
+        "import",
+        "ui-boundary"
+      ],
+      "applies-to": [
+        "src/components/ui/**",
+        "eslint.config.mjs",
+        "ui-boundary.json",
+        "scripts/lib/ui-boundary.mjs",
+        "src/hooks/useNativeContextMenuGuard.ts"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/app-026-no-native-ui-primitives.md",
+      "hash": "65bdd04d94f429f7"
+    },
+    {
+      "id": "ADR-APP-031",
+      "layer": "app",
+      "title": "App-identity single source of truth (app.identity.json) with sync + drift gate",
+      "tldr": "The app name/identifier lives once in app.identity.json; identity:sync propagates it everywhere; identity:check gates drift so it can't diverge.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "identity",
+        "name",
+        "rename",
+        "bootstrap",
+        "productname",
+        "identifier",
+        "ssot",
+        "app-name"
+      ],
+      "applies-to": [
+        "app.identity.json",
+        "scripts/sync-identity.mjs"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/app-031-app-identity-ssot.md",
+      "hash": "781775ad90fcca94"
+    },
+    {
+      "id": "ADR-CORE-002",
+      "layer": "core",
       "title": "Always the best solution, never the easiest",
       "tldr": "Best, senior-level, production-grade — no shortcuts or unfinished leftovers; fix, never silently remove a feature (removal needs the owner's consent).",
       "scope": "global",
@@ -22,11 +208,12 @@
       ],
       "applies-to": [],
       "supersededBy": null,
-      "path": "docs/adr/002-best-solution-principle.md",
-      "hash": "4bd8dabcff75c6bf"
+      "path": "docs/adr/core-002-best-solution-principle.md",
+      "hash": "6ce107a1b07c8bb8"
     },
     {
-      "id": "ADR-003",
+      "id": "ADR-CORE-003",
+      "layer": "core",
       "title": "Repository is the single source of truth; memory is repo-resident",
       "tldr": "All decisions/rules/memory live in the repo; agent memory sits in .claude/memory and is symlinked into the user memory dir, so there is one truth and no drift.",
       "scope": "governance",
@@ -45,11 +232,12 @@
         "docs/**"
       ],
       "supersededBy": null,
-      "path": "docs/adr/003-repo-single-source-of-truth.md",
-      "hash": "1313999bda923f82"
+      "path": "docs/adr/core-003-repo-single-source-of-truth.md",
+      "hash": "20ee5ad736fb5923"
     },
     {
-      "id": "ADR-004",
+      "id": "ADR-CORE-004",
+      "layer": "core",
       "title": "Verify first, never guess — every claim must be provable",
       "tldr": "Every claim must be verified and provable (source/test/measurement); no guessing; unverified items are marked 'open', never asserted as fact.",
       "scope": "global",
@@ -65,11 +253,12 @@
       ],
       "applies-to": [],
       "supersededBy": null,
-      "path": "docs/adr/004-verify-first-no-guessing.md",
-      "hash": "0cca87cad135fd88"
+      "path": "docs/adr/core-004-verify-first-no-guessing.md",
+      "hash": "5a2f3c3bcaf140d8"
     },
     {
-      "id": "ADR-005",
+      "id": "ADR-CORE-005",
+      "layer": "core",
       "title": "Reusability policy — no structural duplication, shared single sources",
       "tldr": "Reuse over copy-paste; one source for cross-cutting concerns (ts-rs types, HUD theme, command wrappers) — no duplicated structure.",
       "scope": "global",
@@ -86,11 +275,12 @@
       ],
       "applies-to": [],
       "supersededBy": null,
-      "path": "docs/adr/005-reusability-policy.md",
-      "hash": "50cc7da6973df4b5"
+      "path": "docs/adr/core-005-reusability-policy.md",
+      "hash": "79f329a3886253e0"
     },
     {
-      "id": "ADR-006",
+      "id": "ADR-CORE-006",
+      "layer": "core",
       "title": "Context budget — TLDR index + selective on-demand loading + compact-survival",
       "tldr": "Boot loads only CLAUDE.md + TLDR indexes + core docs; full ADRs/rules load on demand via tldr/triggers/applies-to; hooks force a reload after compact.",
       "scope": "governance",
@@ -111,11 +301,12 @@
         "CLAUDE.md"
       ],
       "supersededBy": null,
-      "path": "docs/adr/006-context-budget-selective-loading.md",
-      "hash": "d566f382056aef87"
+      "path": "docs/adr/core-006-context-budget-selective-loading.md",
+      "hash": "ce2bc4df1fe5430c"
     },
     {
-      "id": "ADR-007",
+      "id": "ADR-CORE-007",
+      "layer": "core",
       "title": "Generated indexes + staleness gate",
       "tldr": "One generator builds all indexes from doc front-matter; a content-hash scanner fails CI on drift.",
       "scope": "governance",
@@ -135,11 +326,12 @@
         ".claude/**"
       ],
       "supersededBy": null,
-      "path": "docs/adr/007-generated-indexes-staleness-gate.md",
-      "hash": "56b2dc0c67b8961d"
+      "path": "docs/adr/core-007-generated-indexes-staleness-gate.md",
+      "hash": "85e7cab984043763"
     },
     {
-      "id": "ADR-008",
+      "id": "ADR-CORE-008",
+      "layer": "core",
       "title": "Unified quality pipeline (check:all), pre-commit and CI",
       "tldr": "One check:all gate (TS + Rust + governance) runs locally via pre-commit + pre-push; CI is last-line backstop and builds only final releases, never dev builds.",
       "scope": "governance",
@@ -161,11 +353,12 @@
         "scripts/**"
       ],
       "supersededBy": null,
-      "path": "docs/adr/008-quality-pipeline.md",
-      "hash": "23bad7e06b025be2"
+      "path": "docs/adr/core-008-quality-pipeline.md",
+      "hash": "e1e05c25c931f3a8"
     },
     {
-      "id": "ADR-009",
+      "id": "ADR-CORE-009",
+      "layer": "core",
       "title": "Dependency policy — latest stable everything, verified, lockfiles committed",
       "tldr": "Latest stable of every dependency (verified vs crates.io/npm), lockfiles committed — current versions minimise known CVEs and avoid an update cycle.",
       "scope": "governance",
@@ -187,11 +380,12 @@
         "src-tauri/Cargo.toml"
       ],
       "supersededBy": null,
-      "path": "docs/adr/009-dependency-policy.md",
-      "hash": "817f1383f2a7f874"
+      "path": "docs/adr/core-009-dependency-policy.md",
+      "hash": "5ea5c2fdbd85ca19"
     },
     {
-      "id": "ADR-010",
+      "id": "ADR-CORE-010",
+      "layer": "core",
       "title": "Testing strategy — test-first (TDD), unit tests from the first module, contracts pinned both sides",
       "tldr": "Test-first (TDD): the failing test comes before the code; every module ships unit tests; IPC contracts pinned both sides; coverage gated in check:all.",
       "scope": "governance",
@@ -210,11 +404,12 @@
         "tests/**"
       ],
       "supersededBy": null,
-      "path": "docs/adr/010-testing-strategy.md",
-      "hash": "184b968c679a7a2a"
+      "path": "docs/adr/core-010-testing-strategy.md",
+      "hash": "62fc65a172090354"
     },
     {
-      "id": "ADR-011",
+      "id": "ADR-CORE-011",
+      "layer": "core",
       "title": "Security by design — hardened Tauri, validated IPC, no secret leakage",
       "tldr": "Credentials in the OS keyring and never in the frontend; least-privilege capabilities, strict CSP, validated IPC inputs, app-data-only writes, HTTPS-only.",
       "scope": "global",
@@ -236,11 +431,12 @@
         "src/**"
       ],
       "supersededBy": null,
-      "path": "docs/adr/011-security-by-design.md",
-      "hash": "ad2969d1908a3c56"
+      "path": "docs/adr/core-011-security-by-design.md",
+      "hash": "f5b22f3d06d8a4fe"
     },
     {
-      "id": "ADR-022",
+      "id": "ADR-CORE-022",
+      "layer": "core",
       "title": "Agent delegation — model selection and subagent governance inheritance",
       "tldr": "Pick the right model per task (Opus/Sonnet/Haiku), brief each subagent with a task-fit senior persona, and make it inherit + never bypass project governance.",
       "scope": "governance",
@@ -258,11 +454,12 @@
       ],
       "applies-to": [],
       "supersededBy": null,
-      "path": "docs/adr/022-agent-delegation-governance.md",
-      "hash": "451f8bb9138a4c84"
+      "path": "docs/adr/core-022-agent-delegation-governance.md",
+      "hash": "3e30df93f15a7f51"
     },
     {
-      "id": "ADR-024",
+      "id": "ADR-CORE-024",
+      "layer": "core",
       "title": "Versioning (SSOT + SemVer) and dev/release build channels",
       "tldr": "package.json is the version SSOT (synced into Cargo.toml + Cargo.lock, gated in check:all); every change bumps SemVer; releasing is a separate, instructed act.",
       "scope": "governance",
@@ -289,13 +486,14 @@
         "src-tauri/tauri.dev.conf.json"
       ],
       "supersededBy": null,
-      "path": "docs/adr/024-versioning-and-build-channels.md",
-      "hash": "bd25a3882784eba7"
+      "path": "docs/adr/core-024-versioning-and-build-channels.md",
+      "hash": "bdfd34d76263b8e9"
     },
     {
-      "id": "ADR-030",
+      "id": "ADR-CORE-030",
+      "layer": "core",
       "title": "Portable governance core — versioned, hash-pinned, updatable across template forks",
-      "tldr": "SUPERSEDED by ADR-033: two layers became N ordered layers. The hash pin, drift gate and self-updating governance:update are retained there.",
+      "tldr": "SUPERSEDED by ADR-CORE-033: two layers became N ordered layers. The hash pin, drift gate and self-updating governance:update are retained there.",
       "scope": "governance",
       "load": "conditional",
       "status": "superseded",
@@ -315,12 +513,13 @@
         "scripts/governance-manifest.mjs",
         "scripts/governance-update.mjs"
       ],
-      "supersededBy": "ADR-033",
-      "path": "docs/adr/030-portable-governance-core.md",
-      "hash": "73e154ac26a3a2c2"
+      "supersededBy": "ADR-CORE-033",
+      "path": "docs/adr/core-030-portable-governance-core.md",
+      "hash": "22bb364dbe15144f"
     },
     {
-      "id": "ADR-032",
+      "id": "ADR-CORE-032",
+      "layer": "core",
       "title": "Config layering — pinned core config, project overlays, explicit opt-out",
       "tldr": "Core config stays pinned; project-specific config is project-owned; eslint/knip take a project overlay; governance/opt-out.json opts a core path out of the pin.",
       "scope": "governance",
@@ -349,11 +548,12 @@
         "governance/**"
       ],
       "supersededBy": null,
-      "path": "docs/adr/032-config-layering-project-overlays.md",
-      "hash": "ced0520124711136"
+      "path": "docs/adr/core-032-config-layering-project-overlays.md",
+      "hash": "f4a53638dfa0a237"
     },
     {
-      "id": "ADR-033",
+      "id": "ADR-CORE-033",
+      "layer": "core",
       "title": "Governance layers — an agnostic core, an application layer, and a publishing cascade",
       "tldr": "Governance is N ordered layers (core → app → project); a repo consumes upstream layers, may own one, and republishes the union to its own forks.",
       "scope": "governance",
@@ -384,8 +584,354 @@
         "scripts/check-index.mjs"
       ],
       "supersededBy": null,
-      "path": "docs/adr/033-governance-layers-cascade.md",
-      "hash": "3078e33a818061bd"
+      "path": "docs/adr/core-033-governance-layers-cascade.md",
+      "hash": "19bf884c6e8b4ff6"
+    },
+    {
+      "id": "ADR-CORE-034",
+      "layer": "core",
+      "title": "The layer is part of the ADR id — ADR-<LAYER>-<NNN>, not a number block",
+      "tldr": "ADR ids carry their layer (ADR-CORE-004, ADR-APP-026, ADR-PROJ-105); number blocks were a convention nobody could enforce, and were already violated.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "adr",
+        "id",
+        "identifier",
+        "numbering",
+        "prefix",
+        "layer",
+        "block",
+        "rename",
+        "collision"
+      ],
+      "applies-to": [
+        "docs/adr/**",
+        "scripts/lib/governance.mjs",
+        "scripts/check-index.mjs"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/core-034-layered-adr-identifiers.md",
+      "hash": "bc661a3ba3d35da3"
+    },
+    {
+      "id": "ADR-CORE-035",
+      "layer": "core",
+      "title": "Cross-layer supersession — declared in the superseding document, never in the superseded one",
+      "tldr": "A project can retire an upstream decision by declaring `supersedes` in its OWN document; the pinned file is never touched. Direction: higher layer only.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "supersede",
+        "superseded",
+        "retire",
+        "decline",
+        "opt-out",
+        "override",
+        "layer",
+        "upstream",
+        "deviate",
+        "exception"
+      ],
+      "applies-to": [
+        "docs/adr/**",
+        ".claude/rules/**",
+        "scripts/lib/governance.mjs",
+        "scripts/check-index.mjs"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/core-035-cross-layer-supersession.md",
+      "hash": "0e9e71cdffb5f75c"
+    },
+    {
+      "id": "ADR-PROJ-001",
+      "layer": "proj",
+      "title": "UI stack — Tauri 2 + React on the saga shell, not a pure-Rust GUI toolkit",
+      "tldr": "Tauri 2 + React on the saga shell. egui, iced, Slint and GPUI were evaluated and rejected: same native overlay cost, no workbench, lower design ceiling.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "stack",
+        "ui",
+        "framework",
+        "toolkit",
+        "egui",
+        "iced",
+        "slint",
+        "gpui",
+        "dioxus",
+        "freya",
+        "xilem",
+        "webview",
+        "react",
+        "tauri"
+      ],
+      "applies-to": [
+        "src/**",
+        "src-tauri/**",
+        "package.json"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-001-ui-stack-tauri-over-rust-toolkits.md",
+      "hash": "16d4e599b99bb3d6"
+    },
+    {
+      "id": "ADR-PROJ-002",
+      "layer": "proj",
+      "title": "The publisher is undecided — the identity is provisional and the release build refuses to run",
+      "tldr": "Publisher, Apple account, licence, trademark and the design are deferred — release-blockers.json plus release:check refuse a bundled build until each is closed.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "identity",
+        "identifier",
+        "bundle",
+        "vendor",
+        "publisher",
+        "release",
+        "licence",
+        "license",
+        "trademark",
+        "signing",
+        "notarization",
+        "apple",
+        "blocker"
+      ],
+      "applies-to": [
+        "app.identity.json",
+        "release-blockers.json",
+        "scripts/project/check-release-ready.mjs"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-002-provisional-identity-and-release-blockers.md",
+      "hash": "75e646088e5f1116"
+    },
+    {
+      "id": "ADR-PROJ-003",
+      "layer": "proj",
+      "title": "Huginn's visual identity replaces the template's HUD look",
+      "tldr": "The neon HUD inherited from saga is not Huginn's: calm and restrained instead. The mechanism (colour SSOT, own primitives, ui-boundary gate) is kept unchanged.",
+      "scope": "frontend",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "design",
+        "look",
+        "theme",
+        "palette",
+        "hud",
+        "overlay",
+        "brand",
+        "icon",
+        "font",
+        "colour",
+        "color",
+        "ui"
+      ],
+      "applies-to": [
+        "src/styles/**",
+        "src/components/**",
+        "src-tauri/icons/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-003-visual-identity.md",
+      "hash": "d093c172c6b80d99"
+    },
+    {
+      "id": "ADR-PROJ-004",
+      "layer": "proj",
+      "title": "Overlay and input — a focus-neutral HUD, push-to-talk, and platform-native window code",
+      "tldr": "The overlay must never steal focus, or the text has nowhere to go — no cross-platform API can. Native window code on both platforms; push-to-talk needs key-up.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "overlay",
+        "hud",
+        "window",
+        "focus",
+        "transparent",
+        "always-on-top",
+        "click-through",
+        "hotkey",
+        "shortcut",
+        "push-to-talk",
+        "injection",
+        "paste",
+        "sendinput",
+        "nspanel",
+        "tray",
+        "autostart"
+      ],
+      "applies-to": [
+        "src-tauri/**",
+        "src/components/overlay/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-004-overlay-and-input.md",
+      "hash": "f56b51275d9af246"
+    },
+    {
+      "id": "ADR-PROJ-005",
+      "layer": "proj",
+      "title": "Speech pipeline — whisper.cpp behind a trait, in a separate deprivileged worker process",
+      "tldr": "Inference runs in a separate deprivileged worker: the process holding the mic, the keyboard and accessibility rights must never be the one parsing a model file.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "speech",
+        "asr",
+        "stt",
+        "whisper",
+        "transcription",
+        "audio",
+        "microphone",
+        "vad",
+        "worker",
+        "sidecar",
+        "process",
+        "isolation",
+        "sandbox",
+        "ggml",
+        "gguf"
+      ],
+      "applies-to": [
+        "src-tauri/crates/huginn-asr*/**",
+        "src-tauri/crates/huginn-audio/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-005-speech-pipeline-process-isolation.md",
+      "hash": "5e803b96a954cd51"
+    },
+    {
+      "id": "ADR-PROJ-006",
+      "layer": "proj",
+      "title": "Model assets — a bundled base model, a catalogue compiled into the binary, and the only network call in the product",
+      "tldr": "A small model ships in the installer; bigger ones are a user-clicked download, URL + SHA-256 compiled in. No remote manifest, no ping. Data, never code.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "model",
+        "models",
+        "download",
+        "catalogue",
+        "catalog",
+        "checksum",
+        "sha256",
+        "whisper",
+        "gguf",
+        "network",
+        "egress",
+        "update",
+        "import",
+        "installer",
+        "bundle"
+      ],
+      "applies-to": [
+        "src-tauri/crates/huginn-models/**",
+        "src-tauri/tauri.conf.json"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-006-model-assets-and-the-only-network-call.md",
+      "hash": "a15a6efa4f11ffd3"
+    },
+    {
+      "id": "ADR-PROJ-007",
+      "layer": "proj",
+      "title": "Storage layout, lowercase paths — and the text is never written to a log",
+      "tldr": "Lowercase huginn/ directories via the platform API, named after the product, not the provisional identifier. Recognised text is never written to a log.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "path",
+        "paths",
+        "directory",
+        "appdata",
+        "storage",
+        "config",
+        "logs",
+        "logging",
+        "cache",
+        "models",
+        "filesystem",
+        "backup",
+        "redaction"
+      ],
+      "applies-to": [
+        "src-tauri/crates/huginn-platform/**",
+        "src-tauri/crates/huginn-core/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-007-storage-layout-and-logging-boundaries.md",
+      "hash": "8c76b5e02584d431"
+    },
+    {
+      "id": "ADR-PROJ-008",
+      "layer": "proj",
+      "title": "Every long operation is a Job — asynchronous, observable, cancellable — and the footer shows them",
+      "tldr": "Nothing over ~200 ms runs invisibly: a Job has progress, an ETA and a cancel, lives in the backend, and its registry is also the single logging chokepoint.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "job",
+        "jobs",
+        "progress",
+        "percent",
+        "eta",
+        "async",
+        "background",
+        "task",
+        "queue",
+        "cancel",
+        "spinner",
+        "footer",
+        "monitor",
+        "status",
+        "blocking"
+      ],
+      "applies-to": [
+        "src-tauri/crates/huginn-core/**",
+        "src/components/**",
+        "src/stores/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-008-jobs-and-the-process-monitor.md",
+      "hash": "589c60ffabcbc7bd"
+    },
+    {
+      "id": "ADR-PROJ-009",
+      "layer": "proj",
+      "title": "Crate structure — one Cargo workspace, rooted at src-tauri/",
+      "tldr": "One Cargo workspace rooted at src-tauri/ (the pinned sync-version.mjs writes there). Nine crates, each earning its place; cross-cutting concerns are not crates.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "crate",
+        "crates",
+        "workspace",
+        "cargo",
+        "module",
+        "structure",
+        "layout",
+        "sidecar",
+        "manifest"
+      ],
+      "applies-to": [
+        "src-tauri/Cargo.toml",
+        "src-tauri/crates/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-009-crate-structure.md",
+      "hash": "11ccac72c4675fec"
     }
   ]
 }

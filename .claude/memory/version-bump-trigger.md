@@ -7,7 +7,7 @@ load: core
 type: feedback
 ---
 
-The agent owns versioning (ADR-024 + rule:versioning), and the two halves have **different triggers**:
+The agent owns versioning (ADR-CORE-024 + rule:versioning), and the two halves have **different triggers**:
 
 - **Bump = the change.** Every change that lands bumps SemVer by its Conventional-Commit type —
   `feat:` → minor, `fix:`/`perf:`/`refactor:` → patch, `!`/`BREAKING` → major (pre-1.0: `feat:` →

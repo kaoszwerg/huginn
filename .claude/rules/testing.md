@@ -8,7 +8,7 @@ triggers: [test, testing, coverage, fixture, tdd, unit, integration, contract]
 applies-to: []
 ---
 
-# Testing (ADR-010)
+# Testing (ADR-CORE-010)
 
 - **Test-first (TDD):** write the failing test **before** the code and follow red → green → refactor.
   No production code without a failing test that demands it; **a fix begins with a test that reproduces

@@ -8,7 +8,7 @@ triggers: [ci, automation, workflow, pipeline, merge, gate, hooks, pre-commit, p
 applies-to: [".github/**", "package.json", "scripts/**"]
 ---
 
-# Automation & CI policy (ADR-008)
+# Automation & CI policy (ADR-CORE-008)
 
 - **Local-first — CI is the last line of defence.** Everything is caught during development *before* it
   reaches the remote: `check:all` runs as a **pre-commit** (fast, staged-file-scoped) and a **pre-push**
@@ -22,11 +22,11 @@ applies-to: [".github/**", "package.json", "scripts/**"]
 - **CI builds releases, not development artefacts.** CI's build role is the *final* version at a tag,
   with whatever signing the platform needs. Development and intermediate builds stay local
   (rule:versioning).
-- **Dependency & security cadence.** Dependencies stay at latest stable (ADR-009); the supply-chain and
+- **Dependency & security cadence.** Dependencies stay at latest stable (ADR-CORE-009); the supply-chain and
   secret scanners in the gate are the automated check, and a finding blocks the push (rule:security).
 - **Reusable, not copied.** CI is defined as a reusable workflow the owning layer publishes and its
   consumers reference — so a pipeline fix reaches every project through `governance:update`, not
   copy-paste.
 - **A repo's own CI is not published.** The workflow that gates *this* repo is excluded from what it
-  ships downstream (`exclude` in `governance/config.json`, ADR-033) — a consumer inherits the governance,
+  ships downstream (`exclude` in `governance/config.json`, ADR-CORE-033) — a consumer inherits the governance,
   not the maintainer's build matrix.

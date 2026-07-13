@@ -8,7 +8,7 @@ triggers: [version, release, bump, semver, changelog, tag, released, reopen]
 applies-to: ["package.json", "CHANGELOG.md"]
 ---
 
-# Versioning & releases (ADR-024)
+# Versioning & releases (ADR-CORE-024)
 
 The agent owns versioning. Do not hand-edit versions in multiple files.
 

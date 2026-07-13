@@ -1,0 +1,11 @@
+{
+  "$comment": "SINGLE SOURCE OF TRUTH for the app identity (ADR-APP-031). Edit ONLY here, then run `npm run identity:sync`. Never hand-edit the derived name/identifier in package.json, Cargo.toml, tauri.conf.json, tauri.dev.conf.json, src/lib/app.ts or index.html — `identity:check` (in check:all) fails on drift. NOTE: `identifier`/`vendor` are PROVISIONAL until the publisher is decided (ADR-PROJ-001). They are a release blocker; `npm run release:check` refuses a release build while that decision stands open.",
+  "displayName": "Huginn",
+  "binaryName": "huginn",
+  "packageName": "huginn",
+  "crateName": "huginn",
+  "identifier": "ai.lysis.huginn",
+  "vendor": "lysis",
+  "tagline": "Local voice input. Private by design.",
+  "description": "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings."
+}

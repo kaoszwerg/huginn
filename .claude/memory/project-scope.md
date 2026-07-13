@@ -1,50 +1,72 @@
 ---
 id: mem:project-scope
-title: althing scope summary
-tldr: "althing IS the portable governance core: stack-agnostic rules/ADRs + the layered drift-gate. It ships no product code and must never learn about any stack."
+title: Huginn scope summary
+tldr: "Huginn is a fully local, system-wide voice input for Windows and macOS (Tauri 2 + Rust + React). Its only network call is a model download the user clicks."
 scope: project
 load: core
 type: project
 ---
 
-# althing — scope summary
+# Huginn — scope summary
 
-**One-line:** `althing` is the **portable agent-governance core** — the stack-agnostic rules, ADRs and
-memory, plus the scripts that index, pin, gate and distribute them. It is the root of the governance
-cascade (ADR-033) and has no upstream.
+**One line:** Huginn is a fully local, system-wide **voice input** for Windows and macOS. Hold a global
+hotkey, speak, release — the recognised text is inserted into whatever application has focus. Speech is
+processed **on the device**. No cloud, no telemetry, no stored recordings.
 
-The name is the Old Norse assembly that set the law: the place the rules are decided, from which they
-travel outward.
+The name is Odin's raven of thought: it takes in what is spoken and brings back something usable. That
+is a reason for the name — never a licence to listen, store or profile.
 
-## What exists here
+## What this repo is
 
-- The **agnostic** rules (`.claude/rules/*.md`) and ADRs (`docs/adr/NNN-*.md`) — everything that is true
-  for a project regardless of what it is built from.
-- The governance tooling (`scripts/`): index generation + staleness gate (ADR-007), the front-matter and
-  reachability validator, `context-for.mjs`, and the layered manifest/drift-gate + `governance:update`
-  (ADR-033).
-- Migration briefings (`docs/migrations/`) — what a downstream project must **do** after a change here.
+A **leaf project** in the governance cascade (ADR-CORE-033):
 
-## What must never exist here
+```
+althing                    (owns 'core' — stack-agnostic rules, ADRs, gate)
+  └── saga-rust-template   (owns 'app'  — Tauri 2 + Rust + React shell, CI, version/identity SSOT)
+        └── huginn         ← this repo. Consumes both. Publishes nothing.
+```
 
-**Any stack knowledge.** No framework, no language runtime, no build tool, no design system, no product.
-The moment a core rule names `cargo`, `tracing`, a React hook or a HUD panel, the core stops being
-adoptable by the next project — and the layer gate in `governance:check` rejects it.
+Huginn owns **no** published layer. Its own governance lives in the project line —
+`docs/adr/project/proj-NNN-*.md`, `.claude/rules/project/`, `scripts/project/` — and is never pinned.
+Everything else here is upstream-owned and **read-only**; the drift gate enforces it.
 
-The only assumption the core makes about a consumer is **Node**, because that is what runs these scripts.
-It says nothing about what the project itself is written in.
+## The decisions that shape everything (read the ADR before you contradict one)
 
-## Who consumes it
+| | |
+| --- | --- |
+| **Stack** | Tauri 2 + Rust + React, on the saga shell. Pure-Rust GUI toolkits were evaluated and rejected — ADR-PROJ-001 |
+| **Overlay** | Transparent, always-on-top, click-through — and **focus-neutral**. It must not steal focus, or the recognised text has nowhere to go. No cross-platform API delivers that; the overlay window is created with platform-native code — ADR-PROJ-004 |
+| **Speech** | whisper.cpp, in a **separate deprivileged process**. The main process holds the microphone, the keyboard and macOS accessibility rights; it must never be the one parsing a model file — ADR-PROJ-005 |
+| **Models** | A small base model ships in the installer (offline from launch one). Larger ones are an explicit download from a catalogue **compiled into the binary**. Users may import their own model file — ADR-PROJ-006 |
+| **Network** | Exactly **one** outbound activity exists in the entire product: a model download the user clicked. No telemetry, no auto-update, no ping — ADR-PROJ-006, rule:privacy |
+| **Jobs** | Nothing longer than ~200 ms runs invisibly. Every such operation is a Job: async, with progress and an ETA, cancellable, shown in the footer's process monitor — ADR-PROJ-008 |
+| **Storage** | Lowercase `huginn/` directories, resolved through the platform API. **The recognised text is never written to a log** — that would turn the log into a transcript of everything the user ever said — ADR-PROJ-007 |
+| **Design** | The template's neon HUD look is **not** Huginn's and is being replaced: calm, restrained, professional — ADR-PROJ-003 |
+| **Crates** | One Cargo workspace, rooted at `src-tauri/` (forced: the pinned `sync-version.mjs` writes there) — ADR-PROJ-009 |
 
-- `saga-rust-template` — consumes `core`, owns and publishes the **`app`** layer (the Tauri 2 + Rust +
-  React desktop shell), and republishes both to its own forks.
-- `ivaldi` — a leaf project downstream of `saga-rust-template`. **It never points at althing directly**;
-  doing so would strip it of the app layer.
+## What must never happen here
 
-**Why:** the governance was extracted from `saga-rust-template`, where it had grown together with a
-Tauri desktop shell — pinned "portable core" files were prescribing HUD panels and `Serialize for
-AppError`. Splitting the layers is what lets the same rules govern a project that is nothing like a
-desktop app.
+- **Audio or recognised text leaving the device.** Not in a log, not in a crash report, not in
+  telemetry, not "just for diagnostics". The product's entire proposition is that it does not.
+- **Recording without an explicit user action.** No wake word, no always-listening, no "convenient"
+  auto-start of capture.
+- **A silent network call.** Any egress that is not the user clicking "download this model" is a defect
+  and needs its own ADR before it exists (rule:privacy).
+- **Code downloaded at runtime.** Models are *data*, verified against a compiled-in SHA-256. Binaries,
+  DLLs and GPU backends are shipped, never fetched (ADR-PROJ-006).
 
-**How to apply:** before adding anything here, ask whether it would still be true for a project written
-in a language this repo has never heard of. If not, it belongs in a layer above — not here.
+## Open decisions (they block a release, not the work)
+
+The publisher (company vs. personal org, and therefore the bundle identifier), the Apple Developer
+account, the project licence and the trademark check are **deliberately deferred** — and
+`npm run release:check` refuses to produce a release build while any of them stands open (ADR-PROJ-002).
+
+**Why:** Huginn is a privacy product before it is a dictation product. Almost every "convenient" shortcut
+available to a voice tool — logging the transcript to debug it, checking for model updates in the
+background, parsing the model in the process that already has the microphone — would quietly destroy the
+one thing it is for. Those shortcuts are cheap to take and expensive to undo, so the boundaries are
+written down before the code exists, not after a report.
+
+**How to apply:** Before adding anything that records, stores, sends or parses, find the ADR that already
+decided it (the table above) and read it. If your change contradicts one, stop and surface it — do not
+work around it (ADR-CORE-002). If no ADR covers it, it is a new decision: write one.

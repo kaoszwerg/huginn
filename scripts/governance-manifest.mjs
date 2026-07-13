@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Drift-gate CLI for the layered governance (ADR-033, ADR-032, ADR-030). The policy lives in
+// Drift-gate CLI for the layered governance (ADR-CORE-033, ADR-CORE-032, ADR-CORE-030). The policy lives in
 // scripts/lib/governance-core.mjs (and is tested there); this file only adds output + exit codes.
 //   --write   re-pin this repo's OWN layer at the current package.json version
 //   --sync    same as --write when this repo owns a layer; a no-op in a leaf project
@@ -24,7 +24,7 @@ function write() {
   );
 }
 
-// The only real ways to diverge from a file an upstream layer owns (ADR-032). Anything else the message
+// The only real ways to diverge from a file an upstream layer owns (ADR-CORE-032). Anything else the message
 // used to hint at does not exist — listing an option that has no implementation sends people hunting for
 // a flag that was never written.
 const DIVERGE_OPTIONS = [

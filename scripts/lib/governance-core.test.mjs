@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Tests for the layered governance (ADR-033, ADR-032, ADR-030): the hash pin, the drift-gate, layer
+// Tests for the layered governance (ADR-CORE-033, ADR-CORE-032, ADR-CORE-030): the hash pin, the drift-gate, layer
 // attribution, the collision guard, the project opt-out and the upstream update. Everything runs
 // against temp repos — never the real one.
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
@@ -14,6 +14,7 @@ import {
   detectCollisions,
   governedPaths,
   hashFile,
+  layerOfPath,
   readConfig,
   readOptOut,
   upstreamEntries,
@@ -54,7 +55,7 @@ function seedRepo(repo) {
   put(repo, "scripts/project/python.mjs", "export const uv = 1;\n");
 }
 
-/** Pin the current state, then mark the repo as a leaf consumer of `upstream` (pre-ADR-033 shape:
+/** Pin the current state, then mark the repo as a leaf consumer of `upstream` (pre-ADR-CORE-033 shape:
  * no governance/config.json at all — exactly what an existing fork like ivaldi looks like). */
 function pinAsLeaf(repo, upstream = "acme/saga-rust-template") {
   writeManifest(repo);
@@ -91,7 +92,7 @@ describe("governed path collection", () => {
     // (rule:knowledge-handover) — they travel with the governance, not beside it.
     expect(pinned).toContain("docs/migrations/001-demo.md");
 
-    // ADR-032: inherently project-specific config is NOT governed.
+    // ADR-CORE-032: inherently project-specific config is NOT governed.
     expect(pinned).not.toContain("knip.project.json");
     expect(pinned).not.toContain("src/main.tsx");
     // scripts/ is governed, but scripts/project/ is the project's own tooling — reserved, never pinned,
@@ -106,7 +107,7 @@ describe("governed path collection", () => {
     expect(hashFile(root, "CLAUDE.md")).toBe(lf);
   });
 
-  it("governs only the memory and config files the layer declares (ADR-033)", () => {
+  it("governs only the memory and config files the layer declares (ADR-CORE-033)", () => {
     writeConfig(root, {
       upstream: null,
       layer: "core",
@@ -138,8 +139,8 @@ describe("governed path collection", () => {
   });
 });
 
-describe("config (ADR-033)", () => {
-  it("falls back to the legacy shape when there is no config file — a pre-ADR-033 leaf still works", () => {
+describe("config (ADR-CORE-033)", () => {
+  it("falls back to the legacy shape when there is no config file — a pre-ADR-CORE-033 leaf still works", () => {
     pinAsLeaf(root);
     const config = readConfig(root);
 
@@ -206,8 +207,8 @@ describe("drift-gate", () => {
 });
 
 // The cascade: althing (owns 'core') → this repo (consumes 'core', owns 'app') → a leaf.
-// This is the role ADR-030's single boolean could not express.
-describe("layers — consumer AND publisher (ADR-033)", () => {
+// This is the role ADR-CORE-030's single boolean could not express.
+describe("layers — consumer AND publisher (ADR-CORE-033)", () => {
   /** althing: the root of the cascade. Ships CLAUDE.md, a rule, an ADR and a script. */
   function seedAlthing(dir) {
     put(dir, "package.json", `${JSON.stringify({ name: "althing", version: "0.1.0" }, null, 2)}\n`);
@@ -400,7 +401,7 @@ describe("layers — consumer AND publisher (ADR-033)", () => {
     expect(collisions).toEqual(["scripts/sync-version.mjs"]);
   });
 
-  it("publishes a flat files[] that the pre-ADR-033 update logic can still read", () => {
+  it("publishes a flat files[] that the pre-ADR-CORE-033 update logic can still read", () => {
     // ivaldi runs its OWN, older copy of the update logic while fetching the new one. It iterates
     // `files[]` and uses only `path`. If this shape broke, the very update that ships the fix would fail.
     const manifest = readJson(root, "governance/manifest.json");
@@ -424,7 +425,7 @@ describe("layers — consumer AND publisher (ADR-033)", () => {
   });
 });
 
-describe("project opt-out (ADR-032)", () => {
+describe("project opt-out (ADR-CORE-032)", () => {
   it("lets a consumer edit an opted-out upstream file without breaking the gate", () => {
     pinAsLeaf(root);
     optOut(root, "src-tauri/deny.toml");
@@ -479,7 +480,7 @@ describe("project opt-out (ADR-032)", () => {
   });
 });
 
-describe("shadowing config (ADR-032)", () => {
+describe("shadowing config (ADR-CORE-032)", () => {
   // knip resolves knip.json BEFORE knip.config.js, and ESLint resolves eslint.config.js before
   // eslint.config.mjs. A repo that creates one of those silently bypasses the pinned config without ever
   // drifting a hash — the gate has to catch it, or the ban is unenforceable.
@@ -571,7 +572,7 @@ describe("governance:update", () => {
   });
 
   // A path can leave the pin WITHOUT being deleted upstream: it is reclassified to the project layer
-  // (ADR-032 did exactly this to tsconfig/vite/.prettierignore). "Unpinned" must never mean "deleted" —
+  // (ADR-CORE-032 did exactly this to tsconfig/vite/.prettierignore). "Unpinned" must never mean "deleted" —
   // the project keeps its file, edits and all, and simply owns it from now on.
   it("releases a path the upstream unpinned but still ships — keeps the project's own version", () => {
     pinAsLeaf(root);
@@ -644,5 +645,90 @@ describe("governance:update", () => {
       `{ "ignore": ["src/bindings/**"] }\n`,
     );
     expect(fs.readFileSync(path.join(root, "src/main.tsx"), "utf8")).toBe("export default 1;\n");
+  });
+});
+
+describe("line endings (LF, enforced on every platform)", () => {
+  // `.gitattributes` DECLARES LF, but a declaration only governs what git writes. Any tool that writes a
+  // file afterwards can undo it — a script, a generator, an editor — and git then normalises it back on
+  // commit without a word. The working tree drifts to CRLF while the repo holds LF, the content hash
+  // disagrees with a Linux CI runner, and `check:all` is green locally and red in CI on every push,
+  // unreproducibly. That happened. So the gate enforces the invariant instead of trusting the declaration.
+  it("rejects a governed file with CRLF line endings, and names the fix", () => {
+    put(root, "CLAUDE.md", "# core contract\r\n\r\nline two\r\n");
+    writeManifest(root);
+
+    const result = checkCore(root);
+
+    expect(result.ok).toBe(false);
+    expect(result.problems.join("\n")).toMatch(/CRLF line endings/);
+    expect(result.problems.join("\n")).toMatch(/CLAUDE\.md/);
+    expect(result.problems.join("\n")).toMatch(/renormalize/);
+  });
+
+  it("passes on LF, which is what a correct checkout produces", () => {
+    put(root, "CLAUDE.md", "# core contract\n\nline two\n");
+    writeManifest(root);
+
+    expect(checkCore(root).problems.join("\n")).not.toMatch(/CRLF/);
+  });
+});
+
+// An opt-out changes who owns the FILE, not which layer the DECISION came from (ADR-CORE-032). Reading
+// the layer from files[] alone silently reclassified every opted-out path to 'project', and that single
+// mistake made opt-out unusable for anything carrying a layer: an opted-out ADR's id claimed 'APP' while
+// the gate computed 'project' (ADR-CORE-034 fails), and an app rule that CITED an opted-out app rule
+// suddenly "depended on a higher layer" (the acyclicity gate fails). Both reproduced on a real consumer.
+describe("an opt-out keeps the document's layer (ADR-CORE-035)", () => {
+  const seedCascade = () => {
+    writeConfig(root, {
+      upstream: "acme/althing",
+      layer: "app",
+      owns: { memory: [], config: [] },
+    });
+    put(root, "docs/adr/app-020-hud.md", "# hud\n");
+    put(
+      root,
+      "governance/manifest.json",
+      `${JSON.stringify(
+        {
+          generated: true,
+          governanceVersion: "1.0.0",
+          upstream: "acme/althing",
+          layers: [
+            { id: "core", source: "acme/althing", version: "1.0.0" },
+            { id: "app", source: null, version: "1.2.3" },
+          ],
+          optedOut: [],
+          count: 1,
+          files: [{ path: "docs/adr/app-020-hud.md", hash: "x", layer: "app" }],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+  };
+
+  it("reports the pinned layer for a pinned path", () => {
+    seedCascade();
+    const manifest = readJson(root, "governance/manifest.json");
+
+    expect(layerOfPath(manifest, "docs/adr/app-020-hud.md")).toBe("app");
+  });
+
+  it("still reports 'app' once the path is opted out — the file is mine, the decision is still theirs", () => {
+    seedCascade();
+    const manifest = readJson(root, "governance/manifest.json");
+    manifest.files = [];
+    manifest.optedOut = [{ path: "docs/adr/app-020-hud.md", layer: "app" }];
+
+    expect(layerOfPath(manifest, "docs/adr/app-020-hud.md")).toBe("app");
+  });
+
+  it("knows nothing about a path the governance does not govern", () => {
+    seedCascade();
+    const manifest = readJson(root, "governance/manifest.json");
+
+    expect(layerOfPath(manifest, "docs/adr/project/proj-100-x.md")).toBeNull();
   });
 });

@@ -1,3 +1,5 @@
 {
-  "*.{json,md,mjs,cjs,yml,yaml}": ["prettier --write"]
+  "*.{ts,tsx}": ["eslint --fix --max-warnings 0 --no-warn-ignored", "prettier --write"],
+  "*.{json,css,md,mjs,cjs,yml,yaml}": ["prettier --write"],
+  "src-tauri/**/*.rs": ["rustfmt --edition 2021"]
 }

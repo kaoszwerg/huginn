@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Adopt the governance core in THIS repo (ADR-033).
+// Adopt the governance core in THIS repo (ADR-CORE-033).
 //
 //   node scripts/governance-init.mjs --from <owner/repo|url|path> [--layer <name>]
 //
@@ -41,7 +41,7 @@ if (!from) {
       "  node scripts/governance-init.mjs --from <owner/repo> --layer app  # a repo that also PUBLISHES a layer",
       "",
       "  A leaf consumes its upstream's layers and owns none of its own. Pass --layer only if this repo",
-      "  will publish governance of its own to further consumers downstream (ADR-033).",
+      "  will publish governance of its own to further consumers downstream (ADR-CORE-033).",
     ].join("\n"),
   );
 }

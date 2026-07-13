@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Pull the upstream governance layers (ADR-033) into THIS repo. Overwrites ONLY the paths the upstream
-// owns — minus the paths this repo opted out of (governance/opt-out.json, ADR-032). This repo's OWN
+// Pull the upstream governance layers (ADR-CORE-033) into THIS repo. Overwrites ONLY the paths the upstream
+// owns — minus the paths this repo opted out of (governance/opt-out.json, ADR-CORE-032). This repo's OWN
 // layer and its project layer are never touched. Never commits — the maintainer reviews `git diff`.
 //   node scripts/governance-update.mjs [--to <ref>]      (default ref: main)
 //
-// Self-update first (ADR-030): a consumer runs its OWN, possibly outdated copy of this script while it
+// Self-update first (ADR-CORE-030): a consumer runs its OWN, possibly outdated copy of this script while it
 // is fetching the new one — so a fix to the update logic itself would only take effect one update too
 // late, which is exactly how a bug here reaches every project. We therefore refresh `scripts/` from
 // upstream, then re-execute with the fresh logic (`--self-updated`, reusing the same clone via `--src`).
@@ -36,7 +36,7 @@ const selfUpdated = args.includes("--self-updated");
 const srcIdx = args.indexOf("--src");
 const providedSrc = srcIdx >= 0 ? args[srcIdx + 1] : null;
 
-// --adopt: the ONE-TIME step a repo runs when it first takes an upstream (ADR-033).
+// --adopt: the ONE-TIME step a repo runs when it first takes an upstream (ADR-CORE-033).
 //
 // Before it, every governed file is attributed to this repo. After it, the files the upstream owns are
 // attributed to the upstream's layer and the rest to this repo's own layer. Until that re-attribution
@@ -191,7 +191,7 @@ function run() {
     console.log("    Had local content in one of these? Recover it with `git show HEAD:<path>`.");
   }
   // Opt-outs are always reported: a path that silently stops receiving upstream fixes is exactly the
-  // kind of drift this system exists to make visible (ADR-032).
+  // kind of drift this system exists to make visible (ADR-CORE-032).
   if (skipped.length) {
     console.log(`  Kept ${skipped.length} opted-out path(s) — project-owned, not updated:`);
     for (const p of skipped) console.log(`    - ${p}`);

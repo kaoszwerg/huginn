@@ -8,7 +8,7 @@ triggers: [agent, subagent, delegation, model, spawn, task]
 applies-to: []
 ---
 
-# Agent delegation (ADR-022)
+# Agent delegation (ADR-CORE-022)
 
 When the main agent delegates to a subagent:
 
@@ -33,4 +33,4 @@ When the main agent delegates to a subagent:
 4. **Senior persona — main agent included.** Every task — the main agent's own execution **and** each
    subagent's — is framed as a senior specialist for that task's domain and delivered at senior level;
    state the persona in the subagent's prompt. Drop below senior only when a lighter touch is
-   demonstrably the better fit, never as a shortcut. (ADR-002, ADR-022)
+   demonstrably the better fit, never as a shortcut. (ADR-CORE-002, ADR-CORE-022)

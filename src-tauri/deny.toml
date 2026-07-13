@@ -1,0 +1,39 @@
+# cargo-deny configuration (ADR-009, ADR-011). Supply-chain gate for the Rust dependencies.
+
+[advisories]
+# Security vulnerabilities (CVEs) and yanked crates fail for ALL dependencies.
+yanked = "deny"
+# "Unmaintained" advisories are only enforced for our own/workspace + direct deps. Transitive
+# unmaintained crates (e.g. gtk-rs GTK3 bindings) come from Tauri's Linux stack with no safe upgrade
+# available — upstream-controlled and unavoidable (ADR-009).
+unmaintained = "workspace"
+ignore = []
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[licenses]
+confidence-threshold = 0.8
+# Our own crate is UNLICENSED (private app, ADR-009); do not license-check workspace members.
+private = { ignore = true }
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "MPL-2.0",
+  "Unicode-3.0",
+  "CDLA-Permissive-2.0",
+  # Boost Software License — permissive, OSI-approved, no attribution-in-binary requirement. Pulled
+  # in transitively by the Windows clipboard path (tauri-plugin-clipboard-manager → arboard →
+  # clipboard-win → error-code), used for "Copy song link" (ADR-009).
+  "BSL-1.0",
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

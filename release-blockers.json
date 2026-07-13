@@ -1,0 +1,45 @@
+{
+  "$comment": "Decisions that must be made before Huginn is released to anyone (ADR-PROJ-002). `npm run release:check` FAILS while any entry is unresolved, and it is the first step of any release build. It is deliberately NOT part of check:all: a blocker must not redden every development build, or the next agent learns to ignore gates. Closing a blocker means setting resolved:true and writing the decision into `resolution` — deleting an entry to go green is falsifying a record (rule:code-quality).",
+  "blockers": [
+    {
+      "id": "publisher-and-identifier",
+      "resolved": false,
+      "title": "Decide the publisher — company (lysis.ai) or the maintainer's own GitHub org",
+      "why": "It fixes the bundle identifier. macOS keys the granted microphone and accessibility permissions to it; changing it after a release takes those permissions away from every existing user. The current value `ai.lysis.huginn` is a WORKING value, not a decision.",
+      "how": "Set `identifier` + `vendor` in app.identity.json, run `npm run identity:sync`, then set resolved:true here.",
+      "resolution": null
+    },
+    {
+      "id": "apple-developer-account",
+      "resolved": false,
+      "title": "Apple Developer Program (~99 USD/year)",
+      "why": "Unavoidable for ANY macOS distribution, App Store or not: notarisation needs a Developer ID certificate, and without it Gatekeeper blocks the app on the user's machine. Autostart via SMAppService also requires a signed app, so that feature cannot even be verified until this exists.",
+      "how": "Enrol, register the App ID for the final identifier, put the signing secrets into the release workflow (ADR-APP-023), then set resolved:true.",
+      "resolution": null
+    },
+    {
+      "id": "project-licence",
+      "resolved": false,
+      "title": "Decide the project licence",
+      "why": "It decides the cargo-deny allow-list and therefore which dependencies may ever be used. Adding a copyleft dependency before this is decided can foreclose the answer.",
+      "how": "Decide, put the text in LICENSE, align `src-tauri/deny.toml`'s licence allow-list, then set resolved:true.",
+      "resolution": null
+    },
+    {
+      "id": "name-and-trademark",
+      "resolved": false,
+      "title": "Name and trademark check for 'Huginn'",
+      "why": "The product brief demands it, and a prominent open-source project already carries the name. Publishing under a contested name is a problem that gets more expensive the later it is found.",
+      "how": "Run the checks the brief lists (software names, trademarks in the target markets, domains, app-store names, GitHub orgs), record the result in docs/product/name-and-identity.md, then set resolved:true.",
+      "resolution": null
+    },
+    {
+      "id": "visual-identity",
+      "resolved": false,
+      "title": "Huginn's own design system replaces the template's HUD look",
+      "why": "The repo currently carries saga's neon/chamfer palette as an inherited placeholder (ADR-PROJ-003). Shipping it would be shipping another product's face.",
+      "how": "Land Huginn's design system (tokens in globals.css + palette.ts, primitives in src/components/ui/**, new icons), then set resolved:true.",
+      "resolution": null
+    }
+  ]
+}

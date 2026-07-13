@@ -1,150 +1,200 @@
 {
   "generated": true,
-  "governanceVersion": "0.1.0",
-  "upstream": null,
+  "governanceVersion": "0.4.0",
+  "upstream": "kaoszwerg/saga-rust-template",
   "layers": [
     {
       "id": "core",
-      "source": null,
-      "version": "0.1.0"
+      "source": "kaoszwerg/althing",
+      "version": "0.3.0"
+    },
+    {
+      "id": "app",
+      "source": "kaoszwerg/saga-rust-template",
+      "version": "0.4.0"
     }
   ],
-  "optedOut": [],
-  "count": 69,
+  "optedOut": [
+    {
+      "path": ".claude/memory/glossary.md",
+      "layer": "app"
+    }
+  ],
+  "count": 106,
   "files": [
     {
+      "path": ".claude/memory/logging-contract.md",
+      "hash": "d9b04dabdb8c31e5",
+      "layer": "app"
+    },
+    {
       "path": ".claude/memory/README.md",
-      "hash": "b02ba7e984eefa44",
+      "hash": "3496f0082a690091",
       "layer": "core"
     },
     {
       "path": ".claude/memory/repo-is-memory-home.md",
-      "hash": "99305e6a6a7f1bf0",
+      "hash": "e79657a95d930e06",
       "layer": "core"
     },
     {
       "path": ".claude/memory/response-prelude.md",
-      "hash": "3d97772ea313ec6c",
+      "hash": "fc0e8dd5ad9ddae9",
       "layer": "core"
     },
     {
       "path": ".claude/memory/user-conventions.md",
-      "hash": "cacacd061b81a11d",
+      "hash": "f7fb000dc1e5bf8b",
       "layer": "core"
     },
     {
       "path": ".claude/memory/version-bump-trigger.md",
-      "hash": "343f73e74c7918ae",
+      "hash": "71618bc067b5dee2",
       "layer": "core"
     },
     {
       "path": ".claude/rules/agent-delegation.md",
-      "hash": "ddfb034be2602a2f",
+      "hash": "99864bba94e585c0",
       "layer": "core"
     },
     {
       "path": ".claude/rules/automation.md",
-      "hash": "bdbbe1aef008dcf3",
+      "hash": "d5ad20fa96a7f267",
       "layer": "core"
     },
     {
       "path": ".claude/rules/clarify-and-plan.md",
-      "hash": "8af369ded5d88b6e",
+      "hash": "2a2fa1b9fa47ab35",
       "layer": "core"
     },
     {
       "path": ".claude/rules/code-quality.md",
-      "hash": "d00730b0c418023c",
+      "hash": "7fb8b7e1225309ff",
       "layer": "core"
     },
     {
       "path": ".claude/rules/context-loading.md",
-      "hash": "7f8f128b57f7eb6a",
+      "hash": "94a84613199ae83c",
       "layer": "core"
     },
     {
       "path": ".claude/rules/core-principles.md",
-      "hash": "ba01983ccce89e55",
+      "hash": "d08b16c578346bcc",
       "layer": "core"
     },
     {
+      "path": ".claude/rules/cross-platform.md",
+      "hash": "bc3212d6ca20bd5b",
+      "layer": "app"
+    },
+    {
       "path": ".claude/rules/dependencies.md",
-      "hash": "f03446ae73499c96",
+      "hash": "e3e1855acf59566e",
       "layer": "core"
     },
     {
       "path": ".claude/rules/documentation.md",
-      "hash": "25b2828345bac8ce",
+      "hash": "f9aeb63fad150053",
       "layer": "core"
     },
     {
       "path": ".claude/rules/editing-workflow.md",
-      "hash": "89274df1e2f2d6fe",
+      "hash": "df1469a088dba38f",
       "layer": "core"
     },
     {
+      "path": ".claude/rules/frontend-architecture.md",
+      "hash": "b4978772c2715ea1",
+      "layer": "app"
+    },
+    {
       "path": ".claude/rules/git-workflow.md",
-      "hash": "83e74bce1f6babe7",
+      "hash": "ea53e1ad38f54e9d",
       "layer": "core"
     },
     {
       "path": ".claude/rules/knowledge-handover.md",
-      "hash": "be146671328c7858",
+      "hash": "920e8aae80ab4f57",
       "layer": "core"
     },
     {
       "path": ".claude/rules/logging.md",
-      "hash": "fec401e9a5f11717",
+      "hash": "0213c17cd388c9bf",
       "layer": "core"
     },
     {
       "path": ".claude/rules/no-guessing.md",
-      "hash": "68b6a8662a4ab96f",
+      "hash": "5df2fc07215d8368",
       "layer": "core"
     },
     {
       "path": ".claude/rules/privacy.md",
-      "hash": "a73ff9a2488ff19c",
+      "hash": "781ffeda86017e15",
       "layer": "core"
     },
     {
       "path": ".claude/rules/project/README.md",
-      "hash": "c0c1bccd0aa7214d",
+      "hash": "23737f6923dc5aee",
       "layer": "core"
     },
     {
       "path": ".claude/rules/response-format.md",
-      "hash": "4abe9505f5f7c3d8",
+      "hash": "b99b72e5f9ad132f",
       "layer": "core"
     },
     {
       "path": ".claude/rules/reusability.md",
-      "hash": "b77274d9b144f62b",
+      "hash": "35e1f806dbbc1879",
       "layer": "core"
     },
     {
       "path": ".claude/rules/rule-maintenance.md",
-      "hash": "ea5ca98fd94e7c38",
+      "hash": "77b0dbbad45dfbe1",
       "layer": "core"
+    },
+    {
+      "path": ".claude/rules/rust-conventions.md",
+      "hash": "bd65b5bace3431a6",
+      "layer": "app"
     },
     {
       "path": ".claude/rules/security.md",
-      "hash": "d16e1c9e78602ce1",
+      "hash": "dfd097b034b8d9ee",
       "layer": "core"
+    },
+    {
+      "path": ".claude/rules/stack-release.md",
+      "hash": "cdb670f0681f4bdc",
+      "layer": "app"
+    },
+    {
+      "path": ".claude/rules/stack-tauri.md",
+      "hash": "69180cda12298fa3",
+      "layer": "app"
     },
     {
       "path": ".claude/rules/testing.md",
-      "hash": "21c291cf8a2a4bb6",
+      "hash": "93de987140a8c9fb",
       "layer": "core"
     },
     {
+      "path": ".claude/rules/theming.md",
+      "hash": "e81232b621e7e6d9",
+      "layer": "app"
+    },
+    {
+      "path": ".claude/rules/ui-design.md",
+      "hash": "eccbe44dba3d320a",
+      "layer": "app"
+    },
+    {
       "path": ".claude/rules/verification.md",
-      "hash": "e2f9ce4569157bd6",
+      "hash": "80224c791cb64881",
       "layer": "core"
     },
     {
       "path": ".claude/rules/versioning.md",
-      "hash": "e20fb482c43276da",
+      "hash": "0b80872d37135cf5",
       "layer": "core"
     },
     {
@@ -156,6 +206,16 @@
       "path": ".gitattributes",
       "hash": "4a3cb5a2e9c659ba",
       "layer": "core"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "hash": "bf9ed3567f00ffe8",
+      "layer": "app"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "hash": "705ca3e9bbfca098",
+      "layer": "app"
     },
     {
       "path": ".husky/commit-msg",
@@ -173,13 +233,23 @@
       "layer": "core"
     },
     {
+      "path": ".lintstagedrc.json",
+      "hash": "8e1c2958eab7aac6",
+      "layer": "app"
+    },
+    {
+      "path": ".prettierrc.json",
+      "hash": "ceb0884ac5d51996",
+      "layer": "app"
+    },
+    {
       "path": ".secretlintrc.json",
       "hash": "1c0e86ca72216c22",
       "layer": "core"
     },
     {
       "path": "CLAUDE.md",
-      "hash": "b0ea762e7eb41a18",
+      "hash": "83d6cbe3a2c54007",
       "layer": "core"
     },
     {
@@ -188,153 +258,258 @@
       "layer": "core"
     },
     {
-      "path": "docs/adr/002-best-solution-principle.md",
-      "hash": "e11bd88c85ca799b",
+      "path": "docs/adr/app-001-tauri-rust-react-stack.md",
+      "hash": "fdb64269384173f8",
+      "layer": "app"
+    },
+    {
+      "path": "docs/adr/app-020-hud-design-system.md",
+      "hash": "e659cd2acba40f9d",
+      "layer": "app"
+    },
+    {
+      "path": "docs/adr/app-021-tauri-window-chrome.md",
+      "hash": "9bab1656ff4a63cf",
+      "layer": "app"
+    },
+    {
+      "path": "docs/adr/app-023-cross-platform-release-signing.md",
+      "hash": "7e0cca3319b34dd3",
+      "layer": "app"
+    },
+    {
+      "path": "docs/adr/app-025-logging-architecture.md",
+      "hash": "8b7a5c2c66b42240",
+      "layer": "app"
+    },
+    {
+      "path": "docs/adr/app-026-no-native-ui-primitives.md",
+      "hash": "b005d7fc89fb11a6",
+      "layer": "app"
+    },
+    {
+      "path": "docs/adr/app-031-app-identity-ssot.md",
+      "hash": "2f84baf55fd29efc",
+      "layer": "app"
+    },
+    {
+      "path": "docs/adr/core-002-best-solution-principle.md",
+      "hash": "f40cfa75b67c4159",
       "layer": "core"
     },
     {
-      "path": "docs/adr/003-repo-single-source-of-truth.md",
-      "hash": "a70f536d5de35b6e",
+      "path": "docs/adr/core-003-repo-single-source-of-truth.md",
+      "hash": "e080cfb7837982da",
       "layer": "core"
     },
     {
-      "path": "docs/adr/004-verify-first-no-guessing.md",
-      "hash": "5013540798557d5a",
+      "path": "docs/adr/core-004-verify-first-no-guessing.md",
+      "hash": "d67fe0d9dcd6afb2",
       "layer": "core"
     },
     {
-      "path": "docs/adr/005-reusability-policy.md",
-      "hash": "08fcfba418a1a9c4",
+      "path": "docs/adr/core-005-reusability-policy.md",
+      "hash": "203df55f43c490db",
       "layer": "core"
     },
     {
-      "path": "docs/adr/006-context-budget-selective-loading.md",
-      "hash": "7af831c3a9a06a01",
+      "path": "docs/adr/core-006-context-budget-selective-loading.md",
+      "hash": "bd4634fa4c9924b4",
       "layer": "core"
     },
     {
-      "path": "docs/adr/007-generated-indexes-staleness-gate.md",
-      "hash": "a013df6cc6ca4043",
+      "path": "docs/adr/core-007-generated-indexes-staleness-gate.md",
+      "hash": "0a10d99a189285a5",
       "layer": "core"
     },
     {
-      "path": "docs/adr/008-quality-pipeline.md",
-      "hash": "d7e5fabb4010b3d7",
+      "path": "docs/adr/core-008-quality-pipeline.md",
+      "hash": "36e65e9bc4208e59",
       "layer": "core"
     },
     {
-      "path": "docs/adr/009-dependency-policy.md",
-      "hash": "6ec785a729ce6028",
+      "path": "docs/adr/core-009-dependency-policy.md",
+      "hash": "3e400c04bbca0abf",
       "layer": "core"
     },
     {
-      "path": "docs/adr/010-testing-strategy.md",
-      "hash": "c1c964dd03448bc6",
+      "path": "docs/adr/core-010-testing-strategy.md",
+      "hash": "108a89e2d77f7f72",
       "layer": "core"
     },
     {
-      "path": "docs/adr/011-security-by-design.md",
-      "hash": "b6f430abe75f3c7c",
+      "path": "docs/adr/core-011-security-by-design.md",
+      "hash": "481588fe692d76ed",
       "layer": "core"
     },
     {
-      "path": "docs/adr/022-agent-delegation-governance.md",
-      "hash": "5df82d85443294db",
+      "path": "docs/adr/core-022-agent-delegation-governance.md",
+      "hash": "5d9708c0b0c6367f",
       "layer": "core"
     },
     {
-      "path": "docs/adr/024-versioning-and-build-channels.md",
-      "hash": "0ecdf1c97d64eddc",
+      "path": "docs/adr/core-024-versioning-and-build-channels.md",
+      "hash": "4d2b3d1116d6ec49",
       "layer": "core"
     },
     {
-      "path": "docs/adr/030-portable-governance-core.md",
-      "hash": "c573b60476ef02d2",
+      "path": "docs/adr/core-030-portable-governance-core.md",
+      "hash": "ba14808a5edd3948",
       "layer": "core"
     },
     {
-      "path": "docs/adr/032-config-layering-project-overlays.md",
-      "hash": "05385eb6a811e5d0",
+      "path": "docs/adr/core-032-config-layering-project-overlays.md",
+      "hash": "2745497fcce19096",
       "layer": "core"
     },
     {
-      "path": "docs/adr/033-governance-layers-cascade.md",
-      "hash": "8ed6beb3828181c3",
+      "path": "docs/adr/core-033-governance-layers-cascade.md",
+      "hash": "5a30cb270e9d0750",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/core-034-layered-adr-identifiers.md",
+      "hash": "8eb53f2c6ffcc006",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/core-035-cross-layer-supersession.md",
+      "hash": "99ce550ddf9e0768",
       "layer": "core"
     },
     {
       "path": "docs/adr/project/README.md",
-      "hash": "6f898abf77de22cb",
+      "hash": "2c23cfbdb021496a",
       "layer": "core"
     },
     {
       "path": "docs/migrations/001-config-layering.md",
-      "hash": "cdc459d7ccb91557",
+      "hash": "7fc90f1a767b33e6",
       "layer": "core"
     },
     {
       "path": "docs/migrations/002-versioning-per-change.md",
-      "hash": "899f5d4a11b5c4d9",
+      "hash": "a51cb958b5de27da",
       "layer": "core"
     },
     {
       "path": "docs/migrations/003-governance-layers.md",
-      "hash": "3472063403c510e0",
+      "hash": "000632b651f0a4e1",
       "layer": "core"
+    },
+    {
+      "path": "docs/migrations/004-layered-adr-ids.md",
+      "hash": "8d20834337ecb5aa",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/005-cross-layer-supersession.md",
+      "hash": "f9f6609d0328ad74",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/100-ui-defaults-not-libraries.md",
+      "hash": "67464e9fc8640eda",
+      "layer": "app"
+    },
+    {
+      "path": "docs/migrations/101-ui-boundary-gate.md",
+      "hash": "306420e3520c2c1c",
+      "layer": "app"
+    },
+    {
+      "path": "docs/migrations/102-devdependency-bypass-closed.md",
+      "hash": "71b7408c4b97857b",
+      "layer": "app"
     },
     {
       "path": "docs/migrations/README.md",
-      "hash": "74246affc37b1a0c",
+      "hash": "34a7b26f19b907a6",
       "layer": "core"
     },
     {
+      "path": "eslint.config.mjs",
+      "hash": "c8c8deff4d4c632a",
+      "layer": "app"
+    },
+    {
+      "path": "knip.config.js",
+      "hash": "38955659f3388a5b",
+      "layer": "app"
+    },
+    {
+      "path": "scripts/bootstrap.mjs",
+      "hash": "89f85871cd1f803a",
+      "layer": "app"
+    },
+    {
       "path": "scripts/check-index.mjs",
-      "hash": "f871fa0bc5b39d36",
+      "hash": "772e97c3d81c7062",
       "layer": "core"
     },
     {
       "path": "scripts/context-for.mjs",
-      "hash": "ff20a9aae1edb4eb",
+      "hash": "dd54282a057f8dba",
       "layer": "core"
     },
     {
       "path": "scripts/governance-init.mjs",
-      "hash": "3c235c5861ccca3d",
+      "hash": "d9fe6a001de7bfff",
       "layer": "core"
     },
     {
       "path": "scripts/governance-manifest.mjs",
-      "hash": "a81f8a8c649bb64b",
+      "hash": "f4e6e69d867e57fe",
       "layer": "core"
     },
     {
       "path": "scripts/governance-update.mjs",
-      "hash": "47b79b7ea321e507",
+      "hash": "c63fbcd3c8383800",
       "layer": "core"
     },
     {
+      "path": "scripts/lib/bootstrap-fork.mjs",
+      "hash": "12efaff316286289",
+      "layer": "app"
+    },
+    {
+      "path": "scripts/lib/bootstrap-fork.test.mjs",
+      "hash": "d6886ed6f1cc4b48",
+      "layer": "app"
+    },
+    {
       "path": "scripts/lib/governance-core.mjs",
-      "hash": "192753274da9e289",
+      "hash": "64fecff65b8d85db",
       "layer": "core"
     },
     {
       "path": "scripts/lib/governance-core.test.mjs",
-      "hash": "d985c25c577a38ed",
+      "hash": "f38db387e1a18413",
       "layer": "core"
     },
     {
       "path": "scripts/lib/governance.mjs",
-      "hash": "109d510572a031fe",
+      "hash": "5bac8a876bd6f1d8",
       "layer": "core"
     },
     {
       "path": "scripts/lib/governance.test.mjs",
-      "hash": "1bce7b8757044fb9",
+      "hash": "a135eb200dca2250",
       "layer": "core"
     },
     {
+      "path": "scripts/lib/ui-boundary.mjs",
+      "hash": "1f6fcdd3d4cb73e6",
+      "layer": "app"
+    },
+    {
+      "path": "scripts/lib/ui-boundary.test.mjs",
+      "hash": "6e6eb6767430179d",
+      "layer": "app"
+    },
+    {
       "path": "scripts/lint-memory.mjs",
-      "hash": "807f703b63ba393a",
+      "hash": "5d4a95f4cb7b86c5",
       "layer": "core"
     },
     {
@@ -353,9 +528,29 @@
       "layer": "core"
     },
     {
+      "path": "scripts/sync-identity.mjs",
+      "hash": "ac31082b5d3fbe3d",
+      "layer": "app"
+    },
+    {
       "path": "scripts/sync-index.mjs",
-      "hash": "c07d0f0be1e3c230",
+      "hash": "18b11df1233cefc0",
       "layer": "core"
+    },
+    {
+      "path": "scripts/sync-version.mjs",
+      "hash": "a6c6f6e9be615590",
+      "layer": "app"
+    },
+    {
+      "path": "scripts/sync-version.test.mjs",
+      "hash": "58dc722e1404f979",
+      "layer": "app"
+    },
+    {
+      "path": "src-tauri/deny.toml",
+      "hash": "a3edd65f7931816f",
+      "layer": "app"
     }
   ]
 }

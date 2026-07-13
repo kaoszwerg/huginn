@@ -8,7 +8,7 @@ triggers: [verify, proof, evidence, check, done, prove]
 applies-to: []
 ---
 
-# Verification (ADR-004, ADR-010)
+# Verification (ADR-CORE-004, ADR-CORE-010)
 
 - **Logic:** unit tests per module; integration tests for anything that crosses a module boundary.
   Filesystem behaviour is verified against a temp directory — never asserted from reading the code.

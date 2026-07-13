@@ -1,4 +1,4 @@
-# 002 — Version bumps follow the change, not the release (ADR-024)
+# 002 — Version bumps follow the change, not the release (ADR-CORE-024)
 
 **Audience: the agent working in a project built on this template.** Read this before your next commit
 and before anyone says the word "build". Two things changed: **when you bump** (now: every change) and

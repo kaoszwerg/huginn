@@ -8,7 +8,7 @@ triggers: [dependency, dependencies, package, add, license, supply-chain, vendor
 applies-to: ["package.json"]
 ---
 
-# Dependency addition gate (ADR-009)
+# Dependency addition gate (ADR-CORE-009)
 
 - **Justify before adding.** A new dependency is added only when the standard library or an existing
   dependency cannot do the job reasonably; prefer fewer, smaller, well-scoped packages over a large
@@ -24,11 +24,11 @@ applies-to: ["package.json"]
   auto-suppresses a finding and never pushes past an unresolved one.
 - **A recorded exception is a governed file, not a quiet edit.** Where the exception list lives in a file
   an upstream layer owns, a project changes it by opting that path out (`governance/opt-out.json`,
-  ADR-032) — the exception stays visible in a file the maintainer reviews, and the upstream's
+  ADR-CORE-032) — the exception stays visible in a file the maintainer reviews, and the upstream's
   supply-chain policy is never silently rewritten.
 - **Pin to avoid build drift.** Dependencies are declared with **exact** versions (no `^`/`~`), the
   lockfile is committed, and the gate/CI install and build from the lock (`npm ci`, and the equivalent
   `--locked`/frozen flag of every other toolchain in the project). A version bump is deliberate — a
   changed version *and* an updated lockfile — never floating.
-- **Version policy is separate.** *Which* version to move to is ADR-009 (latest stable, verified,
+- **Version policy is separate.** *Which* version to move to is ADR-CORE-009 (latest stable, verified,
   lockfiles committed); this rule governs *whether* to add the dependency at all.
