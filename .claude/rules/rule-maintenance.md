@@ -64,3 +64,7 @@ applies-to: [".claude/rules/**", "docs/adr/**", "scripts/**"]
 - **An opt-out is not a way to decline a decision.** It changes who owns a *file* (ADR-CORE-032), not
   which layer a *decision* came from — an opted-out app ADR is still an app ADR. To decline a decision,
   supersede it. Opt-out is the escape for **config**.
+- **Wanting to change something an upstream layer owns?** Read rule:upstream-changes *first*. It asks the
+  question that comes before "how do I get this through": **am I in the wrong layer?** — and it states
+  what upstreaming actually costs (a commit per layer, and it is a proposal to the maintainer, not
+  something you commit yourself).

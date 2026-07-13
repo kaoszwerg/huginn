@@ -1,27 +1,27 @@
 {
   "generated": true,
-  "governanceVersion": "0.4.0",
+  "governanceVersion": "0.4.1",
   "upstream": "kaoszwerg/saga-rust-template",
   "layers": [
     {
       "id": "core",
       "source": "kaoszwerg/althing",
-      "version": "0.3.0"
+      "version": "0.4.0"
     },
     {
       "id": "app",
       "source": "kaoszwerg/saga-rust-template",
-      "version": "0.4.0"
+      "version": "0.4.1"
     }
   ],
-  "optedOut": [
+  "optedOut": [],
+  "count": 108,
+  "files": [
     {
       "path": ".claude/memory/glossary.md",
+      "hash": "7946ec9dd508fdc4",
       "layer": "app"
-    }
-  ],
-  "count": 106,
-  "files": [
+    },
     {
       "path": ".claude/memory/logging-contract.md",
       "hash": "d9b04dabdb8c31e5",
@@ -149,7 +149,7 @@
     },
     {
       "path": ".claude/rules/rule-maintenance.md",
-      "hash": "77b0dbbad45dfbe1",
+      "hash": "c51eb2551e7bd483",
       "layer": "core"
     },
     {
@@ -186,6 +186,11 @@
       "path": ".claude/rules/ui-design.md",
       "hash": "eccbe44dba3d320a",
       "layer": "app"
+    },
+    {
+      "path": ".claude/rules/upstream-changes.md",
+      "hash": "a25a5ef59d40be07",
+      "layer": "core"
     },
     {
       "path": ".claude/rules/verification.md",
@@ -459,7 +464,7 @@
     },
     {
       "path": "scripts/governance-manifest.mjs",
-      "hash": "f4e6e69d867e57fe",
+      "hash": "503a0a5541a6fed4",
       "layer": "core"
     },
     {

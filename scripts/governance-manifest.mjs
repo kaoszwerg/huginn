@@ -24,18 +24,32 @@ function write() {
   );
 }
 
-// The only real ways to diverge from a file an upstream layer owns (ADR-CORE-032). Anything else the message
-// used to hint at does not exist — listing an option that has no implementation sends people hunting for
-// a flag that was never written.
+// The real ways to diverge from a file an upstream layer owns, in the order they should be considered.
+//
+// ADR-CORE-032 says: never advertise a mechanism that does not exist. The inverse costs just as much, and
+// it happened — this menu offered three options and silently omitted SUPERSEDE, which was the right one
+// for the case that hit it. The consumer was pushed toward opt-out (the worst fit), found it broken, and
+// wrote a workaround. A menu that hides the correct option is not a smaller defect than one that invents
+// a wrong one.
+//
+// The decision procedure itself is rule:upstream-changes, which the last line points at — the message
+// names the options, the rule says how to choose between them.
 const DIVERGE_OPTIONS = [
-  "  → files owned by an upstream layer must not be edited in place. Your options:",
-  "     1. project overlay — for lint/knip config, put your settings in `eslint.config.project.mjs`",
-  "        or `knip.project.json` (project-owned, merged on top, never overwritten).",
-  "     2. upstream it — the change belongs in the layer that owns the file: make it there, release,",
-  "        then `npm run governance:update`.",
-  "     3. opt out — take the path out of the pin by adding it to `governance/opt-out.json`",
-  '        ({"paths": ["<governed path>"]}). The file becomes project-owned: you keep your edit, and',
-  "        `governance:update` stops updating it (upstream fixes for it no longer reach you).",
+  "  → files owned by an upstream layer must not be edited in place. Your options, best first:",
+  "",
+  "     1. put it in YOUR layer — most changes are only true for this project. A new rule/ADR/script",
+  "        of your own needs nothing from the upstream at all. Ask honestly whether it is only-here.",
+  "     2. supersede it — to DECLINE an upstream decision, declare `supersedes: [<its id>]` in your own",
+  "        document (ADR-CORE-035). Their file is never touched, and you keep every other upstream fix.",
+  "        You do not need to own a file to disagree with it.",
+  "     3. overlay — for config the upstream provides one for: put your settings in",
+  "        `eslint.config.project.mjs` or `knip.project.json` (project-owned, merged on top).",
+  "     4. opt out — LAST RESORT, config only: add the path to `governance/opt-out.json`",
+  '        ({"paths": ["<governed path>"]}). You keep your edit and STOP RECEIVING every future upstream',
+  "        fix for that file. Printed on every update, on purpose.",
+  "",
+  "     Genuinely belongs upstream? It is a PROPOSAL to the maintainer, not something you commit: it is",
+  "     another repo, and it costs one commit per layer between the core and you (rule:upstream-changes).",
   "     To discard a local edit and restore the pinned content: `git checkout -- <path>`.",
 ].join("\n");
 
