@@ -65,6 +65,18 @@ export const config: WebdriverIO.Config = {
   mochaOpts: { ui: "bdd", timeout: 60_000 },
   reporters: ["spec"],
 
+  // The app builds a hidden overlay window at startup (ADR-PROJ-004), so a session can attach to the
+  // wrong one. Before each spec, switch to the MAIN window (its URL is not the overlay) and wait for the
+  // app to have mounted — otherwise the first assertion races the webview's first paint.
+  async before() {
+    const { browser, $ } = await import("@wdio/globals");
+    for (const handle of await browser.getWindowHandles()) {
+      await browser.switchToWindow(handle);
+      if (!(await browser.getUrl()).includes("overlay")) break;
+    }
+    await $('[data-testid="nav-home"]').waitForExist({ timeout: 15_000 });
+  },
+
   // tauri-driver is the WebDriver server; start it before the session and stop it after. It is not a
   // WDIO "service" because it is a plain child process, and keeping it explicit here keeps the one
   // moving part visible.
