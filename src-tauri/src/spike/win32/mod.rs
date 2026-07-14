@@ -5,6 +5,7 @@
 //! here and not guessed at** — they are built and measured on the Mac (PLAN.md phase 1b), because
 //! a `#[cfg(target_os = "macos")]` branch nobody has compiled is not a stub, it is fiction.
 
+pub mod clipboard;
 pub mod focus;
 pub mod inject;
 pub mod overlay;

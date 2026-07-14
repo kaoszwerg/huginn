@@ -107,12 +107,16 @@ observed. The spike code is throwaway; the findings are not.
 - ✅ **Huginn's own design system** (ADR-PROJ-003) — release blocker closed.
 - ✅ Settings, substantially: hotkey, model, recognition language, microphone, start/stop sounds,
   autostart, theme, UI language.
-- **Text post-processing (`huginn-text`)** — the crate exists and is wired into the pipeline:
-  - ✅ Trailing-space between dictations, and spoken structure commands ("neue Zeile" → newline, "neuer
-    Absatz" → blank line), per recognition language (German + English).
-  - ⬜ Spoken **punctuation** ("Komma" → ",") and special characters, as an opt-in mode — **not built**.
-  - ⬜ A user dictionary / custom vocabulary — **not built**.
-  - ⬜ **In-app discoverability** of the voice commands (a reference in Settings) — **not built**.
+- **Text post-processing (`huginn-text`)** — a rule engine (ADR-PROJ-010), wired into the pipeline:
+  - ✅ Trailing-space between dictations; spoken structure commands ("neue Zeile", "neuer Absatz"), per
+    recognition language.
+  - ✅ Spoken **punctuation** ("Komma" → ",") as an opt-in mode.
+  - ✅ **Custom commands and macros** — user-defined rules that insert a template, with `{date}`,
+    `{time}`, `{clipboard}`, `{cursor}` placeholders; edited in a **Commands** settings section, stored
+    on-device.
+  - ✅ **In-app discoverability**: the built-in commands are shown in Settings, and a **Help** view
+    documents push-to-talk, the hotkey, commands/macros and troubleshooting.
+  - ⬜ Special-character words beyond punctuation, and richer placeholders (templating logic) — open.
 - ⬜ Injection strategy choice (keystrokes vs. clipboard) and overlay position — **open**.
 
 ## Release blockers (they stop a build, not the work)

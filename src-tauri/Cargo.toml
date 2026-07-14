@@ -39,7 +39,7 @@ chrono = { version = "0.4.44", features = ["serde"] }
 
 [package]
 name = "huginn"
-version = "0.7.0"
+version = "0.8.0"
 description = "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings."
 authors = ["kaoszwerg"]
 edition = "2021"
@@ -106,6 +106,10 @@ windows = { version = "0.62.2", features = [
     "Win32_System_Threading",
     "Win32_System_LibraryLoader",
     "Win32_Graphics_Gdi",
+    # Clipboard read for the {clipboard} macro placeholder (ADR-PROJ-010).
+    "Win32_System_DataExchange",
+    "Win32_System_Memory",
+    "Win32_System_Ole",
 ] }
 
 [dev-dependencies]

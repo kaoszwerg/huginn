@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AudioLines, Mic, Palette, Power } from "lucide-react";
+import { AudioLines, MessageSquareText, Mic, Palette, Power } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Panel } from "../components/ui/Panel";
 import { Button } from "../components/ui/Button";
@@ -9,6 +9,7 @@ import { useSettings, useUpdateSettings } from "../hooks/useSettings";
 import { useHotkeyStatus, useSetHotkey } from "../hooks/useHotkey";
 import { useAutostart, useSetAutostart } from "../hooks/useAutostart";
 import { SpeechSection } from "./settings/SpeechSection";
+import { CommandsSection } from "./settings/CommandsSection";
 import { LANGUAGES } from "../i18n";
 import type { ThemeChoice } from "../bindings/ThemeChoice";
 
@@ -20,6 +21,7 @@ import type { ThemeChoice } from "../bindings/ThemeChoice";
 const SECTIONS = [
   { id: "recording", labelKey: "settings.sections.recording", Icon: Mic },
   { id: "speech", labelKey: "settings.sections.speech", Icon: AudioLines },
+  { id: "commands", labelKey: "settings.sections.commands", Icon: MessageSquareText },
   { id: "appearance", labelKey: "settings.sections.appearance", Icon: Palette },
   { id: "background", labelKey: "settings.sections.background", Icon: Power },
 ] as const;
@@ -61,6 +63,7 @@ export function SettingsView() {
       <div className="flex-1 space-y-4 overflow-auto p-6">
         {section === "recording" ? <RecordingSection /> : null}
         {section === "speech" ? <SpeechSection /> : null}
+        {section === "commands" ? <CommandsSection /> : null}
         {section === "appearance" ? <AppearanceSection /> : null}
         {section === "background" ? <BackgroundSection /> : null}
       </div>

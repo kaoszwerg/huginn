@@ -8,6 +8,7 @@ import { AboutDialog } from "./components/AboutDialog";
 import { Notice } from "./components/ui/Notice";
 import { Button } from "./components/ui/Button";
 import { HomeView } from "./views/HomeView";
+import { HelpView } from "./views/HelpView";
 import { LogsView } from "./views/LogsView";
 import { SettingsView } from "./views/SettingsView";
 import { useScrollTop } from "./hooks/useScrollTop";
@@ -71,6 +72,7 @@ export default function App() {
         <Sidebar />
         <main ref={mainRef} className="flex-1 overflow-hidden">
           {view === "home" ? <HomeView /> : null}
+          {view === "help" ? <HelpView /> : null}
           {view === "logs" ? <LogsView /> : null}
           {view === "settings" ? <SettingsView /> : null}
         </main>

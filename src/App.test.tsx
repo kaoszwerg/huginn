@@ -25,6 +25,8 @@ vi.mock("./api/commands", () => ({
       recognition_language: "de",
       sounds: true,
       hotkey: "Ctrl+Space",
+      rules: [],
+      dictate_punctuation: false,
     }),
     updateSettings: vi.fn(),
     getHotkeyStatus: vi

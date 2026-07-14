@@ -11,7 +11,8 @@
 
 use crate::error::{AppError, Result};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE,
+    SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP,
+    KEYEVENTF_UNICODE, VIRTUAL_KEY, VK_LEFT,
 };
 
 /// Build the `INPUT` sequence for `text`: one key-down + one key-up per UTF-16 code unit.
@@ -74,6 +75,50 @@ pub fn send_text(text: &str) -> Result<usize> {
         )));
     }
     Ok(sent)
+}
+
+/// Move the caret left by `count` characters — synthesised Left-arrow presses, so a macro's `{cursor}`
+/// placeholder can leave the caret inside the inserted text (ADR-PROJ-010). Same capability and trust as
+/// [`send_text`] (ADR-PROJ-004): synthetic input into the focused window.
+pub fn move_caret_left(count: usize) -> Result<()> {
+    if count == 0 {
+        return Ok(());
+    }
+    let mut inputs = Vec::with_capacity(count * 2);
+    for _ in 0..count {
+        inputs.push(vk_event(VK_LEFT, false));
+        inputs.push(vk_event(VK_LEFT, true));
+    }
+
+    let sent = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) } as usize;
+    if sent != inputs.len() {
+        let os = std::io::Error::last_os_error();
+        return Err(AppError::Other(format!(
+            "SendInput moved the caret {sent} of {} steps ({os})",
+            inputs.len()
+        )));
+    }
+    Ok(())
+}
+
+/// A virtual-key event (for keys that are not characters, like the arrows). A key-down carries no flag.
+fn vk_event(vk: VIRTUAL_KEY, up: bool) -> INPUT {
+    INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: INPUT_0 {
+            ki: KEYBDINPUT {
+                wVk: vk,
+                wScan: 0,
+                dwFlags: if up {
+                    KEYEVENTF_KEYUP
+                } else {
+                    KEYBD_EVENT_FLAGS(0)
+                },
+                time: 0,
+                dwExtraInfo: 0,
+            },
+        },
+    }
 }
 
 #[cfg(test)]

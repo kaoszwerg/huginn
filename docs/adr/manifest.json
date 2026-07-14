@@ -1,6 +1,6 @@
 {
   "generated": true,
-  "count": 33,
+  "count": 34,
   "adrs": [
     {
       "id": "ADR-APP-001",
@@ -932,6 +932,49 @@
       "supersededBy": null,
       "path": "docs/adr/project/proj-009-crate-structure.md",
       "hash": "11ccac72c4675fec"
+    },
+    {
+      "id": "ADR-PROJ-010",
+      "layer": "proj",
+      "title": "Voice rules — one mechanism for structure commands, spoken punctuation and macros",
+      "tldr": "Spoken commands are rules: phrase(s) -> break/paragraph/insert-template. Built-ins seed it; user rules and macros extend it; templates carry placeholders.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "voice",
+        "command",
+        "commands",
+        "rule",
+        "rules",
+        "macro",
+        "macros",
+        "snippet",
+        "expansion",
+        "template",
+        "placeholder",
+        "punctuation",
+        "komma",
+        "zeile",
+        "absatz",
+        "newline",
+        "paragraph",
+        "dictionary",
+        "vocabulary",
+        "text",
+        "post-processing",
+        "cursor",
+        "clipboard"
+      ],
+      "applies-to": [
+        "src-tauri/crates/huginn-text/**",
+        "src-tauri/src/speech/**",
+        "src-tauri/src/commands/**",
+        "src/views/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-010-voice-rules-and-macros.md",
+      "hash": "ff0012566c1579c5"
     }
   ]
 }

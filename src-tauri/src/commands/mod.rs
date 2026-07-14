@@ -89,6 +89,8 @@ pub fn update_settings(
         recognition_language: None,
         sounds: None,
         hotkey: None,
+        rules: None,
+        dictate_punctuation: None,
     })?;
     tracing::debug!(
         ui_scale = next.ui_scale,
@@ -208,6 +210,46 @@ pub fn set_sounds(state: State<'_, AppState>, enabled: bool) -> Result<SettingsD
         sounds: Some(enabled),
         ..Default::default()
     })
+}
+
+/// Replace the full voice-command list (ADR-PROJ-010). The editor owns the list and sends it whole.
+///
+/// The rule *content* (phrases, macro text) is the user's own and is **not logged** — only the count
+/// (ADR-PROJ-007).
+#[tauri::command]
+pub fn set_rules(
+    state: State<'_, AppState>,
+    rules: Vec<crate::dto::VoiceRuleDto>,
+) -> Result<SettingsDto> {
+    tracing::info!(count = rules.len(), "set_rules");
+    state.settings.update(SettingsPatch {
+        rules: Some(rules),
+        ..Default::default()
+    })
+}
+
+/// Turn spoken punctuation ("Komma" → ",") on or off (off by default — it steals the literal word).
+#[tauri::command]
+pub fn set_dictate_punctuation(state: State<'_, AppState>, enabled: bool) -> Result<SettingsDto> {
+    tracing::info!(enabled, "set_dictate_punctuation");
+    state.settings.update(SettingsPatch {
+        dictate_punctuation: Some(enabled),
+        ..Default::default()
+    })
+}
+
+/// The built-in voice commands for the current recognition language, for the in-app reference.
+///
+/// SSOT with the engine (ADR-PROJ-010): the settings show exactly the phrases `huginn-text` acts on.
+#[tauri::command]
+pub fn list_builtin_commands(
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::dto::BuiltinCommandDto>> {
+    let language = state.settings.get().recognition_language;
+    Ok(huginn_text::builtin_reference(&language)
+        .into_iter()
+        .map(Into::into)
+        .collect())
 }
 
 /// The model catalogue, annotated with what is actually installed.

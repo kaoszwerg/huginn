@@ -37,6 +37,8 @@ describe("useSettings", () => {
       recognition_language: "de",
       sounds: true,
       hotkey: "Ctrl+Space",
+      rules: [],
+      dictate_punctuation: false,
     };
     vi.mocked(api.getSettings).mockResolvedValue(settings);
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -77,6 +79,8 @@ describe("useUpdateSettings", () => {
       recognition_language: "de",
       sounds: true,
       hotkey: "Ctrl+Space",
+      rules: [],
+      dictate_punctuation: false,
     };
     vi.mocked(api.updateSettings).mockResolvedValue(updated);
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });

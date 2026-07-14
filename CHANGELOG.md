@@ -8,6 +8,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Custom voice commands and macros, an opt-in punctuation mode, and an in-app guide** (ADR-PROJ-010).
+  `huginn-text` is now a **rule engine**: every spoken command is a rule mapping trigger phrase(s) to an
+  action — a line break, a paragraph, or **inserting a template**. That one mechanism is the built-in
+  commands, the new **spoken punctuation** ("Komma" → ",", off by default because it steals the literal
+  word), **your own commands**, and **macros** — a spoken word that inserts a whole passage. Macro
+  templates carry placeholders resolved on insertion: `{date}`, `{time}`, `{clipboard}`, and `{cursor}`
+  for where the caret lands afterwards. Rules are edited entirely in a new **Commands** settings section
+  (add / edit / delete, per recognition language), stored on-device, and the built-in commands are shown
+  there for reference (SSOT with the engine). A new **Help** view documents push-to-talk, the hotkey,
+  the commands and macros, and basic troubleshooting — the product no longer assumes the user already
+  knows how it works. The `{clipboard}` read and the `{cursor}` caret move are platform-trait methods
+  (Windows now; macOS with phase 1b) and the clipboard is read **only** when a firing macro needs it.
 - **Text post-processing — dictations no longer stick together, and you can speak line breaks**
   (`huginn-text`, PLAN.md phase 5). Whisper trims its output, so two dictations in a row were landing as
   one word ("Hallo Weltwie geht's"); every dictation now ends with a single trailing space. And because

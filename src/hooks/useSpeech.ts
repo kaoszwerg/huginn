@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/commands";
+import type { VoiceRuleDto } from "../bindings/VoiceRuleDto";
 
 /**
  * The microphones the system offers.
@@ -69,6 +70,38 @@ export function useSetSounds() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (enabled: boolean) => api.setSounds(enabled),
+    onSuccess: (settings) => qc.setQueryData(["settings"], settings),
+  });
+}
+
+/**
+ * The built-in voice commands for the current recognition language (ADR-PROJ-010).
+ *
+ * SSOT with the engine: the reference shows exactly the phrases the recogniser acts on. Re-fetched when
+ * the recognition language changes, since the phrases are language-specific.
+ */
+export function useBuiltinCommands() {
+  return useQuery({
+    queryKey: ["builtin-commands"],
+    queryFn: api.listBuiltinCommands,
+    staleTime: 60_000,
+  });
+}
+
+/** Replace the whole voice-command list (the editor sends the full array). */
+export function useSetRules() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (rules: VoiceRuleDto[]) => api.setRules(rules),
+    onSuccess: (settings) => qc.setQueryData(["settings"], settings),
+  });
+}
+
+/** Turn spoken punctuation on or off. */
+export function useSetDictatePunctuation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled: boolean) => api.setDictatePunctuation(enabled),
     onSuccess: (settings) => qc.setQueryData(["settings"], settings),
   });
 }

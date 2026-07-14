@@ -6,6 +6,7 @@
   "nav": {
     "aria": "Primary",
     "home": "Home",
+    "help": "Help",
     "logs": "Logs",
     "settings": "Settings"
   },
@@ -64,7 +65,8 @@
       "recording": "Recording",
       "appearance": "Appearance",
       "background": "Background",
-      "speech": "Recognition"
+      "speech": "Recognition",
+      "commands": "Commands"
     },
     "recording": {
       "title": "Push-to-talk",
@@ -128,6 +130,58 @@
     "microphonesFailed": "The microphones could not be listed.",
     "soundsTitle": "Sound",
     "soundsHint": "A short tone when recording starts and stops. With push-to-talk it is often the only confirmation that the microphone is really open."
+  },
+  "commands": {
+    "info": "Everything you speak that is not dictation: line and paragraph breaks, optional punctuation, and macros — a spoken word that inserts a whole passage. All of it stays on the device.",
+    "yourTitle": "Your commands",
+    "yourEmpty": "No commands of your own yet. Add one — for example a macro word that inserts a whole passage.",
+    "add": "Add command",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saveFailed": "The command could not be saved.",
+    "phrasesLabel": "Trigger",
+    "phrasesHint": "One or more spoken words, separated by commas.",
+    "phrasesPlaceholder": "signature, sig",
+    "actionLabel": "Action",
+    "action_line": "New line",
+    "action_paragraph": "New paragraph",
+    "action_insert": "Insert text",
+    "templateLabel": "Text",
+    "templatePlaceholder": "Kind regards,\n{cursor}",
+    "placeholderHelp": "Placeholders: {date} {time} {clipboard} {cursor} — for literal braces use {{ and }}.",
+    "languageLabel": "Language",
+    "thisLanguage": "{{lang}} only",
+    "allLanguages": "All languages",
+    "punctuationTitle": "Dictate punctuation",
+    "punctuationHint": "When on, \"comma\" becomes \",\", \"period\" becomes \".\", and so on. In return you can no longer dictate those words literally — which is why it is off by default.",
+    "builtinTitle": "Built-in commands",
+    "builtinHint": "These commands are always there. They depend on the recognition language.",
+    "builtinFailed": "The built-in commands could not be loaded.",
+    "effect_line": "Line break",
+    "effect_paragraph": "Paragraph",
+    "effect_punctuation": "inserts \"{{char}}\""
+  },
+  "help": {
+    "title": "Help",
+    "intro": "{{name}} turns speech into text — straight into the application you are working in, entirely on this device.",
+    "privacyTitle": "Your voice stays here",
+    "privacyBody": "Everything runs locally. Audio and recognised text never leave the device — no cloud, no telemetry, no stored recordings. The only outbound connection is the model download, which you start yourself.",
+    "howTitle": "How to dictate",
+    "how1": "Hold the push-to-talk key (default: Ctrl+Space).",
+    "how2": "Speak while you hold it. An overlay shows that Huginn is listening.",
+    "how3": "Release. The recognised text is inserted where your cursor was.",
+    "hotkeyTitle": "The key",
+    "hotkeyBody": "The combination is yours to choose under Settings → Recording. If another application already owns it, Huginn tells you at the top of the window — it will not dictate silently into nowhere.",
+    "commandsTitle": "Commands and macros",
+    "commandsInfo": "You set all of this under Settings → Commands.",
+    "commandsBody": "Some things cannot be dictated, only spoken: say \"new line\" for a line break or \"new paragraph\" for a blank line. Optionally you can speak punctuation too (\"comma\", \"period\").",
+    "macrosBody": "Macros are trigger words that insert a whole passage — for example \"signature\" for your sign-off. A macro's text may carry placeholders: {date}, {time}, {clipboard}, and {cursor} for where the caret should land afterwards.",
+    "troubleTitle": "When something does not work",
+    "troubleNoModel": "Nothing is recognised and no model is installed? Download one under Settings → Recognition.",
+    "troubleHotkey": "The key does nothing? Another application probably owns it — pick a different combination.",
+    "troubleSilent": "You speak but nothing arrives? Check the microphone under Settings → Recognition, and turn the sound on to hear whether it is recording."
   },
   "jobs": {
     "cancel": "Cancel"

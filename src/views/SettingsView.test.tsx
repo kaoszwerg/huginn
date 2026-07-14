@@ -37,6 +37,8 @@ const DEFAULTS: SettingsDto = {
   recognition_language: "de",
   sounds: true,
   hotkey: "Ctrl+Space",
+  rules: [],
+  dictate_punctuation: false,
 };
 
 const ARMED: HotkeyStatus = { shortcut: "Ctrl+Space", registered: true, error: null };

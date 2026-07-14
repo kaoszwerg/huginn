@@ -3,9 +3,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 /** Top-level views (sidebar navigation). Product views are added here as they land. */
-export type ViewId = "home" | "logs" | "settings";
+export type ViewId = "home" | "help" | "logs" | "settings";
 
-const VIEWS: ViewId[] = ["home", "logs", "settings"];
+const VIEWS: ViewId[] = ["home", "help", "logs", "settings"];
 
 export interface UiState {
   view: ViewId;

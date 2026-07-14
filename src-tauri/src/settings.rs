@@ -31,6 +31,11 @@ pub struct SettingsPatch {
     /// `spike::set_hotkey`): storing a shortcut that cannot be registered would leave the user with
     /// a setting that lies.
     pub hotkey: Option<String>,
+    /// The full voice-command list, replacing whatever was there (the editor owns the list and sends
+    /// it whole — ADR-PROJ-010).
+    pub rules: Option<Vec<crate::dto::VoiceRuleDto>>,
+    /// Whether spoken punctuation is active.
+    pub dictate_punctuation: Option<bool>,
 }
 
 /// Thread-safe settings store: in-memory state + the JSON file it is persisted to.
@@ -118,6 +123,12 @@ impl SettingsStore {
             }
             if let Some(hotkey) = patch.hotkey {
                 guard.hotkey = hotkey;
+            }
+            if let Some(rules) = patch.rules {
+                guard.rules = rules;
+            }
+            if let Some(dictate_punctuation) = patch.dictate_punctuation {
+                guard.dictate_punctuation = dictate_punctuation;
             }
             guard.clone()
         };

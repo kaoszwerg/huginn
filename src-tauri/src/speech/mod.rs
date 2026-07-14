@@ -96,11 +96,11 @@ pub fn start_recording(app: &AppHandle) -> Result<()> {
 
 /// Stop capturing and recognise. Called on key-up.
 ///
-/// Returns the text ready to insert — the recognised words plus a single trailing space so that
-/// back-to-back dictations do not run together (see [`with_insertion_spacing`]) — or `None` when
+/// Returns the processed text ready to insert — the recognised words run through `huginn-text` (spoken
+/// commands, macros, a trailing space), together with where the caret should land — or `None` when
 /// there was nothing to recognise (the key was tapped rather than held). **The text is returned,
-/// never logged.**
-pub fn finish_recording(app: &AppHandle) -> Result<Option<String>> {
+/// never logged** (ADR-PROJ-007).
+pub fn finish_recording(app: &AppHandle) -> Result<Option<huginn_text::Processed>> {
     let state = app.state::<SpeechState>();
 
     let recorder = {
@@ -128,20 +128,22 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<String>> {
         huginn_audio::cue::play(Cue::Stop);
     }
 
-    let language = settings.recognition_language;
+    let language = settings.recognition_language.clone();
 
-    let mut worker = state
-        .worker
-        .lock()
-        .map_err(|_| AppError::Other("the worker lock is poisoned".into()))?;
+    let transcript = {
+        let mut worker = state
+            .worker
+            .lock()
+            .map_err(|_| AppError::Other("the worker lock is poisoned".into()))?;
 
-    let Some(worker) = worker.as_mut() else {
-        return Err(AppError::Other(
-            "no speech model is loaded — install one in the settings".into(),
-        ));
+        let Some(worker) = worker.as_mut() else {
+            return Err(AppError::Other(
+                "no speech model is loaded — install one in the settings".into(),
+            ));
+        };
+
+        worker.transcribe(&audio, Some(&language))?
     };
-
-    let transcript = worker.transcribe(&audio, Some(&language))?;
 
     // Counts and durations. NEVER the text (ADR-PROJ-007).
     tracing::info!(
@@ -149,10 +151,67 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<String>> {
         "text recognised and about to be inserted"
     );
 
-    // Post-process into the text actually inserted: spoken structure commands ("neue Zeile" → a real
-    // newline) and a trailing space so consecutive dictations do not stick together. Applied here, the
-    // one place both platforms funnel through, so neither injection path can forget it (`huginn-text`).
-    Ok(Some(huginn_text::process(&transcript, &language)))
+    // Post-process into the text actually inserted: spoken commands, macros, spacing (`huginn-text`,
+    // ADR-PROJ-010). Applied here, the one place both platforms funnel through, so neither injection
+    // path can forget it.
+    let user_rules: Vec<huginn_text::Rule> = settings.rules.iter().map(|r| r.to_rule()).collect();
+    let options = huginn_text::Options {
+        dictate_punctuation: settings.dictate_punctuation,
+    };
+    let ctx = build_context(&settings.rules, &language);
+    Ok(Some(huginn_text::process(
+        &transcript,
+        &language,
+        &user_rules,
+        &options,
+        &ctx,
+    )))
+}
+
+/// Resolve the runtime values a macro template might need — the clock, and the clipboard **only if a
+/// rule actually uses it**. Reading the clipboard on every dictation would be needless, and needlessly
+/// touching the user's clipboard (rule:privacy); so it is read lazily, and never logged (ADR-PROJ-007).
+fn build_context(rules: &[crate::dto::VoiceRuleDto], language: &str) -> huginn_text::Context {
+    let now = chrono::Local::now();
+    let base = language.split('-').next().unwrap_or("").to_lowercase();
+    let date = match base.as_str() {
+        "de" => now.format("%d.%m.%Y").to_string(),
+        "en" => now.format("%m/%d/%Y").to_string(),
+        _ => now.format("%Y-%m-%d").to_string(),
+    };
+    let time = now.format("%H:%M").to_string();
+
+    let clipboard = if uses_clipboard(rules) {
+        read_clipboard()
+    } else {
+        String::new()
+    };
+
+    huginn_text::Context {
+        date,
+        time,
+        clipboard,
+    }
+}
+
+/// Does any enabled rule's template reference `{clipboard}`? Only then is it worth reading.
+fn uses_clipboard(rules: &[crate::dto::VoiceRuleDto]) -> bool {
+    use crate::dto::VoiceActionDto;
+    rules.iter().any(|r| {
+        r.enabled && matches!(&r.action, VoiceActionDto::Insert(t) if t.contains("{clipboard}"))
+    })
+}
+
+/// The clipboard text, for a `{clipboard}` macro. Windows now; macOS is written on the Mac (phase 1b).
+fn read_clipboard() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        crate::spike::win32::clipboard::read_text().unwrap_or_default()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        String::new()
+    }
 }
 
 /// Load a model into the worker, starting the worker if it is not running.

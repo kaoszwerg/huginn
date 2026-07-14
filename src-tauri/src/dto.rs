@@ -35,6 +35,76 @@ pub enum ThemeChoice {
     Dark,
 }
 
+/// What a voice rule does (ADR-PROJ-010). Adjacently tagged so the frontend sees a clean union:
+/// `{ kind: "line" } | { kind: "paragraph" } | { kind: "insert", template: string }`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/bindings/")]
+#[serde(tag = "kind", content = "template", rename_all = "lowercase")]
+pub enum VoiceActionDto {
+    /// A single line break.
+    Line,
+    /// A blank line (two breaks).
+    Paragraph,
+    /// Insert a template — literal text with `{date}`/`{time}`/`{clipboard}`/`{cursor}` placeholders.
+    /// This one variant is both spoken punctuation and macros.
+    Insert(String),
+}
+
+/// A user-defined (or built-in) voice command (ADR-PROJ-010). Stored on-device in the settings.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/bindings/")]
+pub struct VoiceRuleDto {
+    /// Stable id, generated when the rule is created; how the editor addresses it.
+    pub id: String,
+    /// Trigger phrases, as spoken. Matched case-insensitively, punctuation-tolerant.
+    pub phrases: Vec<String>,
+    pub action: VoiceActionDto,
+    /// Recognition languages this fires on: `["de"]`, `["en"]`, or `["*"]` for every language.
+    pub languages: Vec<String>,
+    pub enabled: bool,
+}
+
+impl VoiceRuleDto {
+    /// Convert to the pure engine's rule type (the engine knows nothing about serde or the id).
+    pub fn to_rule(&self) -> huginn_text::Rule {
+        huginn_text::Rule {
+            phrases: self.phrases.clone(),
+            action: match &self.action {
+                VoiceActionDto::Line => huginn_text::Action::LineBreak,
+                VoiceActionDto::Paragraph => huginn_text::Action::Paragraph,
+                VoiceActionDto::Insert(t) => huginn_text::Action::Insert(t.clone()),
+            },
+            languages: self.languages.clone(),
+            enabled: self.enabled,
+        }
+    }
+}
+
+/// A built-in command, for the in-app reference (SSOT with the engine, ADR-PROJ-010).
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../src/bindings/")]
+pub struct BuiltinCommandDto {
+    /// The phrases that trigger it, as spoken.
+    pub phrases: Vec<String>,
+    /// `"line"`, `"paragraph"`, or `"punctuation"`.
+    pub kind: String,
+    /// The character a punctuation command inserts; empty otherwise.
+    pub inserts: String,
+    /// True for the opt-in punctuation set.
+    pub punctuation: bool,
+}
+
+impl From<huginn_text::BuiltinInfo> for BuiltinCommandDto {
+    fn from(b: huginn_text::BuiltinInfo) -> Self {
+        Self {
+            phrases: b.phrases,
+            kind: b.kind,
+            inserts: b.inserts,
+            punctuation: b.punctuation,
+        }
+    }
+}
+
 /// Persisted user preferences. Stored as JSON under `<app_data_dir>/settings.json`.
 ///
 /// Every field carries a serde default so a settings file written by an older version — missing a
@@ -94,6 +164,14 @@ pub struct SettingsDto {
     /// what the UI must show the user (rule:overlay-and-input).
     #[serde(default = "default_hotkey")]
     pub hotkey: String,
+    /// The user's voice commands and macros (ADR-PROJ-010). Empty by default — the built-in structure
+    /// commands need no entry here; this list is what the user adds on top.
+    #[serde(default)]
+    pub rules: Vec<VoiceRuleDto>,
+    /// When true, spoken punctuation ("Komma" → ",") is active. Off by default: it steals the literal
+    /// word, so the user opts in.
+    #[serde(default)]
+    pub dictate_punctuation: bool,
 }
 
 fn default_ui_scale() -> f64 {
@@ -158,6 +236,8 @@ impl Default for SettingsDto {
             recognition_language: default_recognition_language(),
             sounds: default_sounds(),
             hotkey: default_hotkey(),
+            rules: Vec::new(),
+            dictate_punctuation: false,
         }
     }
 }
@@ -202,6 +282,14 @@ mod tests {
             recognition_language: "de".to_string(),
             sounds: false,
             hotkey: "Ctrl+Shift+KeyJ".to_string(),
+            rules: vec![VoiceRuleDto {
+                id: "r1".to_string(),
+                phrases: vec!["grußformel".to_string()],
+                action: VoiceActionDto::Insert("Mit freundlichen Grüßen".to_string()),
+                languages: vec!["de".to_string()],
+                enabled: true,
+            }],
+            dictate_punctuation: true,
         };
         let json = serde_json::to_string(&s).expect("serialize");
         let back: SettingsDto = serde_json::from_str(&json).expect("deserialize");
@@ -209,6 +297,12 @@ mod tests {
         assert!(back.minimize_to_tray);
         assert_eq!(back.theme, ThemeChoice::Dark);
         assert_eq!(back.hotkey, "Ctrl+Shift+KeyJ");
+        assert!(back.dictate_punctuation);
+        assert_eq!(back.rules.len(), 1);
+        assert_eq!(
+            back.rules[0].action,
+            VoiceActionDto::Insert("Mit freundlichen Grüßen".to_string())
+        );
     }
 
     #[test]

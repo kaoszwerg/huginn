@@ -1,4 +1,4 @@
-import { Home, ScrollText, Settings } from "lucide-react";
+import { CircleHelp, Home, ScrollText, Settings } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "../ui/IconButton";
@@ -10,6 +10,7 @@ type NavItem = { id: ViewId; Icon: LucideIcon; labelKey: string };
 const MAIN_NAV: NavItem[] = [{ id: "home", Icon: Home, labelKey: "nav.home" }];
 
 const BOTTOM_NAV: NavItem[] = [
+  { id: "help", Icon: CircleHelp, labelKey: "nav.help" },
   { id: "logs", Icon: ScrollText, labelKey: "nav.logs" },
   { id: "settings", Icon: Settings, labelKey: "nav.settings" },
 ];

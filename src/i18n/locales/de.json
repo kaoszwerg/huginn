@@ -6,6 +6,7 @@
   "nav": {
     "aria": "Hauptnavigation",
     "home": "Start",
+    "help": "Hilfe",
     "logs": "Protokoll",
     "settings": "Einstellungen"
   },
@@ -64,7 +65,8 @@
       "recording": "Aufnahme",
       "appearance": "Erscheinungsbild",
       "background": "Hintergrund",
-      "speech": "Spracherkennung"
+      "speech": "Spracherkennung",
+      "commands": "Befehle"
     },
     "recording": {
       "title": "Push-to-talk",
@@ -128,6 +130,58 @@
     "microphonesFailed": "Die Mikrofone konnten nicht gelesen werden.",
     "soundsTitle": "Signalton",
     "soundsHint": "Ein kurzer Ton beim Start und Ende der Aufnahme. Bei Push-to-talk ist er oft die einzige Rückmeldung, dass das Mikrofon wirklich offen ist."
+  },
+  "commands": {
+    "info": "Alles, was du sprichst und was kein Diktat ist: Umbrüche, optional Satzzeichen, und Makros — ein gesprochenes Wort, das eine ganze Passage einfügt. Alles bleibt auf dem Gerät.",
+    "yourTitle": "Eigene Befehle",
+    "yourEmpty": "Noch keine eigenen Befehle. Füge einen hinzu — etwa ein Makro-Wort, das eine ganze Passage einfügt.",
+    "add": "Befehl hinzufügen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "saveFailed": "Der Befehl konnte nicht gespeichert werden.",
+    "phrasesLabel": "Auslöser",
+    "phrasesHint": "Ein oder mehrere gesprochene Wörter, durch Komma getrennt.",
+    "phrasesPlaceholder": "grußformel, gruß",
+    "actionLabel": "Aktion",
+    "action_line": "Neue Zeile",
+    "action_paragraph": "Neuer Absatz",
+    "action_insert": "Text einfügen",
+    "templateLabel": "Text",
+    "templatePlaceholder": "Mit freundlichen Grüßen,\n{cursor}",
+    "placeholderHelp": "Platzhalter: {date} {time} {clipboard} {cursor} — für geschweifte Klammern {{ und }}.",
+    "languageLabel": "Sprache",
+    "thisLanguage": "Nur {{lang}}",
+    "allLanguages": "Alle Sprachen",
+    "punctuationTitle": "Satzzeichen diktieren",
+    "punctuationHint": "Wenn an, wird \"Komma\" zu \",\", \"Punkt\" zu \".\" usw. Dafür kannst du diese Wörter dann nicht mehr wörtlich diktieren — deshalb ist es standardmäßig aus.",
+    "builtinTitle": "Eingebaute Befehle",
+    "builtinHint": "Diese Befehle sind immer da. Sie hängen von der Erkennungssprache ab.",
+    "builtinFailed": "Die eingebauten Befehle konnten nicht geladen werden.",
+    "effect_line": "Zeilenumbruch",
+    "effect_paragraph": "Absatz",
+    "effect_punctuation": "fügt \"{{char}}\" ein"
+  },
+  "help": {
+    "title": "Hilfe",
+    "intro": "{{name}} verwandelt gesprochene Sprache in Text — direkt in der Anwendung, in der du gerade arbeitest, vollständig auf diesem Gerät.",
+    "privacyTitle": "Deine Stimme bleibt hier",
+    "privacyBody": "Alles läuft lokal. Audio und erkannter Text verlassen das Gerät nie — keine Cloud, keine Telemetrie, keine gespeicherten Aufnahmen. Die einzige Verbindung nach außen ist der Modell-Download, den du selbst anstößt.",
+    "howTitle": "So diktierst du",
+    "how1": "Halte die Push-to-talk-Taste gedrückt (Standard: Strg+Leertaste).",
+    "how2": "Sprich, solange du hältst. Ein Overlay zeigt an, dass zugehört wird.",
+    "how3": "Lass los. Der erkannte Text wird dort eingefügt, wo dein Cursor stand.",
+    "hotkeyTitle": "Die Taste",
+    "hotkeyBody": "Die Tastenkombination ist frei wählbar unter Einstellungen → Aufnahme. Wenn eine andere Anwendung sie bereits belegt, sagt Huginn es dir oben im Fenster — es diktiert dann nicht stumm ins Leere.",
+    "commandsTitle": "Befehle und Makros",
+    "commandsInfo": "Alles hierzu stellst du unter Einstellungen → Befehle ein.",
+    "commandsBody": "Manches lässt sich nicht diktieren, sondern nur sprechen: Sag \"neue Zeile\" für einen Umbruch oder \"neuer Absatz\" für eine Leerzeile. Optional kannst du auch Satzzeichen sprechen (\"Komma\", \"Punkt\").",
+    "macrosBody": "Makros sind Auslösewörter, die eine ganze Passage einfügen — etwa \"grußformel\" für deine Grußzeile. Ein Makro-Text darf Platzhalter enthalten: {date}, {time}, {clipboard} und {cursor} für die Stelle, an der der Cursor danach steht.",
+    "troubleTitle": "Wenn etwas nicht geht",
+    "troubleNoModel": "Nichts wird erkannt und es ist kein Modell installiert? Lade eines unter Einstellungen → Spracherkennung.",
+    "troubleHotkey": "Die Taste reagiert nicht? Vermutlich belegt sie eine andere Anwendung — wähle eine andere Kombination.",
+    "troubleSilent": "Du sprichst, aber es kommt nichts an? Prüfe das Mikrofon unter Einstellungen → Spracherkennung und schalte den Signalton ein, um zu hören, ob aufgenommen wird."
   },
   "jobs": {
     "cancel": "Abbrechen"

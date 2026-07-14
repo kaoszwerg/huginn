@@ -30,6 +30,8 @@ function settings(ui_scale: number): SettingsDto {
     recognition_language: "de",
     sounds: true,
     hotkey: "Ctrl+Space",
+    rules: [],
+    dictate_punctuation: false,
   };
 }
 

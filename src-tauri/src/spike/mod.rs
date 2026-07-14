@@ -421,9 +421,9 @@ fn on_released(app: &AppHandle, session: &mut Option<Session>, at: Instant) {
         // `is_empty`, not `trim().is_empty()`: `finish_recording` already collapses silence to an empty
         // string, and a dictation that is *only* a "neue Zeile" command comes back as "\n" — whitespace
         // to `trim`, but real output that must be inserted, not discarded (huginn-text).
-        Ok(Some(text)) if !text.is_empty() => {
+        Ok(Some(processed)) if !processed.text.is_empty() => {
             let injected = Instant::now();
-            match win32::inject::send_text(&text) {
+            match win32::inject::send_text(&processed.text) {
                 Ok(events) => tracing::info!(
                     events,
                     inject_ms = injected.elapsed().as_millis(),
@@ -434,6 +434,12 @@ fn on_released(app: &AppHandle, session: &mut Option<Session>, at: Instant) {
                     // Text that vanished silently is the worst possible bug in a dictation tool
                     // (rule:overlay-and-input). It is reported, never swallowed.
                     tracing::error!(error = %e, "the text did not reach the target window");
+                }
+            }
+            // A macro's {cursor} placeholder: put the caret back where the user asked (ADR-PROJ-010).
+            if let Some(steps) = processed.cursor_from_end {
+                if let Err(e) = win32::inject::move_caret_left(steps) {
+                    tracing::warn!(error = %e, "could not reposition the caret after a macro");
                 }
             }
         }

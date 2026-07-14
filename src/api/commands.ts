@@ -9,6 +9,8 @@ import type { ThemeChoice } from "../bindings/ThemeChoice";
 import type { AudioDevice } from "../bindings/AudioDevice";
 import type { ModelStatus } from "../bindings/ModelStatus";
 import type { Job } from "../bindings/Job";
+import type { VoiceRuleDto } from "../bindings/VoiceRuleDto";
+import type { BuiltinCommandDto } from "../bindings/BuiltinCommandDto";
 
 /**
  * Typed facade over the backend `#[tauri::command]` surface. Every IPC call in the app flows through
@@ -66,6 +68,13 @@ export const api = {
   setMicrophone: (name: string | null) => invoke<SettingsDto>("set_microphone", { name }),
   /** Turn the start/stop sounds on or off. */
   setSounds: (enabled: boolean) => invoke<SettingsDto>("set_sounds", { enabled }),
+  /** Replace the full voice-command list — the editor owns the list and sends it whole (ADR-PROJ-010). */
+  setRules: (rules: VoiceRuleDto[]) => invoke<SettingsDto>("set_rules", { rules }),
+  /** Turn spoken punctuation ("Komma" → ",") on or off. Off by default: it steals the literal word. */
+  setDictatePunctuation: (enabled: boolean) =>
+    invoke<SettingsDto>("set_dictate_punctuation", { enabled }),
+  /** The built-in voice commands for the current recognition language, for the in-app reference. */
+  listBuiltinCommands: () => invoke<BuiltinCommandDto[]>("list_builtin_commands"),
   /** The model catalogue, annotated with what is actually installed. */
   listModels: () => invoke<ModelStatus[]>("list_models"),
   /**
