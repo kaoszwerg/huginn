@@ -40,7 +40,29 @@ theme: ThemeChoice,
  */
 language: string, 
 /**
- * The push-to-talk combination, in the shortcut syntax (`"Ctrl+Space"`, `"Ctrl+Shift+KeyJ"`).
+ * The microphone the user picked, by name.  means the system default — and a name that is
+ * no longer there falls back to the default too, rather than losing the sentence someone is in
+ * the middle of speaking (huginn-audio).
+ */
+microphone: string | null, 
+/**
+ * Which model recognises the speech. An id from the compiled-in catalogue (huginn-models).
+ */
+model: string, 
+/**
+ * The language Huginn **recognises** — not the language of the interface. German by default;
+ * the multilingual models handle German and English both (ADR-PROJ-006).
+ */
+recognition_language: string, 
+/**
+ * Play a short sound when recording starts and stops.
+ *
+ * On by default: with push-to-talk there is no other confirmation that the microphone is
+ * actually live, and an overlay the user is not looking at is not one.
+ */
+sounds: boolean, 
+/**
+ * The push-to-talk combination, in the shortcut syntax (, ).
  *
  * It is a *preference*, not a fact: the combination stored here may fail to register — another
  * application can already own it. Whether it is actually armed is [`HotkeyStatus`], and that is

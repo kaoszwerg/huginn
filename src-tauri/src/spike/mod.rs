@@ -72,17 +72,12 @@ const OFFSCREEN_Y: f64 = -10_000.0;
 
 /// Overrides for a spike run, so a measurement does not need a rebuild.
 const ENV_HOTKEY: &str = "HUGINN_SPIKE_HOTKEY";
-const ENV_TEXT: &str = "HUGINN_SPIKE_TEXT";
 
 /// Keeps the overlay on screen without holding the key — the only way to measure what a *living*
 /// transparent window costs over an hour (PLAN.md 1a.3, tauri#15471). It contradicts the product
 /// rule that the overlay exists only while recording, which is exactly why it is a measurement
 /// switch and not a setting.
 const ENV_STICKY_OVERLAY: &str = "HUGINN_SPIKE_OVERLAY_STICKY";
-
-/// What gets typed into the target on release. Not dictated content — there is no speech engine
-/// yet; this is the payload that proves the injection path works end to end.
-const DEFAULT_PROBE_TEXT: &str = "Huginn spike: injected without stealing focus.";
 
 /// What the hotkey thread hands to the overlay worker. Carries the instant the key actually moved,
 /// so the latency we report includes the time the message spent in the queue — the number the user
@@ -368,6 +363,13 @@ fn on_pressed(app: &AppHandle, session: &mut Option<Session>, at: Instant) {
     if let Err(e) = show_overlay(app, Some(&target), at) {
         tracing::error!(error = %e, "overlay failed to appear");
     }
+
+    // The microphone opens here, on the key — not after the overlay, not on a timer. Audio captured
+    // late is a word missing from the front of every sentence.
+    if let Err(e) = crate::speech::start_recording(app) {
+        tracing::error!(error = %e, "the microphone could not be opened");
+    }
+
     *session = Some(Session {
         target,
         started: at,
@@ -410,18 +412,40 @@ fn on_released(app: &AppHandle, session: &mut Option<Session>, at: Instant) {
         );
     }
 
-    // Inject while the overlay is still on screen: the harder proof, and the real sequence (the
-    // product inserts text before it takes the overlay down).
-    let text = std::env::var(ENV_TEXT).unwrap_or_else(|_| DEFAULT_PROBE_TEXT.to_string());
-    let injected = Instant::now();
-    match win32::inject::send_text(&text) {
-        Ok(events) => tracing::info!(
-            events,
-            inject_ms = injected.elapsed().as_millis(),
-            focus_kept,
-            "text injected into the focused window"
-        ),
-        Err(e) => tracing::error!(error = %e, "SPIKE FAILED: injection did not reach the target"),
+    // Recognise, then insert — while the overlay is still on screen, which is also the honest
+    // sequence: the user should see "listening" until the words actually land.
+    //
+    // The text is never logged (ADR-PROJ-007). It goes from the worker's pipe into the focused
+    // window, and nowhere else.
+    match crate::speech::finish_recording(app) {
+        Ok(Some(text)) if !text.trim().is_empty() => {
+            let injected = Instant::now();
+            match win32::inject::send_text(&text) {
+                Ok(events) => tracing::info!(
+                    events,
+                    inject_ms = injected.elapsed().as_millis(),
+                    focus_kept,
+                    "text inserted into the focused window"
+                ),
+                Err(e) => {
+                    // Text that vanished silently is the worst possible bug in a dictation tool
+                    // (rule:overlay-and-input). It is reported, never swallowed.
+                    tracing::error!(error = %e, "the text did not reach the target window");
+                }
+            }
+        }
+        Ok(Some(_)) => {
+            // The model heard nothing — silence, or a key tapped rather than held.
+            tracing::info!("nothing was recognised");
+        }
+        Ok(None) => {
+            tracing::debug!("no recording was open");
+        }
+        Err(e) => {
+            // No model installed, the worker died, the microphone failed. The user is told (the log
+            // feeds the Logs view, and the UI shows the state) — never silence.
+            tracing::error!(error = %e, "the recording could not be transcribed");
+        }
     }
 
     if let Err(e) = hide_overlay(app) {
@@ -728,12 +752,6 @@ mod tests {
         // A tiny virtual display (a remote session) must not push the window off-screen.
         let (x, y) = centre_bottom(200.0, 100.0, 1.0);
         assert!(x >= 0 && y >= 0, "got ({x}, {y})");
-    }
-
-    #[test]
-    fn the_probe_text_says_what_it_is() {
-        // It lands in the user's document during a spike run; it must be unmistakable.
-        assert!(DEFAULT_PROBE_TEXT.contains("Huginn"));
     }
 
     #[test]

@@ -25,6 +25,10 @@ function settings(ui_scale: number): SettingsDto {
     minimize_to_tray: false,
     theme: "system",
     language: "en",
+    microphone: null,
+    model: "ggml-base",
+    recognition_language: "de",
+    sounds: true,
     hotkey: "Ctrl+Space",
   };
 }

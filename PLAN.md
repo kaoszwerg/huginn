@@ -70,37 +70,45 @@ Developer account (ADR-PROJ-002) — that stays open, and is written as open.
 Output: a short report in `docs/` with the measurements, and the ADRs updated with what was actually
 observed. The spike code is throwaway; the findings are not.
 
-## Phase 2 — The skeleton that everything hangs on
+## Phase 2 — The skeleton that everything hangs on — **done on the Windows line** (v0.6.0, `check:all` green)
 
-- **Cargo workspace** rooted at `src-tauri/` (ADR-PROJ-009), crates created empty but building.
-- **Job registry + process monitor** (ADR-PROJ-008) — first, because everything after it reports through
-  it, and because it is also the logging chokepoint. `Job` generated to TypeScript via `gen:types`.
-- **`huginn-platform`**: the trait for paths, hotkey, overlay window, injection, autostart — plus the
-  **Windows** implementation, complete, with the spike's findings as real code. The **macOS**
-  implementation lands **[mac]**, on the Mac, in its own change.
-- Storage layout (ADR-PROJ-007): lowercase `huginn/` directories, resolved through the platform API.
+- ✅ **Cargo workspace** rooted at `src-tauri/` (ADR-PROJ-009): six crates, building and tested.
+- ✅ **Job registry + process monitor** (ADR-PROJ-008) — the logging chokepoint everything reports
+  through. `Job` generated to TypeScript via `gen:types` and rendered by `JobMonitor`.
+- ✅ Storage layout (ADR-PROJ-007): the models dir is resolved through Tauri's `app.path()`.
+- **Platform layer — partially.** The **Windows** implementation is complete and real code
+  (`src-tauri/src/spike/win32/`: focus-neutral overlay, `SendInput` injection, focus tracking) plus the
+  autostart plugin. **Not yet extracted into a clean `huginn-platform` trait crate** — that refactor and
+  the **macOS** implementation land together **[mac]**, on the Mac, so the trait is shaped by two real
+  callers rather than guessed from one.
 
-## Phase 3 — Speech
+## Phase 3 — Speech — **done on the Windows line** (v0.6.0, `check:all` green)
 
-- **Benchmark first** (ADR-CORE-004): whisper.cpp vs. a streaming engine on German test audio — WER and
-  latency, on the maintainer's hardware. The result decides the engine and is written into ADR-PROJ-005.
-- `huginn-asr-proto` + `huginn-asr-worker`: the deprivileged sidecar process, its protocol pinned by tests
-  on **both** sides.
-- `huginn-audio`: capture (cpal), resampling to what the model wants, a bounded ring buffer.
-- End to end: hold the hotkey → speak → release → the text appears in the focused application.
+- ✅ **Engine chosen by measurement** (ADR-CORE-004): whisper.cpp, the `base` multilingual model, picked
+  on measured German WER (~4.2%) and speed, not reputation. (A streaming-engine comparison remains a
+  future option, not a blocker.)
+- ✅ `huginn-asr-proto` + `huginn-asr-worker`: the deprivileged sidecar process, protocol pinned by tests
+  on **both** sides; a crashed worker is surfaced, not fatal.
+- ✅ `huginn-audio`: capture (cpal) → mono → Butterworth low-pass resample to 16 kHz → normalisation.
+- ✅ End to end (Windows): hold the hotkey → speak → release → the text appears in the focused
+  application. Proven microphone-free by the worker pipeline test (known German fixture → expected words).
 
-## Phase 4 — Models
+## Phase 4 — Models — **done on the Windows line, bar local import** (v0.6.0, `check:all` green)
 
-- `huginn-models`: the catalogue compiled into the binary (id, URL, SHA-256, size, licence, languages),
-  the verified downloader, content-addressed storage, the atomic swap, and importing a local file.
-- Choose and bundle the base model (a benchmark decides which; the licence goes into the SBOM).
-- Every step a Job with progress, an ETA and a cancel button (ADR-PROJ-008).
+- ✅ `huginn-models`: the catalogue compiled into the binary (id, URL, SHA-256, size, languages), the
+  verified downloader (the only network call), content-addressed storage and the atomic swap.
+- ✅ The `base` model is the shipped default; every step is a Job with progress, an honest ETA and a
+  working cancel (ADR-PROJ-008).
+- ⬜ **Importing a local model file from disk** (unverifiable, UI must say so — rule:model-assets) is
+  **not built yet**.
 
 ## Phase 5 — The product
 
-- Text post-processing (`huginn-text`): punctuation, a user dictionary, spoken commands.
-- Settings: hotkey, model, language, injection strategy, autostart, overlay position.
-- **Huginn's own design system** (ADR-PROJ-003) — this closes a release blocker.
+- ✅ **Huginn's own design system** (ADR-PROJ-003) — release blocker closed.
+- ✅ Settings, substantially: hotkey, model, recognition language, microphone, start/stop sounds,
+  autostart, theme, UI language.
+- ⬜ Text post-processing (`huginn-text`): punctuation, a user dictionary, spoken commands — **not built**.
+- ⬜ Injection strategy choice (keystrokes vs. clipboard) and overlay position — **open**.
 
 ## Release blockers (they stop a build, not the work)
 

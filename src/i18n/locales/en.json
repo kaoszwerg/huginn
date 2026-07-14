@@ -30,6 +30,7 @@
   "home": {
     "worksTitle": "What works",
     "works": {
+      "speech": "Speech recognition entirely on the device (whisper.cpp), German first",
       "pushToTalk": "Push-to-talk with a focus-neutral recording overlay",
       "injection": "Text inserted straight into the application you were working in",
       "typedIpc": "Typed IPC surface (ts-rs bindings as the single source of truth)",
@@ -37,7 +38,7 @@
     },
     "buildTitle": "Build",
     "notYetTitle": "Not yet",
-    "notYetBody": "There is no speech engine yet: holding the hotkey shows the overlay and inserts a probe string, which is what proves the path from key to text end to end. The recogniser, the model catalogue and the dictionary follow.",
+    "notYetBody": "The overlay and text injection are Windows-only so far. The macOS half — a non-activating NSPanel and CGEvent insertion — is written and measured on the Mac, not blind on Windows (PLAN.md phase 1b). Further recognition languages follow as optional downloads.",
     "notYetInfo": "Speech recognition runs in a separate, deprivileged worker process — the process that holds the microphone and synthesises keystrokes must never be the one parsing a model file (ADR-PROJ-005)."
   },
   "logs": {
@@ -62,7 +63,8 @@
     "sections": {
       "recording": "Recording",
       "appearance": "Appearance",
-      "background": "Background"
+      "background": "Background",
+      "speech": "Recognition"
     },
     "recording": {
       "title": "Push-to-talk",
@@ -109,5 +111,25 @@
   "overlay": {
     "listening": "Listening…",
     "releaseToInsert": "release to insert"
+  },
+  "speech": {
+    "modelTitle": "Speech recognition",
+    "modelInfo": "The model does the recognising — entirely on this device. The multilingual models understand German and English. A larger model handles difficult audio better but takes longer.",
+    "noModel": "No model is installed yet. Without one, Huginn cannot recognise anything — download one.",
+    "download": "Download",
+    "downloadFailed": "The download failed.",
+    "use": "Use",
+    "inUse": "In use",
+    "networkNote": "This download is the only connection Huginn ever opens. The server (huggingface.co) learns your IP address — nothing else. The file is verified against a checksum compiled into the program; if it does not match, it is deleted.",
+    "microphoneTitle": "Microphone",
+    "systemDefault": "System default",
+    "isDefault": "system default",
+    "microphoneHint": "If the chosen microphone is unavailable, Huginn falls back to the default — so the sentence you are speaking is not lost.",
+    "microphonesFailed": "The microphones could not be listed.",
+    "soundsTitle": "Sound",
+    "soundsHint": "A short tone when recording starts and stops. With push-to-talk it is often the only confirmation that the microphone is really open."
+  },
+  "jobs": {
+    "cancel": "Cancel"
   }
 }

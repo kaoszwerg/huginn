@@ -1,0 +1,15 @@
+[package]
+name = "huginn-audio"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+ts-rs = { workspace = true }
+
+# The microphone. cpal is the standard cross-platform capture crate and speaks WASAPI on Windows,
+# CoreAudio on macOS — the same code path Huginn needs on both (rule:cross-platform).
+cpal = "0.18.1"

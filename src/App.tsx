@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { TitleBar } from "./components/layout/TitleBar";
 import { StatusBar } from "./components/layout/StatusBar";
+import { JobMonitor } from "./components/layout/JobMonitor";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { AboutDialog } from "./components/AboutDialog";
 import { Notice } from "./components/ui/Notice";
@@ -74,6 +75,8 @@ export default function App() {
           {view === "settings" ? <SettingsView /> : null}
         </main>
       </div>
+      {/* Nothing slow happens invisibly (ADR-PROJ-008). */}
+      <JobMonitor />
       <StatusBar canScrollTop={canTop} onScrollTop={scrollToTop} />
       {aboutOpen ? <AboutDialog onClose={() => setAboutOpen(false)} /> : null}
     </div>

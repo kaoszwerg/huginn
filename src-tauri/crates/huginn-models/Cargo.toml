@@ -1,0 +1,18 @@
+[package]
+name = "huginn-models"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+huginn-core = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+ts-rs = { workspace = true }
+
+# The ONLY network client in the product (ADR-PROJ-006). rustls rather than the system TLS stack: one
+# implementation that behaves identically on every OS, and no dependency on the machine's certificate
+# store being in good order.
+ureq = { version = "3.3.0", features = ["rustls"] }
+sha2 = "0.11.0"

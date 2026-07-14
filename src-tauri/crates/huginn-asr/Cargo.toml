@@ -1,0 +1,14 @@
+[package]
+name = "huginn-asr"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+# whisper.cpp, compiled from source. CPU only for now (the maintainer's call): it builds everywhere,
+# needs no CUDA/Vulkan SDK, and a measured 1.5x real-time on the base model is enough for dictation.
+# A GPU backend is an additional path behind the same trait, not a rewrite.
+whisper-rs = "0.16.0"

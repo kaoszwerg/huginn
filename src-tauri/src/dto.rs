@@ -69,7 +69,25 @@ pub struct SettingsDto {
     /// the frontend — never a change to the IPC contract and a rebuilt backend.
     #[serde(default = "default_language")]
     pub language: String,
-    /// The push-to-talk combination, in the shortcut syntax (`"Ctrl+Space"`, `"Ctrl+Shift+KeyJ"`).
+    /// The microphone the user picked, by name.  means the system default — and a name that is
+    /// no longer there falls back to the default too, rather than losing the sentence someone is in
+    /// the middle of speaking (huginn-audio).
+    #[serde(default)]
+    pub microphone: Option<String>,
+    /// Which model recognises the speech. An id from the compiled-in catalogue (huginn-models).
+    #[serde(default = "default_model")]
+    pub model: String,
+    /// The language Huginn **recognises** — not the language of the interface. German by default;
+    /// the multilingual models handle German and English both (ADR-PROJ-006).
+    #[serde(default = "default_recognition_language")]
+    pub recognition_language: String,
+    /// Play a short sound when recording starts and stops.
+    ///
+    /// On by default: with push-to-talk there is no other confirmation that the microphone is
+    /// actually live, and an overlay the user is not looking at is not one.
+    #[serde(default = "default_sounds")]
+    pub sounds: bool,
+    /// The push-to-talk combination, in the shortcut syntax (, ).
     ///
     /// It is a *preference*, not a fact: the combination stored here may fail to register — another
     /// application can already own it. Whether it is actually armed is [`HotkeyStatus`], and that is
@@ -90,6 +108,20 @@ fn default_minimize_to_tray() -> bool {
 /// German. Huginn is a German dictation tool first; English is the second language.
 fn default_language() -> String {
     "de".to_string()
+}
+
+/// The multilingual model that speaks German (huginn-models::DEFAULT_MODEL).
+fn default_model() -> String {
+    "ggml-base".to_string()
+}
+
+/// German. It is what Huginn is for.
+fn default_recognition_language() -> String {
+    "de".to_string()
+}
+
+fn default_sounds() -> bool {
+    true
 }
 
 /// Two keys, chosen by the maintainer. Not three: a combination you hold while speaking has to be
@@ -121,6 +153,10 @@ impl Default for SettingsDto {
             minimize_to_tray: default_minimize_to_tray(),
             theme: ThemeChoice::default(),
             language: default_language(),
+            microphone: None,
+            model: default_model(),
+            recognition_language: default_recognition_language(),
+            sounds: default_sounds(),
             hotkey: default_hotkey(),
         }
     }
@@ -161,6 +197,10 @@ mod tests {
             minimize_to_tray: true,
             theme: ThemeChoice::Dark,
             language: "en".to_string(),
+            microphone: Some("Yeti X".to_string()),
+            model: "ggml-small".to_string(),
+            recognition_language: "de".to_string(),
+            sounds: false,
             hotkey: "Ctrl+Shift+KeyJ".to_string(),
         };
         let json = serde_json::to_string(&s).expect("serialize");

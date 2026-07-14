@@ -32,6 +32,10 @@ describe("useSettings", () => {
       minimize_to_tray: false,
       theme: "system",
       language: "en",
+      microphone: null,
+      model: "ggml-base",
+      recognition_language: "de",
+      sounds: true,
       hotkey: "Ctrl+Space",
     };
     vi.mocked(api.getSettings).mockResolvedValue(settings);
@@ -68,6 +72,10 @@ describe("useUpdateSettings", () => {
       minimize_to_tray: false,
       theme: "system",
       language: "en",
+      microphone: null,
+      model: "ggml-base",
+      recognition_language: "de",
+      sounds: true,
       hotkey: "Ctrl+Space",
     };
     vi.mocked(api.updateSettings).mockResolvedValue(updated);

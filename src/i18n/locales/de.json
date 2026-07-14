@@ -30,6 +30,7 @@
   "home": {
     "worksTitle": "Was funktioniert",
     "works": {
+      "speech": "Spracherkennung vollständig auf dem Gerät (whisper.cpp), deutsch zuerst",
       "pushToTalk": "Push-to-talk mit fokusneutralem Aufnahme-Overlay",
       "injection": "Text landet direkt in der Anwendung, in der du gerade arbeitest",
       "typedIpc": "Typisierte IPC-Grenze (ts-rs als einzige Quelle der Wahrheit)",
@@ -37,7 +38,7 @@
     },
     "buildTitle": "Build",
     "notYetTitle": "Noch nicht",
-    "notYetBody": "Es gibt noch keine Spracherkennung: Beim Halten der Taste erscheint das Overlay und ein Testtext wird eingefügt — das beweist den Weg von der Taste bis zum Text. Erkenner, Modellkatalog und Wörterbuch folgen.",
+    "notYetBody": "Overlay und Texteinfügung sind bislang nur unter Windows umgesetzt. Die macOS-Hälfte — ein nicht-aktivierendes NSPanel und die CGEvent-Einfügung — wird auf dem Mac geschrieben und gemessen, nicht blind unter Windows (PLAN.md Phase 1b). Weitere Erkennungssprachen folgen als optionale Downloads.",
     "notYetInfo": "Die Spracherkennung läuft in einem separaten, entrechteten Worker-Prozess — der Prozess mit Mikrofon und Tastatur darf niemals derjenige sein, der eine Modelldatei parst (ADR-PROJ-005)."
   },
   "logs": {
@@ -62,7 +63,8 @@
     "sections": {
       "recording": "Aufnahme",
       "appearance": "Erscheinungsbild",
-      "background": "Hintergrund"
+      "background": "Hintergrund",
+      "speech": "Spracherkennung"
     },
     "recording": {
       "title": "Push-to-talk",
@@ -109,5 +111,25 @@
   "overlay": {
     "listening": "Ich höre zu …",
     "releaseToInsert": "loslassen zum Einfügen"
+  },
+  "speech": {
+    "modelTitle": "Spracherkennung",
+    "modelInfo": "Das Modell erkennt die Sprache — vollständig auf diesem Gerät. Die mehrsprachigen Modelle verstehen Deutsch und Englisch. Ein größeres Modell erkennt schwierige Aufnahmen besser, braucht aber länger.",
+    "noModel": "Es ist noch kein Modell installiert. Ohne Modell kann Huginn nichts erkennen — lade eines herunter.",
+    "download": "Herunterladen",
+    "downloadFailed": "Der Download ist fehlgeschlagen.",
+    "use": "Verwenden",
+    "inUse": "Wird verwendet",
+    "networkNote": "Der Download ist die einzige Verbindung, die Huginn nach außen aufbaut. Dabei erfährt der Server (huggingface.co) deine IP-Adresse — mehr nicht. Die Datei wird gegen eine im Programm hinterlegte Prüfsumme verifiziert; stimmt sie nicht, wird sie gelöscht.",
+    "microphoneTitle": "Mikrofon",
+    "systemDefault": "Standard des Systems",
+    "isDefault": "Systemstandard",
+    "microphoneHint": "Ist das gewählte Mikrofon nicht verfügbar, nimmt Huginn das Standardgerät — damit dein Satz nicht verloren geht.",
+    "microphonesFailed": "Die Mikrofone konnten nicht gelesen werden.",
+    "soundsTitle": "Signalton",
+    "soundsHint": "Ein kurzer Ton beim Start und Ende der Aufnahme. Bei Push-to-talk ist er oft die einzige Rückmeldung, dass das Mikrofon wirklich offen ist."
+  },
+  "jobs": {
+    "cancel": "Abbrechen"
   }
 }

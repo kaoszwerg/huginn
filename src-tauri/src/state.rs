@@ -1,17 +1,21 @@
 //! Shared application state held by Tauri (`tauri::Manager`).
 
 use crate::settings::SettingsStore;
+use huginn_core::JobRegistry;
 use std::path::Path;
 
 /// Process-wide state. Domain services are added here as the app grows.
 pub struct AppState {
     pub settings: SettingsStore,
+    /// Every slow operation reports through this, and the footer renders it (ADR-PROJ-008).
+    pub jobs: JobRegistry,
 }
 
 impl AppState {
     pub fn new(data_dir: &Path) -> Self {
         Self {
             settings: SettingsStore::load(data_dir),
+            jobs: JobRegistry::new(),
         }
     }
 }

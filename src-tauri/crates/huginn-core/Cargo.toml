@@ -1,0 +1,12 @@
+[package]
+name = "huginn-core"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+ts-rs = { workspace = true }
+chrono = { workspace = true }

@@ -10,6 +10,9 @@
  *    the Rust side and therefore appears literally in the recorder, the settings view and the tests
  *    that pin it (ADR-PROJ-004).
  *  - **Huginn's own environment switches** (`HUGINN_SPIKE_*`) — long, uppercase, underscore-heavy.
+ *  - **Package download URLs** (`files.pythonhosted.org/…/<hash>/…`) — the build-tools bootstrap
+ *    fetches CMake and libclang by their published, hash-pathed URLs; a package URL is a public
+ *    address, not a credential.
  *
  * The exemption is by *content*, not by file: any string that is not a key combination or one of our
  * variable names is still scanned, everywhere, including in these files. Blanket-disabling the rule
@@ -26,6 +29,8 @@ const NOT_A_SECRET = [
   "Super\\+",
   // Huginn's own environment switches.
   "HUGINN_",
+  // Public package-download hosts the build-tools bootstrap fetches from.
+  "pythonhosted",
 ];
 
 export default [

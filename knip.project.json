@@ -1,4 +1,5 @@
 {
   "entry": ["src/overlay/main.ts", "scripts/project/*.mjs!"],
-  "ignore": []
+  "ignore": [],
+  "ignoreBinaries": ["cmake"]
 }

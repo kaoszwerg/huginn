@@ -9,12 +9,26 @@ pub mod dto;
 pub mod error;
 pub mod logging;
 pub mod settings;
+pub mod speech;
 pub mod spike;
 pub mod state;
 pub mod tray;
 
+use crate::error::{AppError, Result};
 use crate::state::AppState;
+use std::path::PathBuf;
 use tauri::{Emitter, Manager};
+
+/// Where the speech models live: `<app-data>/models/` (ADR-PROJ-007 — lowercase, resolved through
+/// the platform API, never a hardcoded path).
+pub fn models_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::Other(format!("cannot resolve the app data directory: {e}")))?
+        .join("models");
+    Ok(dir)
+}
 
 /// Build and run the Tauri application.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -71,6 +85,13 @@ pub fn run() {
             // have no way to be opened or quit (see tray.rs).
             tray::install(app.handle());
 
+            // The speech worker + model. Loading a model takes hundreds of milliseconds and must not
+            // hold up the window — and a fresh install has no model at all, which is a state the app
+            // runs in perfectly well (the user is told, and picks one).
+            app.manage(speech::SpeechState::new());
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn_blocking(move || load_model_at_startup(&handle));
+
             tracing::info!("startup complete");
             Ok(())
         })
@@ -84,10 +105,49 @@ pub fn run() {
             commands::set_hotkey,
             commands::get_autostart,
             commands::set_autostart,
+            commands::list_microphones,
+            commands::set_microphone,
+            commands::set_sounds,
+            commands::list_models,
+            commands::download_model,
+            commands::set_model,
+            commands::list_jobs,
+            commands::cancel_job,
             commands::open_external,
         ])
         .run(tauri::generate_context!())
         .expect("error while building the Tauri application");
+}
+
+/// Load the user's model into the worker, if it is installed.
+///
+/// **A missing model is not an error.** A fresh install has none — the app runs, says so, and offers
+/// to download one. Treating that as a startup failure would mean a first launch that looks broken.
+fn load_model_at_startup(app: &tauri::AppHandle) {
+    let settings = app.state::<AppState>().settings.get();
+
+    let Ok(dir) = models_dir(app) else {
+        tracing::error!("cannot resolve the models directory — speech is unavailable");
+        return;
+    };
+
+    let path = huginn_models::model_path(&dir, &settings.model);
+    if !path.is_file() {
+        tracing::info!(
+            model = %settings.model,
+            "no speech model is installed yet — the user will be asked to download one"
+        );
+        return;
+    }
+
+    match speech::load_model(app, &path) {
+        Ok(()) => tracing::info!(model = %settings.model, "speech is ready"),
+        Err(e) => {
+            // Loud, and shown in the UI — but not fatal: the hotkey, the overlay and the settings all
+            // still work, and the user needs them to fix this (rule:logging).
+            tracing::error!(error = %e, model = %settings.model, "the speech model could not be loaded");
+        }
+    }
 }
 
 #[cfg(test)]

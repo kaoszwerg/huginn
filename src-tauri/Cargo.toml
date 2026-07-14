@@ -1,6 +1,43 @@
+# The workspace roots HERE, at src-tauri/, and not at the repo root (ADR-PROJ-009). That is a
+# constraint, not a preference: `scripts/sync-version.mjs` is pinned upstream and writes the product
+# version into THIS Cargo.toml and THIS Cargo.lock, and `cargo audit` reads the lockfile from the same
+# place. A workspace at the repo root would mean editing a pinned script — which the drift gate blocks,
+# and which opting out of would cost every future fix to the version SSOT.
+[workspace]
+members = [
+    "crates/huginn-core",
+    "crates/huginn-audio",
+    "crates/huginn-asr",
+    "crates/huginn-asr-proto",
+    "crates/huginn-asr-worker",
+    "crates/huginn-models",
+]
+
+# Internal crates carry a fixed, meaningless version (0.0.0) and are path dependencies. The product
+# version exists ONLY in [package] below, where the pinned sync script writes it: two version sources
+# would make `version:check` right to fail.
+#
+# The version is written next to the path, not left off: a bare `{ path }` resolves to a `*`
+# requirement, which `deny.toml` bans as a wildcard (rule:dependencies: exact versions, no drift) —
+# and rightly, since a wildcard on a real dependency is a supply-chain hole. `= "0.0.0"` is both
+# exact and honest here; these crates move together.
+[workspace.dependencies]
+huginn-core = { path = "crates/huginn-core", version = "0.0.0" }
+huginn-audio = { path = "crates/huginn-audio", version = "0.0.0" }
+huginn-asr = { path = "crates/huginn-asr", version = "0.0.0" }
+huginn-asr-proto = { path = "crates/huginn-asr-proto", version = "0.0.0" }
+huginn-models = { path = "crates/huginn-models", version = "0.0.0" }
+
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+tracing = "0.1.44"
+ts-rs = "12.0.1"
+chrono = { version = "0.4.44", features = ["serde"] }
+
 [package]
 name = "huginn"
-version = "0.5.0"
+version = "0.6.0"
 description = "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings."
 authors = ["kaoszwerg"]
 edition = "2021"
@@ -24,6 +61,10 @@ path = "src/main.rs"
 tauri-build = { version = "2.6.2", features = [] }
 
 [dependencies]
+huginn-core = { workspace = true }
+huginn-audio = { workspace = true }
+huginn-models = { workspace = true }
+huginn-asr-proto = { workspace = true }
 tauri = { version = "2.11.2", features = ["tray-icon", "macos-private-api", "image-png"] }
 tauri-plugin-window-state = "2.4.1"
 # >= 2.3.2 is mandatory: earlier versions burn a full CPU core for as long as the key is held

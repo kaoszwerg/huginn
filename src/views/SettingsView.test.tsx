@@ -32,6 +32,10 @@ const DEFAULTS: SettingsDto = {
   minimize_to_tray: true,
   theme: "system",
   language: "en",
+  microphone: null,
+  model: "ggml-base",
+  recognition_language: "de",
+  sounds: true,
   hotkey: "Ctrl+Space",
 };
 

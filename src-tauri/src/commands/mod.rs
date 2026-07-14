@@ -5,7 +5,7 @@ use crate::dto::{BuildInfo, HotkeyStatus, SettingsDto, ThemeChoice};
 use crate::error::{AppError, Result};
 use crate::settings::SettingsPatch;
 use crate::state::AppState;
-use tauri::State;
+use tauri::{Manager, State};
 
 /// App version from Cargo metadata (IPC smoke test).
 #[tauri::command]
@@ -82,6 +82,12 @@ pub fn update_settings(
         minimize_to_tray,
         theme,
         language,
+        // These have their own commands: choosing a microphone or a model does more than write a
+        // field — see set_microphone / set_model / set_sounds below.
+        microphone: None,
+        model: None,
+        recognition_language: None,
+        sounds: None,
         hotkey: None,
     })?;
     tracing::debug!(
@@ -170,6 +176,112 @@ pub fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<bool> {
         .map_err(|e| AppError::Other(format!("cannot confirm the autostart state: {e}")))?;
     tracing::info!(enabled = now, "autostart updated");
     Ok(now)
+}
+
+/// Every microphone the system offers, with the default marked.
+///
+/// Read fresh each time rather than cached: a headset plugged in after the app started must appear,
+/// and one that was unplugged must not linger in the list as a choice that will silently fail.
+#[tauri::command]
+pub fn list_microphones() -> Result<Vec<huginn_audio::AudioDevice>> {
+    let devices = huginn_audio::input_devices()
+        .map_err(|e| AppError::Other(format!("the microphones could not be listed: {e}")))?;
+    tracing::debug!(count = devices.len(), "list_microphones");
+    Ok(devices)
+}
+
+/// Choose the microphone. `None` means the system default.
+#[tauri::command]
+pub fn set_microphone(state: State<'_, AppState>, name: Option<String>) -> Result<SettingsDto> {
+    tracing::info!(?name, "set_microphone");
+    state.settings.update(SettingsPatch {
+        microphone: Some(name),
+        ..Default::default()
+    })
+}
+
+/// Turn the start/stop sounds on or off.
+#[tauri::command]
+pub fn set_sounds(state: State<'_, AppState>, enabled: bool) -> Result<SettingsDto> {
+    tracing::info!(enabled, "set_sounds");
+    state.settings.update(SettingsPatch {
+        sounds: Some(enabled),
+        ..Default::default()
+    })
+}
+
+/// The model catalogue, annotated with what is actually installed.
+#[tauri::command]
+pub fn list_models(app: tauri::AppHandle) -> Result<Vec<huginn_models::ModelStatus>> {
+    let dir = crate::models_dir(&app)?;
+    Ok(huginn_models::installed(&dir))
+}
+
+/// Download a model and verify it (ADR-PROJ-006).
+///
+/// **The only outbound connection in the product**, and it happens only because the user clicked.
+/// Runs as a Job: progress in bytes, an honest ETA, and a cancel that stops the download rather than
+/// hiding the row (ADR-PROJ-008).
+#[tauri::command]
+pub async fn download_model(app: tauri::AppHandle, id: String) -> Result<()> {
+    let dir = crate::models_dir(&app)?;
+    let jobs = app.state::<crate::state::AppState>().jobs.clone();
+
+    // The download blocks for minutes; it does not run on the IPC thread (rule:jobs).
+    tauri::async_runtime::spawn_blocking(move || {
+        huginn_models::download_and_verify(&dir, &id, &jobs)
+    })
+    .await
+    .map_err(|e| AppError::Other(format!("the download task failed: {e}")))?
+    .map_err(|e| AppError::Other(e.to_string()))?;
+
+    Ok(())
+}
+
+/// Choose the model that recognises the speech, and load it into the worker.
+///
+/// The model must be installed — the UI only offers installed ones, but the boundary is validated
+/// anyway (ADR-CORE-011: the webview is treated as hostile even though we wrote it).
+#[tauri::command]
+pub async fn set_model(app: tauri::AppHandle, id: String) -> Result<SettingsDto> {
+    tracing::info!(model = %id, "set_model");
+
+    let dir = crate::models_dir(&app)?;
+    let path = huginn_models::model_path(&dir, &id);
+    if !path.is_file() {
+        return Err(AppError::Other(format!(
+            "the model “{id}” is not installed"
+        )));
+    }
+
+    let settings = {
+        let state = app.state::<AppState>();
+        state.settings.update(SettingsPatch {
+            model: Some(id),
+            ..Default::default()
+        })?
+    };
+
+    // Loading takes hundreds of milliseconds and allocates the whole model — off the IPC thread.
+    let handle = app.clone();
+    tauri::async_runtime::spawn_blocking(move || crate::speech::load_model(&handle, &path))
+        .await
+        .map_err(|e| AppError::Other(format!("the model load task failed: {e}")))??;
+
+    Ok(settings)
+}
+
+/// Every job the backend is running — what the process monitor shows (ADR-PROJ-008).
+#[tauri::command]
+pub fn list_jobs(state: State<'_, AppState>) -> Vec<huginn_core::Job> {
+    state.jobs.snapshot()
+}
+
+/// Ask a job to stop. The work actually stops; the row is not merely hidden (rule:jobs).
+#[tauri::command]
+pub fn cancel_job(state: State<'_, AppState>, id: u64) {
+    tracing::info!(job = id, "cancel_job");
+    state.jobs.cancel(id);
 }
 
 /// Open an external URL in the user's default browser. Routed through the backend so any failure

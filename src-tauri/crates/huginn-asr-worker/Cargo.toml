@@ -1,0 +1,15 @@
+[package]
+name = "huginn-asr-worker"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "huginn-asr-worker"
+path = "src/main.rs"
+
+[dependencies]
+huginn-asr = { workspace = true }
+huginn-asr-proto = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }

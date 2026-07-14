@@ -21,6 +21,7 @@ export function HomeView() {
       <div className="grid gap-4 md:grid-cols-2">
         <Panel label={t("home.worksTitle")}>
           <ul className="text-dim space-y-1.5 text-sm">
+            <Item>{t("home.works.speech")}</Item>
             <Item>{t("home.works.pushToTalk")}</Item>
             <Item>{t("home.works.injection")}</Item>
             <Item>{t("home.works.typedIpc")}</Item>

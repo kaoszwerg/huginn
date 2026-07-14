@@ -6,6 +6,9 @@ import type { HotkeyStatus } from "../bindings/HotkeyStatus";
 import type { LogRecord } from "../bindings/LogRecord";
 import type { SettingsDto } from "../bindings/SettingsDto";
 import type { ThemeChoice } from "../bindings/ThemeChoice";
+import type { AudioDevice } from "../bindings/AudioDevice";
+import type { ModelStatus } from "../bindings/ModelStatus";
+import type { Job } from "../bindings/Job";
 
 /**
  * Typed facade over the backend `#[tauri::command]` surface. Every IPC call in the app flows through
@@ -57,6 +60,27 @@ export const api = {
   getAutostart: () => invoke<boolean>("get_autostart"),
   /** Turn autostart on or off; resolves with the state the OS *actually* reports afterwards. */
   setAutostart: (enabled: boolean) => invoke<boolean>("set_autostart", { enabled }),
+  /** Every microphone the system offers, read fresh — a headset plugged in just now must appear. */
+  listMicrophones: () => invoke<AudioDevice[]>("list_microphones"),
+  /** Choose the microphone.  means the system default. */
+  setMicrophone: (name: string | null) => invoke<SettingsDto>("set_microphone", { name }),
+  /** Turn the start/stop sounds on or off. */
+  setSounds: (enabled: boolean) => invoke<SettingsDto>("set_sounds", { enabled }),
+  /** The model catalogue, annotated with what is actually installed. */
+  listModels: () => invoke<ModelStatus[]>("list_models"),
+  /**
+   * Download a model and verify it against the checksum compiled into the binary.
+   *
+   * **The only outbound connection in the product** (ADR-PROJ-006), and it happens only because the
+   * user clicked. Progress arrives as Jobs, not as a return value: it takes minutes.
+   */
+  downloadModel: (id: string) => invoke<void>("download_model", { id }),
+  /** Choose the model that recognises speech, and load it into the worker. */
+  setModel: (id: string) => invoke<SettingsDto>("set_model", { id }),
+  /** Everything slow the backend is doing right now (ADR-PROJ-008). */
+  listJobs: () => invoke<Job[]>("list_jobs"),
+  /** Stop a job. The work actually stops; the row is not merely hidden. */
+  cancelJob: (id: number) => invoke<void>("cancel_job", { id }),
   /** Open an http(s) URL in the default browser (routed through the backend so it is logged). */
   openExternal: (url: string) => invoke<void>("open_external", { url }),
 };

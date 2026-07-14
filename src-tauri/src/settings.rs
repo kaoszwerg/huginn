@@ -23,6 +23,10 @@ pub struct SettingsPatch {
     pub minimize_to_tray: Option<bool>,
     pub theme: Option<ThemeChoice>,
     pub language: Option<String>,
+    pub microphone: Option<Option<String>>,
+    pub model: Option<String>,
+    pub recognition_language: Option<String>,
+    pub sounds: Option<bool>,
     /// The push-to-talk combination. Persisted only *after* the OS accepted it (see
     /// `spike::set_hotkey`): storing a shortcut that cannot be registered would leave the user with
     /// a setting that lies.
@@ -96,6 +100,21 @@ impl SettingsStore {
             }
             if let Some(language) = patch.language {
                 guard.language = language;
+            }
+            // Option<Option<T>>: the outer None means "leave it alone", the inner None means "use the
+            // system default microphone". Collapsing them would make it impossible to go back to the
+            // default once a device had been chosen.
+            if let Some(microphone) = patch.microphone {
+                guard.microphone = microphone;
+            }
+            if let Some(model) = patch.model {
+                guard.model = model;
+            }
+            if let Some(language) = patch.recognition_language {
+                guard.recognition_language = language;
+            }
+            if let Some(sounds) = patch.sounds {
+                guard.sounds = sounds;
             }
             if let Some(hotkey) = patch.hotkey {
                 guard.hotkey = hotkey;
