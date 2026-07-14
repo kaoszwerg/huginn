@@ -98,7 +98,7 @@
       ],
       "supersededBy": null,
       "path": "docs/adr/app-023-cross-platform-release-signing.md",
-      "hash": "97fea2d18c2acbc3"
+      "hash": "1c3b0fc51cf64724"
     },
     {
       "id": "ADR-APP-025",
@@ -333,7 +333,7 @@
       "id": "ADR-CORE-008",
       "layer": "core",
       "title": "Unified quality pipeline (check:all), pre-commit and CI",
-      "tldr": "One check:all gate (TS + Rust + governance) runs locally via pre-commit + pre-push; CI is last-line backstop and builds only final releases, never dev builds.",
+      "tldr": "One check:all gate runs locally via pre-commit + pre-push and is the WHOLE gate; GitHub builds final releases at a tag and runs no push-/PR-triggered check.",
       "scope": "governance",
       "load": "core",
       "status": "accepted",
@@ -354,7 +354,7 @@
       ],
       "supersededBy": null,
       "path": "docs/adr/core-008-quality-pipeline.md",
-      "hash": "e1e05c25c931f3a8"
+      "hash": "486bf319fc0ffa59"
     },
     {
       "id": "ADR-CORE-009",

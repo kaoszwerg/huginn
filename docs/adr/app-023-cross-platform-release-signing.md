@@ -24,7 +24,13 @@ Linux, Windows) on a `v*` tag or manual dispatch, attaching artifacts to a **dra
 macOS builds are **signed and notarised automatically when the Apple secrets are present**
 (certificate, identity, Apple ID, app-specific password, Team ID); when absent the build still succeeds
 **unsigned** (ad-hoc). This keeps the pipeline working without secrets while enabling proper signing
-when the maintainer provides them. The quality gate (`check:all`, ADR-CORE-008) runs separately in `ci.yml`.
+when the maintainer provides them.
+
+**This is the only workflow.** The quality gate (`check:all`) is not run here and not run anywhere on the
+remote: it runs **locally**, as pre-commit + pre-push, and that is the whole gate (ADR-CORE-008,
+rule:automation). `ci.yml` — which re-ran `check:all` on every push and pull request — was deleted; remote
+compute produces release artefacts, and nothing else. The accepted cost is that a break which only appears
+on another platform surfaces **here**, at release time.
 
 ## Alternatives
 

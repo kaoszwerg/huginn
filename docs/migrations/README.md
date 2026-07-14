@@ -26,3 +26,4 @@ in a fork, not for a changelog reader. They are part of the pinned governance co
 | [003 — governance is layered](003-governance-layers.md) | Keep your upstream as it is — do NOT repoint it at althing, or you lose the app layer. No `governance/config.json` needed. New gate: dead `ADR-NNN`/`rule:<slug>` citations now fail. |
 | [004 — ADR ids carry their layer](004-layered-adr-ids.md) | Rename your project ADRs to `proj-NNN-*.md` / `ADR-PROJ-NNN` and fix every citation; a bare `ADR-NNN` no longer resolves and fails the gate. |
 | [005 — decline an upstream decision](005-cross-layer-supersession.md) | Retire an upstream ADR/rule by declaring `supersedes` in YOUR document; never edit theirs. An opt-out no longer changes a document's layer. |
+| [006 — no push-triggered CI](006-no-push-ci.md) | Delete your push-/PR-triggered `check:all` workflow; keep the tag-triggered release build. Verification is local, and that is the whole gate. |

@@ -1,21 +1,21 @@
 {
   "generated": true,
-  "governanceVersion": "0.4.1",
+  "governanceVersion": "0.5.0",
   "upstream": "kaoszwerg/saga-rust-template",
   "layers": [
     {
       "id": "core",
       "source": "kaoszwerg/althing",
-      "version": "0.4.0"
+      "version": "0.5.1"
     },
     {
       "id": "app",
       "source": "kaoszwerg/saga-rust-template",
-      "version": "0.4.1"
+      "version": "0.5.0"
     }
   ],
   "optedOut": [],
-  "count": 108,
+  "count": 109,
   "files": [
     {
       "path": ".claude/memory/glossary.md",
@@ -59,7 +59,7 @@
     },
     {
       "path": ".claude/rules/automation.md",
-      "hash": "d5ad20fa96a7f267",
+      "hash": "39efc3ed75403279",
       "layer": "core"
     },
     {
@@ -213,11 +213,6 @@
       "layer": "core"
     },
     {
-      "path": ".github/workflows/ci.yml",
-      "hash": "bf9ed3567f00ffe8",
-      "layer": "app"
-    },
-    {
       "path": ".github/workflows/release.yml",
       "hash": "705ca3e9bbfca098",
       "layer": "app"
@@ -279,7 +274,7 @@
     },
     {
       "path": "docs/adr/app-023-cross-platform-release-signing.md",
-      "hash": "7e0cca3319b34dd3",
+      "hash": "226eb386d18b1afe",
       "layer": "app"
     },
     {
@@ -329,7 +324,7 @@
     },
     {
       "path": "docs/adr/core-008-quality-pipeline.md",
-      "hash": "36e65e9bc4208e59",
+      "hash": "d9e9e2efa4454762",
       "layer": "core"
     },
     {
@@ -413,6 +408,11 @@
       "layer": "core"
     },
     {
+      "path": "docs/migrations/006-no-push-ci.md",
+      "hash": "b9754b811af7ac7d",
+      "layer": "core"
+    },
+    {
       "path": "docs/migrations/100-ui-defaults-not-libraries.md",
       "hash": "67464e9fc8640eda",
       "layer": "app"
@@ -428,8 +428,13 @@
       "layer": "app"
     },
     {
+      "path": "docs/migrations/103-no-push-ci.md",
+      "hash": "b728e8ed5e4532e8",
+      "layer": "app"
+    },
+    {
       "path": "docs/migrations/README.md",
-      "hash": "34a7b26f19b907a6",
+      "hash": "927b30dfb0a1b6e6",
       "layer": "core"
     },
     {
