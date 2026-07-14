@@ -1,11 +1,58 @@
 //! Tauri command surface (typed via ts-rs DTOs). Thin layer: validate, do the work, map errors
 //! (ADR-APP-001, rule:rust-conventions). Every command logs its action and its result (rule:logging).
 
-use crate::dto::{BuildInfo, HotkeyStatus, SettingsDto, ThemeChoice};
+use crate::dto::{BuildInfo, CrashReport, HotkeyStatus, SettingsDto, ThemeChoice};
 use crate::error::{AppError, Result};
 use crate::settings::SettingsPatch;
 use crate::state::AppState;
 use tauri::{Manager, State};
+
+/// Record a fatal error from the UI runtime (ADR-CORE-037, ADR-APP-032).
+///
+/// The webview is a **second entry point**: the Rust panic hook is blind to it, so a crash in the UI
+/// would otherwise leave the user with a blank window and us with nothing to debug. This turns it into
+/// the same durable, on-device record a Rust panic produces. Returns the report's path so the fatal
+/// screen can tell the user where it is; fails only if the report could not be written.
+#[tauri::command]
+pub fn report_crash(report: CrashReport) -> Result<String> {
+    tracing::error!(source = %report.source, message = %report.message, "frontend crash");
+    let details = format!(
+        "source:  {}\nmessage: {}\n\nstack:\n{}",
+        report.source,
+        report.message,
+        report.stack.as_deref().unwrap_or("<none>")
+    );
+    let path = crate::crash::write_report("ui", &details).ok_or_else(|| {
+        AppError::Other("the crash report could not be written to disk".to_string())
+    })?;
+    tracing::info!(path = %path.display(), "frontend crash recorded");
+    Ok(path.to_string_lossy().into_owned())
+}
+
+/// The crash report left behind by a previous failure, if there is one. Consumed on read.
+///
+/// The backstop for the native message box: when the app dies so early that no dialog can be shown — or
+/// the platform has none — the user still learns about it the next time they open the app.
+#[tauri::command]
+pub fn pending_crash() -> Option<String> {
+    let pending = crate::crash::take_pending();
+    match &pending {
+        Some(path) => tracing::warn!(path = %path.display(), "a previous run left a crash report"),
+        None => tracing::debug!("no pending crash from a previous run"),
+    }
+    pending.map(|p| p.to_string_lossy().into_owned())
+}
+
+/// End the process after a fatal UI error, with the exit code that says so (`EXIT_UI_CRASH`).
+///
+/// Invoked from the fatal screen's "Quit" button. The log file is flushed first: `app.exit` runs no
+/// destructors either, and the records describing the crash are the ones that matter most.
+#[tauri::command]
+pub fn exit_after_crash(app: tauri::AppHandle) {
+    tracing::error!("exiting after a fatal UI error");
+    crate::logging::flush();
+    app.exit(crate::crash::EXIT_UI_CRASH);
+}
 
 /// App version from Cargo metadata (IPC smoke test).
 #[tauri::command]

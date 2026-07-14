@@ -73,8 +73,14 @@ Knowledge lives in the repo (ADR-CORE-003) — rule, ADR, gate, error message, c
 downstream project's agent must know goes into a **published layer**, so `governance:update` carries it
 to every consumer; anything only this project must know goes into the project line.
 
-**A change a consumer must *act* on ships a briefing** in `docs/migrations/NNN-<slug>.md` (governed,
+**A change a consumer must *act* on ships a briefing** in `docs/migrations/<layer>-NNN-<slug>.md` (governed,
 delivered by `governance:update`, which prints the briefings it changed — the one moment an agent is
 certainly looking). Write it for the agent who will meet the change, not for a changelog reader: what
 changed, what to do, what is now forbidden, with the exact commands and file names. A change nobody has
 to act on belongs in `CHANGELOG.md` only.
+
+**The filename carries the layer** — `core-008-…md`, `app-001-…md`, `proj-001-…md` (ADR-CORE-038), and the
+gate checks that the layer it claims is the layer that owns the file. A briefing has no id, so the name *is*
+its identifier and the only thing two layers can collide on; a collision aborts every consumer's
+`governance:update`. Number **within your own prefix** — the directory you are looking at holds every
+layer's briefings, so "the next free number" is not a number you can read off a listing.

@@ -48,7 +48,7 @@ function seedRepo(repo) {
   put(repo, ".claude/rules/core-principles.md", "# rules\n");
   put(repo, "docs/adr/001-x.md", "# adr\n");
   put(repo, ".claude/memory/glossary.md", "# glossary\n");
-  put(repo, "docs/migrations/001-demo.md", "# briefing\n");
+  put(repo, "docs/migrations/core-001-demo.md", "# briefing\n");
   // Project layer — must never be pinned.
   put(repo, "knip.project.json", `{ "ignore": ["src/bindings/**"] }\n`);
   put(repo, "src/main.tsx", "export default 1;\n");
@@ -90,7 +90,7 @@ describe("governed path collection", () => {
     expect(pinned).toContain(".claude/memory/glossary.md");
     // Migration briefings are upstream-owned knowledge a consumer must receive on update
     // (rule:knowledge-handover) — they travel with the governance, not beside it.
-    expect(pinned).toContain("docs/migrations/001-demo.md");
+    expect(pinned).toContain("docs/migrations/core-001-demo.md");
 
     // ADR-CORE-032: inherently project-specific config is NOT governed.
     expect(pinned).not.toContain("knip.project.json");

@@ -224,4 +224,4 @@ cites the core document. Never two files with the same id, never a moved id.
   source, no structural duplication), [ADR-CORE-006](core-006-context-budget-selective-loading.md) (selective
   loading — a rule must be reachable in the project that receives it),
   [ADR-CORE-007](core-007-generated-indexes-staleness-gate.md) (generated indexes + hash gate).
-- Migration briefing: [`docs/migrations/003-governance-layers.md`](../migrations/003-governance-layers.md).
+- Migration briefing: [`docs/migrations/core-003-governance-layers.md`](../migrations/core-003-governance-layers.md).

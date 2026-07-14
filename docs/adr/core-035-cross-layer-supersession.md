@@ -116,4 +116,4 @@ decision instead of seizing the file. Opt-out remains what it always was — the
   layer change.
 - [ADR-CORE-033](core-033-governance-layers-cascade.md) — the layers and the acyclicity gate whose false
   positives this removes. [ADR-CORE-034](core-034-layered-adr-identifiers.md) — the id/layer gate.
-- Migration briefing: [`docs/migrations/005-cross-layer-supersession.md`](../migrations/005-cross-layer-supersession.md).
+- Migration briefing: [`docs/migrations/core-005-cross-layer-supersession.md`](../migrations/core-005-cross-layer-supersession.md).

@@ -1,6 +1,6 @@
 {
   "generated": true,
-  "count": 35,
+  "count": 38,
   "adrs": [
     {
       "id": "ADR-APP-001",
@@ -188,6 +188,50 @@
       "hash": "781775ad90fcca94"
     },
     {
+      "id": "ADR-APP-032",
+      "layer": "app",
+      "title": "Crash handling on this stack — the mechanism and the gate",
+      "tldr": "ADR-CORE-037 on Tauri: panic hook before the builder, CrashBoundary + window handlers in the UI, a synchronous crash report, a native message box, a lint gate.",
+      "scope": "backend",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "crash",
+        "panic",
+        "unhandled",
+        "uncaught",
+        "exception",
+        "fatal",
+        "abort",
+        "entry-point",
+        "main",
+        "error-boundary",
+        "top-level",
+        "last-resort",
+        "exit-code",
+        "stacktrace",
+        "startup",
+        "spawn",
+        "background-task",
+        "dialog",
+        "messagebox"
+      ],
+      "applies-to": [
+        "src-tauri/src/crash.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/main.rs",
+        "src/main.tsx",
+        "src/lib/crash.ts",
+        "src/components/CrashBoundary.tsx",
+        "src/components/FatalScreen.tsx",
+        "crash-boundaries.json",
+        "scripts/lib/crash-gate.mjs"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/app-032-crash-handling-mechanism.md",
+      "hash": "34642de9e793e982"
+    },
+    {
       "id": "ADR-CORE-002",
       "layer": "core",
       "title": "Always the best solution, never the easiest",
@@ -354,7 +398,7 @@
       ],
       "supersededBy": null,
       "path": "docs/adr/core-008-quality-pipeline.md",
-      "hash": "486bf319fc0ffa59"
+      "hash": "3c9e49fb90baadf3"
     },
     {
       "id": "ADR-CORE-009",
@@ -487,7 +531,7 @@
       ],
       "supersededBy": null,
       "path": "docs/adr/core-024-versioning-and-build-channels.md",
-      "hash": "bdfd34d76263b8e9"
+      "hash": "ef52c3e776109ccd"
     },
     {
       "id": "ADR-CORE-030",
@@ -549,7 +593,7 @@
       ],
       "supersededBy": null,
       "path": "docs/adr/core-032-config-layering-project-overlays.md",
-      "hash": "f4a53638dfa0a237"
+      "hash": "c23ad96d06219e26"
     },
     {
       "id": "ADR-CORE-033",
@@ -585,7 +629,7 @@
       ],
       "supersededBy": null,
       "path": "docs/adr/core-033-governance-layers-cascade.md",
-      "hash": "19bf884c6e8b4ff6"
+      "hash": "baca5d75b361c6db"
     },
     {
       "id": "ADR-CORE-034",
@@ -613,7 +657,7 @@
       ],
       "supersededBy": null,
       "path": "docs/adr/core-034-layered-adr-identifiers.md",
-      "hash": "bc661a3ba3d35da3"
+      "hash": "1ef5affc88c5f426"
     },
     {
       "id": "ADR-CORE-035",
@@ -643,7 +687,7 @@
       ],
       "supersededBy": null,
       "path": "docs/adr/core-035-cross-layer-supersession.md",
-      "hash": "0e9e71cdffb5f75c"
+      "hash": "6701ba4db1eff1fb"
     },
     {
       "id": "ADR-CORE-036",
@@ -672,6 +716,70 @@
       "supersededBy": null,
       "path": "docs/adr/core-036-challenge-the-premise.md",
       "hash": "f06a0befce3d79a7"
+    },
+    {
+      "id": "ADR-CORE-037",
+      "layer": "core",
+      "title": "No silent death — every entry point has a last-resort handler",
+      "tldr": "Nothing governed the error nobody caught. A crash is permitted — a silent crash is not: every entry point reports before it dies. Survival needs proof.",
+      "scope": "global",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "crash",
+        "panic",
+        "unhandled",
+        "uncaught",
+        "fatal",
+        "abort",
+        "entry-point",
+        "last-resort",
+        "error-boundary",
+        "supervisor",
+        "exit-code",
+        "stacktrace"
+      ],
+      "applies-to": [
+        ".claude/rules/crash-handling.md",
+        ".claude/rules/core-principles.md"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/core-037-no-silent-death.md",
+      "hash": "101d748c2bfbac6e"
+    },
+    {
+      "id": "ADR-CORE-038",
+      "layer": "core",
+      "title": "The layer is part of the briefing filename — <layer>-NNN-<slug>.md, not a number range",
+      "tldr": "Briefings are named <layer>-NNN-<slug>.md (core-001-…, app-001-…); number ranges were unchecked prose, and a collision aborts a consumer's governance:update.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "migration",
+        "briefing",
+        "migrations",
+        "filename",
+        "name",
+        "numbering",
+        "number",
+        "range",
+        "block",
+        "prefix",
+        "layer",
+        "collision",
+        "rename",
+        "handover"
+      ],
+      "applies-to": [
+        "docs/migrations/**",
+        "scripts/check-index.mjs",
+        "scripts/lib/governance.mjs",
+        ".claude/rules/knowledge-handover.md"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/core-038-layered-briefing-names.md",
+      "hash": "a8a74474ae5d25e8"
     },
     {
       "id": "ADR-PROJ-001",

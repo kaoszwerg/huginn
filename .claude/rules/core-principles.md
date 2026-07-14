@@ -1,7 +1,7 @@
 ---
 id: rule:core-principles
 title: Core principles
-tldr: "Best solution, verify everything, repo SSOT, reuse, security & tests, log everything, one-pass, fix don't remove, hand knowledge over, challenge the premise."
+tldr: "Best solution, verify, repo SSOT, reuse, security & tests, log everything + no silent crash, one-pass, fix don't remove, hand over, challenge the premise."
 scope: global
 load: core
 triggers: [principle, start, overview]
@@ -23,10 +23,15 @@ applies-to: []
 5. **Selective context loading.** Boot light, load full docs on demand; reload after compact. (ADR-CORE-006)
 6. **Security & tests are not optional.** Validated inputs, secret redaction, least-privilege
    capabilities; **test-first** unit tests from the first module (TDD). (ADR-CORE-011, ADR-CORE-010)
-7. **Log everything, in every component.** Detailed structured logging is mandatory for debugging: every
-   command, request and long-running task logs the action it performs and its result — start, progress,
-   outcome, and every error with context. No component is silent, no failure is swallowed. Never log
-   secrets or user content. (rule:logging carries the mechanism for the stack in use.)
+7. **Log everything, in every component — and nothing dies silently.** Detailed structured logging is
+   mandatory for debugging: every command, request and long-running task logs the action it performs and
+   its result — start, progress, outcome, and every error with context. No component is silent, no failure
+   is swallowed — **including the failure nobody caught.** Every entry point (a `main`, a UI root, a
+   worker, a request handler) carries a last-resort handler: an unhandled error, a panic, a crash **may**
+   end the process, but never without a logged, user-visible, on-device account of it. It survives instead
+   of exiting only at a boundary where the isolation is *proven*, never assumed. Never log secrets or user
+   content. (rule:logging carries the mechanism for the stack in use; rule:crash-handling carries the last
+   line. ADR-CORE-037)
 8. **One pass, no leftovers.** Implement fully — no stubs, no "later", nothing "optional". (ADR-CORE-002)
 9. **Fix, don't remove — and fix on sight.** A misbehaving feature is **repaired**, never deleted or
    silently downgraded to dodge the fix. **Every bug you find is fixed now, regardless of which session

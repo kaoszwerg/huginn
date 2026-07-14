@@ -10,7 +10,10 @@ import {
   collectIdRefs,
   adrLayerOf,
   prefixOfLayer,
+  briefingLayerOf,
+  filePrefixOfLayer,
   ADR_ID_RE,
+  BRIEFING_NAME_RE,
   ROOT,
   ADR_DIR,
   BLUEPRINT,
@@ -203,7 +206,51 @@ if (manifest && layerRank.size > 1) {
   }
 }
 
-// 6) Dead ADR citations in the CI workflows.
+// 6) A migration briefing names its layer in its filename, and it must be telling the truth (ADR-CORE-038).
+//
+//    A briefing has no front-matter and no id: the filename IS the identifier — and the collision surface.
+//    Two layers shipping `docs/migrations/008-x.md` do not merely confuse a reader; `detectCollisions`
+//    aborts the consumer's `governance:update`, so it can pull nothing at all until a file that is already
+//    published gets renamed. That is the most expensive place this could possibly fail.
+//
+//    The old guard was number blocks in a README (core 001–099, app 100–199, project 200+): prose nobody
+//    loads, checked by nothing, and finite. An agent in the app layer sees a directory ending at `007-` and
+//    takes `008-` as the next free number — the README never enters its context. Same failure as
+//    ADR-CORE-034, same fix: the layer belongs in the identifier, where the gate can compare what the name
+//    CLAIMS against the layer that actually owns the file.
+const MIGRATIONS_DIR = path.join(ROOT, "docs", "migrations");
+if (fs.existsSync(MIGRATIONS_DIR)) {
+  const briefings = fs
+    .readdirSync(MIGRATIONS_DIR)
+    .filter((n) => n.endsWith(".md") && n !== "README.md")
+    .sort();
+  for (const name of briefings) {
+    const rel = `docs/migrations/${name}`;
+    const claimed = briefingLayerOf(name);
+    if (!claimed) {
+      errors.push(
+        `${rel}: malformed briefing name — expected <layer>-NNN-<slug>.md, e.g. ` +
+          `core-001-config-layering.md, app-001-…, proj-001-…. The layer is part of the name ` +
+          `(ADR-CORE-038): a bare number cannot say which layer owns it, and two layers that pick the ` +
+          `same one abort every consumer's \`governance:update\`.`,
+      );
+      continue;
+    }
+    if (!manifest) continue;
+    // Not pinned → this repo's own project layer, which prefixes its files `proj` (never published).
+    const actual = layerOf({ rel });
+    const expected = filePrefixOfLayer(actual);
+    if (claimed !== expected) {
+      const [, , num, slug] = BRIEFING_NAME_RE.exec(name);
+      errors.push(
+        `${rel}: name claims layer '${claimed}', but the file is owned by layer '${actual}'. ` +
+          `Rename it to ${expected}-${num}-${slug}.md (ADR-CORE-038), or move it into the layer it claims.`,
+      );
+    }
+  }
+}
+
+// 7) Dead ADR citations in the CI workflows.
 //
 //    They cite ADRs in their headers to say *why* the pipeline is shaped the way it is — and they were
 //    the one place the great ADR rename missed, because the rewrite walked markdown and code but not YAML.

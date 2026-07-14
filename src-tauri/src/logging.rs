@@ -38,7 +38,10 @@ struct LogState {
 }
 
 static STATE: OnceLock<LogState> = OnceLock::new();
-static GUARD: OnceLock<WorkerGuard> = OnceLock::new();
+/// The non-blocking file appender's worker guard. A `Mutex<Option<..>>` rather than a `OnceLock` so the
+/// crash path can **drop** it ([`flush`]) before a `process::exit` that would otherwise run no
+/// destructors and take the last records — the ones describing the crash — with it (ADR-APP-032).
+static GUARD: Mutex<Option<WorkerGuard>> = Mutex::new(None);
 
 fn state() -> &'static LogState {
     STATE.get_or_init(|| {
@@ -141,7 +144,9 @@ pub fn init(data_dir: &Path) {
 
     let file_appender = tracing_appender::rolling::daily(&logs_dir, "app.log");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
-    let _ = GUARD.set(guard); // keep the worker alive for the process lifetime
+    if let Ok(mut slot) = GUARD.lock() {
+        *slot = Some(guard); // keep the worker alive for the process lifetime; dropped by flush() on a crash
+    }
 
     // Default: our crate at debug (so the UI log view shows detailed records), dependencies at info
     // to keep the noise down. Override entirely via RUST_LOG.
@@ -162,30 +167,25 @@ pub fn init(data_dir: &Path) {
         )
         .with(BufferLayer);
     let _ = registry.try_init();
-
-    install_panic_hook();
 }
 
-/// Route panics through `tracing` so they reach the JSON log file + UI buffer (ADR-APP-025), not just
-/// stderr. A panic inside an async Tauri command otherwise aborts that command's future leaving
-/// **no** record. Chains to the previous hook so the default backtrace behaviour is preserved.
-fn install_panic_hook() {
-    let previous = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |info| {
-        let location = info
-            .location()
-            .map(|l| format!("{}:{}", l.file(), l.line()))
-            .unwrap_or_default();
-        let payload = info
-            .payload()
-            .downcast_ref::<&str>()
-            .map(|s| s.to_string())
-            .or_else(|| info.payload().downcast_ref::<String>().cloned())
-            .unwrap_or_else(|| "<non-string panic payload>".to_string());
-        tracing::error!(location = %location, payload = %payload, "panic");
-        previous(info);
-    }));
+/// Flush and drop the file appender's worker guard — called from the crash path only ([`crate::crash`]).
+///
+/// `tracing_appender`'s non-blocking writer hands records to a background thread and flushes them when
+/// its `WorkerGuard` is dropped — but a crash ends the process with `std::process::exit`, which runs
+/// **no destructors**. Without this, the last records written before a crash — the very ones describing
+/// it — would die in that buffer. After it returns the file sink is gone; the next statement is the exit.
+pub fn flush() {
+    if let Ok(mut slot) = GUARD.lock() {
+        drop(slot.take());
+    }
 }
+
+// The panic hook lives in `crate::crash` (ADR-APP-032), not here. It still routes the panic through
+// `tracing` as this module's hook did, and adds what ADR-CORE-037 requires on top: a synchronous crash
+// report, a flushed log file, a message the user actually sees, and a deliberate exit code. It must be
+// installed BEFORE logging exists — a panic while resolving the app data dir happens before `init` has
+// ever run — which is why it cannot be owned by this module.
 
 #[cfg(test)]
 mod tests {

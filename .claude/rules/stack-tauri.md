@@ -34,6 +34,12 @@ contract; **this file is what the agent is actually building**.
   (ADR-APP-026, rule:ui-design). A lint gate in `check:all` enforces it.
 - **Logging** runs through `tracing` into console + a rotating JSON file + a live UI buffer (ADR-APP-025,
   rule:logging).
+- **Nothing here dies silently (ADR-APP-032).** This app has **two** runtimes and therefore two entry
+  points: the Rust process (panic hook in `crash.rs`, installed *before* the Tauri builder) and the
+  webview (`CrashBoundary` + window handlers in `src/main.tsx`). A crash logs, writes a report to
+  `<app-data>/crashes/`, shows a native message box and exits with a defined code — **a lint gate in
+  `check:all` fails the build if an entry point or a background task is left uncovered.** Adding a
+  `spawn`? It goes in `crash-boundaries.json`, with how it dies.
 
 ## Essential commands
 
@@ -58,6 +64,7 @@ Load them by task, per rule:context-loading:
 | HUD layout, controls, a11y         | rule:ui-design             |
 | Colours, chamfers, glow            | rule:theming               |
 | `tracing`, sinks, log view         | rule:logging               |
+| Panics, crashes, entry points       | rule:crash-handling + ADR-APP-032 |
 | Windows/macOS/Linux parity         | rule:cross-platform        |
 | Version sync, channels, releases   | rule:stack-release         |
 

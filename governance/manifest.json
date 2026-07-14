@@ -1,21 +1,21 @@
 {
   "generated": true,
-  "governanceVersion": "0.6.0",
+  "governanceVersion": "0.8.0",
   "upstream": "kaoszwerg/saga-rust-template",
   "layers": [
     {
       "id": "core",
       "source": "kaoszwerg/althing",
-      "version": "0.6.0"
+      "version": "0.8.0"
     },
     {
       "id": "app",
       "source": "kaoszwerg/saga-rust-template",
-      "version": "0.6.0"
+      "version": "0.8.0"
     }
   ],
   "optedOut": [],
-  "count": 111,
+  "count": 121,
   "files": [
     {
       "path": ".claude/memory/glossary.md",
@@ -84,7 +84,12 @@
     },
     {
       "path": ".claude/rules/core-principles.md",
-      "hash": "da80dadf4f839292",
+      "hash": "821cc719350b30e9",
+      "layer": "core"
+    },
+    {
+      "path": ".claude/rules/crash-handling.md",
+      "hash": "526766ff38d2e37b",
       "layer": "core"
     },
     {
@@ -119,7 +124,7 @@
     },
     {
       "path": ".claude/rules/knowledge-handover.md",
-      "hash": "920e8aae80ab4f57",
+      "hash": "41729a46849f5a36",
       "layer": "core"
     },
     {
@@ -174,7 +179,7 @@
     },
     {
       "path": ".claude/rules/stack-tauri.md",
-      "hash": "69180cda12298fa3",
+      "hash": "38f02c1893caa557",
       "layer": "app"
     },
     {
@@ -254,7 +259,7 @@
     },
     {
       "path": "CLAUDE.md",
-      "hash": "e6c3d3f818517847",
+      "hash": "14d3c624b939719d",
       "layer": "core"
     },
     {
@@ -298,6 +303,11 @@
       "layer": "app"
     },
     {
+      "path": "docs/adr/app-032-crash-handling-mechanism.md",
+      "hash": "a31b15f1ce5cce9a",
+      "layer": "app"
+    },
+    {
       "path": "docs/adr/core-002-best-solution-principle.md",
       "hash": "f40cfa75b67c4159",
       "layer": "core"
@@ -329,7 +339,7 @@
     },
     {
       "path": "docs/adr/core-008-quality-pipeline.md",
-      "hash": "d9e9e2efa4454762",
+      "hash": "84586317e0917627",
       "layer": "core"
     },
     {
@@ -354,7 +364,7 @@
     },
     {
       "path": "docs/adr/core-024-versioning-and-build-channels.md",
-      "hash": "4d2b3d1116d6ec49",
+      "hash": "42caefb09d247372",
       "layer": "core"
     },
     {
@@ -364,22 +374,22 @@
     },
     {
       "path": "docs/adr/core-032-config-layering-project-overlays.md",
-      "hash": "2745497fcce19096",
+      "hash": "7e42c0c48f289024",
       "layer": "core"
     },
     {
       "path": "docs/adr/core-033-governance-layers-cascade.md",
-      "hash": "5a30cb270e9d0750",
+      "hash": "8846af0afa0aadeb",
       "layer": "core"
     },
     {
       "path": "docs/adr/core-034-layered-adr-identifiers.md",
-      "hash": "8eb53f2c6ffcc006",
+      "hash": "2886f69487575fb4",
       "layer": "core"
     },
     {
       "path": "docs/adr/core-035-cross-layer-supersession.md",
-      "hash": "99ce550ddf9e0768",
+      "hash": "bbea8a6866d38ea5",
       "layer": "core"
     },
     {
@@ -388,68 +398,98 @@
       "layer": "core"
     },
     {
+      "path": "docs/adr/core-037-no-silent-death.md",
+      "hash": "8ac45ce239805c4a",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/core-038-layered-briefing-names.md",
+      "hash": "2a0790c0a2710b3d",
+      "layer": "core"
+    },
+    {
       "path": "docs/adr/project/README.md",
       "hash": "2c23cfbdb021496a",
       "layer": "core"
     },
     {
-      "path": "docs/migrations/001-config-layering.md",
-      "hash": "7fc90f1a767b33e6",
-      "layer": "core"
-    },
-    {
-      "path": "docs/migrations/002-versioning-per-change.md",
-      "hash": "a51cb958b5de27da",
-      "layer": "core"
-    },
-    {
-      "path": "docs/migrations/003-governance-layers.md",
-      "hash": "000632b651f0a4e1",
-      "layer": "core"
-    },
-    {
-      "path": "docs/migrations/004-layered-adr-ids.md",
-      "hash": "8d20834337ecb5aa",
-      "layer": "core"
-    },
-    {
-      "path": "docs/migrations/005-cross-layer-supersession.md",
-      "hash": "f9f6609d0328ad74",
-      "layer": "core"
-    },
-    {
-      "path": "docs/migrations/006-no-push-ci.md",
-      "hash": "b9754b811af7ac7d",
-      "layer": "core"
-    },
-    {
-      "path": "docs/migrations/100-ui-defaults-not-libraries.md",
+      "path": "docs/migrations/app-100-ui-defaults-not-libraries.md",
       "hash": "67464e9fc8640eda",
       "layer": "app"
     },
     {
-      "path": "docs/migrations/101-ui-boundary-gate.md",
+      "path": "docs/migrations/app-101-ui-boundary-gate.md",
       "hash": "306420e3520c2c1c",
       "layer": "app"
     },
     {
-      "path": "docs/migrations/102-devdependency-bypass-closed.md",
+      "path": "docs/migrations/app-102-devdependency-bypass-closed.md",
       "hash": "71b7408c4b97857b",
       "layer": "app"
     },
     {
-      "path": "docs/migrations/103-no-push-ci.md",
+      "path": "docs/migrations/app-103-no-push-ci.md",
       "hash": "b728e8ed5e4532e8",
       "layer": "app"
     },
     {
+      "path": "docs/migrations/app-104-crash-handling-mechanism.md",
+      "hash": "f8998b1973ccb272",
+      "layer": "app"
+    },
+    {
+      "path": "docs/migrations/app-105-briefing-names.md",
+      "hash": "7b090c3b69820f06",
+      "layer": "app"
+    },
+    {
+      "path": "docs/migrations/core-001-config-layering.md",
+      "hash": "7fc90f1a767b33e6",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/core-002-versioning-per-change.md",
+      "hash": "a51cb958b5de27da",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/core-003-governance-layers.md",
+      "hash": "000632b651f0a4e1",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/core-004-layered-adr-ids.md",
+      "hash": "8d20834337ecb5aa",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/core-005-cross-layer-supersession.md",
+      "hash": "f9f6609d0328ad74",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/core-006-no-push-ci.md",
+      "hash": "b9754b811af7ac7d",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/core-007-crash-handling.md",
+      "hash": "4ac0c9c574a8118d",
+      "layer": "core"
+    },
+    {
+      "path": "docs/migrations/core-008-layered-briefing-names.md",
+      "hash": "5099487f0fb2cbb8",
+      "layer": "core"
+    },
+    {
       "path": "docs/migrations/README.md",
-      "hash": "927b30dfb0a1b6e6",
+      "hash": "ab9c3e45101213da",
       "layer": "core"
     },
     {
       "path": "eslint.config.mjs",
-      "hash": "c8c8deff4d4c632a",
+      "hash": "f474bc57ecc38215",
       "layer": "app"
     },
     {
@@ -464,7 +504,7 @@
     },
     {
       "path": "scripts/check-index.mjs",
-      "hash": "772e97c3d81c7062",
+      "hash": "78cb6930dcc89e1a",
       "layer": "core"
     },
     {
@@ -498,23 +538,33 @@
       "layer": "app"
     },
     {
+      "path": "scripts/lib/crash-gate.mjs",
+      "hash": "361c9808c0db11ae",
+      "layer": "app"
+    },
+    {
+      "path": "scripts/lib/crash-gate.test.mjs",
+      "hash": "d572743178e2eb92",
+      "layer": "app"
+    },
+    {
       "path": "scripts/lib/governance-core.mjs",
       "hash": "64fecff65b8d85db",
       "layer": "core"
     },
     {
       "path": "scripts/lib/governance-core.test.mjs",
-      "hash": "f38db387e1a18413",
+      "hash": "d698f9e34f89d13c",
       "layer": "core"
     },
     {
       "path": "scripts/lib/governance.mjs",
-      "hash": "5bac8a876bd6f1d8",
+      "hash": "f8694a7f995d1891",
       "layer": "core"
     },
     {
       "path": "scripts/lib/governance.test.mjs",
-      "hash": "a135eb200dca2250",
+      "hash": "424f6843e2bde73f",
       "layer": "core"
     },
     {

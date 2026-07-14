@@ -2,7 +2,7 @@
 
 # Current ADRs (accepted snapshot)
 
-33 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
+36 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
 in [../README.md](../README.md).
 
 | ADR | Layer | Title | Load |
@@ -13,6 +13,7 @@ in [../README.md](../README.md).
 | [ADR-APP-025](../app-025-logging-architecture.md) | app | Logging architecture — JSON file + ring buffer + live UI stream | conditional |
 | [ADR-APP-026](../app-026-no-native-ui-primitives.md) | app | No native UI defaults — every control is a reusable HUD primitive | conditional |
 | [ADR-APP-031](../app-031-app-identity-ssot.md) | app | App-identity single source of truth (app.identity.json) with sync + drift gate | conditional |
+| [ADR-APP-032](../app-032-crash-handling-mechanism.md) | app | Crash handling on this stack — the mechanism and the gate | conditional |
 | [ADR-CORE-002](../core-002-best-solution-principle.md) | core | Always the best solution, never the easiest | core |
 | [ADR-CORE-003](../core-003-repo-single-source-of-truth.md) | core | Repository is the single source of truth; memory is repo-resident | core |
 | [ADR-CORE-004](../core-004-verify-first-no-guessing.md) | core | Verify first, never guess — every claim must be provable | core |
@@ -30,6 +31,8 @@ in [../README.md](../README.md).
 | [ADR-CORE-034](../core-034-layered-adr-identifiers.md) | core | The layer is part of the ADR id — ADR-<LAYER>-<NNN>, not a number block | conditional |
 | [ADR-CORE-035](../core-035-cross-layer-supersession.md) | core | Cross-layer supersession — declared in the superseding document, never in the superseded one | conditional |
 | [ADR-CORE-036](../core-036-challenge-the-premise.md) | core | Challenge the premise — the agent is a critical partner, not an executor | conditional |
+| [ADR-CORE-037](../core-037-no-silent-death.md) | core | No silent death — every entry point has a last-resort handler | conditional |
+| [ADR-CORE-038](../core-038-layered-briefing-names.md) | core | The layer is part of the briefing filename — <layer>-NNN-<slug>.md, not a number range | conditional |
 | [ADR-PROJ-001](../project/proj-001-ui-stack-tauri-over-rust-toolkits.md) | proj | UI stack — Tauri 2 + React on the saga shell, not a pure-Rust GUI toolkit | conditional |
 | [ADR-PROJ-002](../project/proj-002-provisional-identity-and-release-blockers.md) | proj | The publisher is undecided — the identity is provisional and the release build refuses to run | conditional |
 | [ADR-PROJ-003](../project/proj-003-visual-identity.md) | proj | Huginn's visual identity replaces the template's HUD look | conditional |

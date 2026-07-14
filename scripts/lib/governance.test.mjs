@@ -9,10 +9,13 @@ import {
   validateCommon,
   adrLayerOf,
   prefixOfLayer,
+  briefingLayerOf,
+  filePrefixOfLayer,
   parseDoc,
   resolveSupersessions,
   effectiveStatus,
   ADR_ID_RE,
+  BRIEFING_NAME_RE,
 } from "./governance.mjs";
 
 const doc = (data) => ({ rel: ".claude/rules/x.md", data });
@@ -89,6 +92,50 @@ describe("layered ADR ids", () => {
     const id = "ADR-PROJ-105";
     expect(ADR_ID_RE.exec(id)[1]).toBe(prefixOfLayer("project")); // the comparison the gate makes
     expect(adrLayerOf(id)).not.toBe("project"); // …and the one it must NOT make
+  });
+});
+
+// A briefing has no front-matter and no id, so its FILENAME is its identifier — and the filename is the
+// collision surface: two layers shipping `docs/migrations/008-x.md` make `detectCollisions` abort the
+// consumer's `governance:update`. The layer therefore lives in the name (ADR-CORE-038), for the same reason
+// it lives in an ADR id (ADR-CORE-034): a number cannot disagree with reality, so no gate can check it.
+describe("layered migration briefing names", () => {
+  it("reads the layer off the filename", () => {
+    expect(briefingLayerOf("core-001-config-layering.md")).toBe("core");
+    expect(briefingLayerOf("app-001-hud-primitives.md")).toBe("app");
+    expect(briefingLayerOf("proj-012-x.md")).toBe("proj");
+  });
+
+  it("rejects the bare-number name — it names no layer, which is how two layers collide", () => {
+    expect(briefingLayerOf("001-config-layering.md")).toBeNull();
+    expect(briefingLayerOf("100-hud-primitives.md")).toBeNull();
+    expect(BRIEFING_NAME_RE.test("008-anything.md")).toBe(false);
+  });
+
+  it("rejects a malformed name rather than guessing at it", () => {
+    expect(briefingLayerOf("core-1-x.md")).toBeNull(); // the number is NNN, always three digits
+    expect(briefingLayerOf("core-001.md")).toBeNull(); // a briefing without a slug says nothing
+    expect(briefingLayerOf("CORE-001-x.md")).toBeNull(); // filenames are lowercase
+    expect(briefingLayerOf("README.md")).toBeNull(); // the index is not a briefing
+    expect(briefingLayerOf(undefined)).toBeNull();
+  });
+
+  // Same trap as the ADR gate: the project LAYER is called `project` while its files are prefixed `proj`.
+  // Comparing the layer name against the prefix would fire on a correct file and tell the agent to rename
+  // it to itself — a gate that teaches you to ignore it.
+  it("maps the project layer to the 'proj' file prefix, in the alphabet the filename uses", () => {
+    expect(filePrefixOfLayer("project")).toBe("proj");
+    expect(filePrefixOfLayer("core")).toBe("core");
+    expect(filePrefixOfLayer("app")).toBe("app");
+
+    const name = "proj-001-x.md";
+    expect(briefingLayerOf(name)).toBe(filePrefixOfLayer("project")); // the comparison the gate makes
+    expect(briefingLayerOf(name)).not.toBe("project"); // …and the one it must NOT make
+  });
+
+  it("keeps number and slug available, so the gate can print the corrected name", () => {
+    const [, layer, num, slug] = BRIEFING_NAME_RE.exec("app-100-no-push-ci.md");
+    expect([layer, num, slug]).toEqual(["app", "100", "no-push-ci"]);
   });
 });
 

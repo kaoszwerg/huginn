@@ -85,7 +85,7 @@ work; the release is an act of the maintainer.** The two were conflated; they ar
 per-change bumps, that hits on *every* change instead of once per release: the next `--locked` build
 (clippy/test/CI) dies with *"cannot update the lock file … because `--locked` was passed"*.
 `scripts/sync-version.mjs` now writes and verifies both files (`version:check` in `check:all`), and the
-briefing `docs/migrations/002-versioning-per-change.md` carries this to the forks.
+briefing `docs/migrations/core-002-versioning-per-change.md` carries this to the forks.
 
 ## Alternatives
 
@@ -110,6 +110,6 @@ briefing `docs/migrations/002-versioning-per-change.md` carries this to the fork
 
 ## References
 
-- `.claude/rules/versioning.md`, `docs/migrations/002-versioning-per-change.md`, `CHANGELOG.md`.
+- `.claude/rules/versioning.md`, `docs/migrations/core-002-versioning-per-change.md`, `CHANGELOG.md`.
 - The propagation of the version into a stack's derived manifests, and the release pipeline that builds
   a tag, belong to the layer that owns the build (ADR-CORE-033).

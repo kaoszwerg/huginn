@@ -4,6 +4,22 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+/// A fatal error from the UI runtime, handed over IPC to be recorded (ADR-CORE-037, ADR-APP-032).
+///
+/// The webview is its own entry point: a Rust panic hook cannot see anything thrown inside it, so the
+/// frontend hands its last-resort failures across the boundary instead. Nothing here leaves the device
+/// (rule:privacy) — it is written to `<app_data_dir>/crashes/` and to the log, and that is all.
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export, export_to = "../../src/bindings/")]
+pub struct CrashReport {
+    /// Where in the UI runtime it surfaced: `render`, `uncaught` or `unhandledrejection`.
+    pub source: String,
+    /// The error's message. Never a secret or user content (rule:logging).
+    pub message: String,
+    /// JS stack trace, when the thrown value carried one (a thrown string does not).
+    pub stack: Option<String>,
+}
+
 /// Build identity: SemVer version, channel (dev/release), and the exact commit it was built from
 /// (ADR-CORE-024). Rendered in the title bar, status bar and About dialog.
 #[derive(Debug, Clone, Serialize, TS)]

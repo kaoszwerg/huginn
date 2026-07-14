@@ -120,6 +120,38 @@ export function prefixOfLayer(layer) {
   return layer === "project" ? "PROJ" : String(layer).toUpperCase();
 }
 
+/**
+ * A migration briefing filename: `<layer>-NNN-<slug>.md` (ADR-CORE-038).
+ *
+ * A briefing carries no front-matter and no id, so the **filename is its identifier** — and it is also the
+ * collision surface. Two layers that ship `docs/migrations/008-x.md` do not merely confuse a reader:
+ * `detectCollisions` aborts the consumer's `governance:update` (scripts/governance-update.mjs), stopping it
+ * from pulling anything at all until a published file is renamed.
+ *
+ * Number blocks (core 001–099, app 100–199, project 200+) were the previous answer. They were prose in a
+ * README, checked by nothing — and an agent in the app layer, looking at a directory that stops at `007-`,
+ * picks `008-` as the next free number without ever seeing the rule. Same failure as ADR-CORE-034, same fix:
+ * put the layer in the identifier, where a gate can compare what the name CLAIMS against the layer that
+ * actually owns the file. Numbering is then per-layer, independent, and unbounded.
+ */
+export const BRIEFING_NAME_RE = /^([a-z][a-z0-9]*)-(\d{3})-([a-z0-9]+(?:-[a-z0-9]+)*)\.md$/;
+
+/** The layer a briefing filename claims: `core-001-x.md` → "core". Null if the name is not well-formed. */
+export function briefingLayerOf(name) {
+  const m = BRIEFING_NAME_RE.exec(String(name ?? ""));
+  return m ? m[1] : null;
+}
+
+/**
+ * The prefix a layer uses in a **filename** — lowercase, and `proj` for the project layer, exactly as its
+ * ADR files are named (`proj-105-…md`). Kept apart from `prefixOfLayer` on purpose: comparing a filename
+ * against an id's alphabet is how the ADR gate once fired on correct files and told the agent to rename
+ * them to themselves.
+ */
+export function filePrefixOfLayer(layer) {
+  return prefixOfLayer(layer).toLowerCase();
+}
+
 export function loadAdrs() {
   const load = (dir, line) =>
     listMarkdown(dir, ["README.md"])

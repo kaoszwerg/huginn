@@ -91,4 +91,4 @@ a core document is now wrong *on its face*, before any lookup.
   this identifier makes legible.
 - [ADR-CORE-007](core-007-generated-indexes-staleness-gate.md) — the generated indexes that now carry the
   Layer column.
-- `.claude/rules/rule-maintenance.md`, `docs/migrations/004-layered-adr-ids.md`.
+- `.claude/rules/rule-maintenance.md`, `docs/migrations/core-004-layered-adr-ids.md`.

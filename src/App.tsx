@@ -5,6 +5,7 @@ import { StatusBar } from "./components/layout/StatusBar";
 import { JobMonitor } from "./components/layout/JobMonitor";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { AboutDialog } from "./components/AboutDialog";
+import { CrashNotice } from "./components/CrashNotice";
 import { Notice } from "./components/ui/Notice";
 import { Button } from "./components/ui/Button";
 import { HomeView } from "./views/HomeView";
@@ -50,6 +51,9 @@ export default function App() {
   return (
     <div className="bg-bg border-line flex h-full flex-col overflow-hidden rounded-[10px] border">
       <TitleBar />
+
+      {/* If the PREVIOUS run crashed, say so on sight and point at the on-device report (ADR-APP-032). */}
+      <CrashNotice />
 
       {hotkeyDead ? (
         <Notice

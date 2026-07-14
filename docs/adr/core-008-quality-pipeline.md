@@ -95,4 +95,4 @@ local gate is missing something, **strengthen the local gate** — that is where
 
 - ADR-CORE-002 (best solution), ADR-CORE-009 (deps), ADR-CORE-010 (testing), `rule:automation`,
   `rule:versioning`. The release workflow itself is a stack decision, owned by the layer that builds.
-- Migration briefing: [`docs/migrations/006-no-push-ci.md`](../migrations/006-no-push-ci.md).
+- Migration briefing: [`docs/migrations/core-006-no-push-ci.md`](../migrations/core-006-no-push-ci.md).

@@ -12,6 +12,7 @@ import type { Job } from "../bindings/Job";
 import type { VoiceRuleDto } from "../bindings/VoiceRuleDto";
 import type { BuiltinCommandDto } from "../bindings/BuiltinCommandDto";
 import type { DirListingDto } from "../bindings/DirListingDto";
+import type { CrashReport } from "../bindings/CrashReport";
 
 /**
  * Typed facade over the backend `#[tauri::command]` surface. Every IPC call in the app flows through
@@ -19,6 +20,16 @@ import type { DirListingDto } from "../bindings/DirListingDto";
  * bindings.
  */
 export const api = {
+  /**
+   * Record a fatal UI-runtime error on the device (ADR-CORE-037, ADR-APP-032). The webview is a
+   * second entry point the Rust panic hook cannot see; this hands its last-resort failures to the
+   * backend, which logs them and writes the durable crash file. Resolves with the report's path.
+   */
+  reportCrash: (report: CrashReport) => invoke<string>("report_crash", { report }),
+  /** The crash report a previous run left behind, if any. Consumed on read (shown once, never nags). */
+  pendingCrash: () => invoke<string | null>("pending_crash"),
+  /** End the process after a fatal UI error, with the exit code that says so. */
+  exitAfterCrash: () => invoke<void>("exit_after_crash"),
   /** App SemVer version (IPC smoke test). */
   appVersion: () => invoke<string>("app_version"),
   /** Build identity: version, channel and the commit the binary was built from. */

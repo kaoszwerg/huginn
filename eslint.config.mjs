@@ -16,6 +16,7 @@ import security from "eslint-plugin-security";
 import noSecrets from "eslint-plugin-no-secrets";
 import importX from "eslint-plugin-import-x";
 import { BOUNDARY_REL, checkBoundary, restrictedPatterns } from "./scripts/lib/ui-boundary.mjs";
+import { BOUNDARIES_REL, checkCrashGate } from "./scripts/lib/crash-gate.mjs";
 
 // The UI boundary (ADR-APP-026). Enforced HERE, and not as another `package.json` script, on purpose:
 // `package.json` is project-owned, so a consumer could simply leave the step out of `check:all` — while
@@ -50,6 +51,37 @@ if (boundaryErrors.length) {
   );
 }
 const primitiveOnlyImports = restrictedPatterns(boundary.primitiveOnly);
+
+// The crash gate (ADR-CORE-037, ADR-APP-032). Same reasoning as the UI boundary above, and the same
+// place: ADR-CORE-037 states outright that the core cannot check this — it does not know what an entry
+// point is in this stack — and hands the obligation to gate it to the layer that does. This is that
+// gate, and it runs on every `npm run lint`, in every project, always.
+//
+// It is not an ESLint rule because two of the three entry points it guards are RUST files, which ESLint
+// never sees. Running at config-load time is what lets one check cover both runtimes of a Tauri app —
+// and a crash gate that could only see half the app would be worse than none, because it would look
+// like coverage.
+const { errors: crashErrors } = checkCrashGate(ROOT);
+if (crashErrors.length) {
+  throw new Error(
+    [
+      "",
+      "ADR-CORE-037 — an entry point can die silently:",
+      "",
+      ...crashErrors.map((e) => `  - ${e}`),
+      "",
+      "  A crash is permitted. A SILENT crash is not: every entry point logs, tells the user, leaves a",
+      "  crash report on the device, and exits with a defined code (.claude/rules/crash-handling.md).",
+      "",
+      "    src-tauri/src/lib.rs   — crash::install_panic_hook() FIRST, then the builder; handle its Err.",
+      "    src/main.tsx           — installGlobalCrashHandlers() + mount inside <CrashBoundary>.",
+      `    ${BOUNDARIES_REL}   — one entry per background task, saying HOW THAT TASK DIES.`,
+      "",
+      "  The mechanism lives in src-tauri/src/crash.rs and src/lib/crash.ts — see ADR-APP-032.",
+      "",
+    ].join("\n"),
+  );
+}
 
 const core = tseslint.config(
   {

@@ -5,6 +5,7 @@
 //! app is assembled.
 
 pub mod commands;
+pub mod crash;
 pub mod dto;
 pub mod error;
 pub mod logging;
@@ -18,6 +19,7 @@ use crate::error::{AppError, Result};
 use crate::state::AppState;
 use std::path::PathBuf;
 use tauri::{Emitter, Manager};
+use tokio::sync::broadcast::error::RecvError;
 
 /// Where the speech models live: `<app-data>/models/` (ADR-PROJ-007 — lowercase, resolved through
 /// the platform API, never a hardcoded path).
@@ -31,9 +33,17 @@ pub fn models_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
 }
 
 /// Build and run the Tauri application.
+///
+/// This is the process's entry point, and the last thing that can report a failure to the user
+/// (ADR-CORE-037): the panic hook goes in **first** — before the builder, before logging — because a
+/// panic while resolving the app data dir happens before either exists. `main.rs` builds with
+/// `windows_subsystem = "windows"`, so there is no console to fall back on; nothing here may die
+/// silently.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    crash::install_panic_hook();
+
+    let result = tauri::Builder::default()
         // Persist + restore window size and position across runs — for the MAIN window only.
         //
         // The overlay is denied on purpose (ADR-PROJ-004). Its geometry and visibility are owned
@@ -57,53 +67,18 @@ pub fn run() {
             None,
         ))
         .setup(|app| {
-            let data_dir = app.path().app_data_dir()?;
-            std::fs::create_dir_all(&data_dir)?;
-            logging::init(&data_dir);
-            tracing::info!(
-                app = %app.package_info().name,
-                version = env!("CARGO_PKG_VERSION"),
-                data_dir = %data_dir.display(),
-                "starting"
-            );
-
-            // Bridge live log records to the frontend log view.
-            let log_handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                let mut rx = logging::subscribe();
-                while let Ok(rec) = rx.recv().await {
-                    // Deliberately not re-logged on Err: the record is already in the ring buffer +
-                    // JSON file, and logging an emit failure would feed back into this same stream.
-                    let _ = log_handle.emit("log://record", rec);
-                }
-            });
-
-            app.manage(AppState::new(&data_dir));
-            // Close handler is always registered; it consults the live `minimize_to_tray` setting.
-            // The tray icon itself is installed only when the setting is on (default off).
-            tray::install_close_handler(app.handle());
-
-            // Push-to-talk (ADR-PROJ-004). A failure to arm the hotkey — most likely because another
-            // application already holds the combination — must not take the app down: the user needs
-            // the settings window to fix it. It is never swallowed either; it is shown in the window
-            // and in the tray menu (rule:overlay-and-input).
-            if let Err(e) = pushtotalk::install(app.handle()) {
-                tracing::error!(error = %e, "push-to-talk is NOT available");
+            // Tauri turns an `Err` from this closure into `panic!("Failed to setup app: {e}")`
+            // (tauri 2.11, app.rs) — it never reaches `run()`'s `Result`, and the panic hook would then
+            // report EXIT_PANIC for what is really a startup failure. So it is handled here, with the
+            // exit code that says what actually happened (ADR-CORE-037).
+            if let Err(e) = setup(app) {
+                crash::fatal(
+                    "startup",
+                    "Huginn could not start.",
+                    &format!("setup failed: {e:#}"),
+                    crash::EXIT_STARTUP,
+                );
             }
-
-            // The tray goes up last, so its menu can already state whether the hotkey is armed. It is
-            // installed unconditionally: Huginn lives in the background, and without it the app would
-            // have no way to be opened or quit (see tray.rs).
-            tray::install(app.handle());
-
-            // The speech worker + model. Loading a model takes hundreds of milliseconds and must not
-            // hold up the window — and a fresh install has no model at all, which is a state the app
-            // runs in perfectly well (the user is told, and picks one).
-            app.manage(speech::SpeechState::new());
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn_blocking(move || load_model_at_startup(&handle));
-
-            tracing::info!("startup complete");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -130,9 +105,90 @@ pub fn run() {
             commands::list_jobs,
             commands::cancel_job,
             commands::open_external,
+            // No entry point dies silently (ADR-CORE-037, ADR-APP-032).
+            commands::report_crash,
+            commands::pending_crash,
+            commands::exit_after_crash,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while building the Tauri application");
+        .run(tauri::generate_context!());
+
+    // Reached only when the BUILDER failed (a bad context, a window that could not be constructed) —
+    // `App::run` exits the process itself on the happy path. Formerly a bare `.expect()`: a panic into a
+    // stderr that a `windows_subsystem = "windows"` release build has no one reading (ADR-APP-032).
+    if let Err(e) = result {
+        crash::fatal(
+            "startup",
+            "Huginn could not start.",
+            &format!("tauri failed to build: {e:#}"),
+            crash::EXIT_STARTUP,
+        );
+    }
+}
+
+/// Everything the app needs before the first frame. Fallible on purpose: the caller turns any failure
+/// into a reported, recorded, deliberate exit (ADR-CORE-037) instead of a silent one.
+fn setup(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let data_dir = app.path().app_data_dir()?;
+    std::fs::create_dir_all(&data_dir)?;
+    // Point the crash path at the real app data dir; until now reports went to the temp dir.
+    crash::set_data_dir(&data_dir);
+    logging::init(&data_dir);
+    tracing::info!(
+        app = %app.package_info().name,
+        version = env!("CARGO_PKG_VERSION"),
+        data_dir = %data_dir.display(),
+        "starting"
+    );
+
+    // Bridge live log records to the frontend log view. A `broadcast` receiver returns `Lagged` when the
+    // UI falls behind — recoverable, so warn and keep bridging; the old `while let Ok(..)` loop ended here
+    // and silently froze the log view for the rest of the session (ADR-CORE-037). It ends only on
+    // `Closed` (logging is shutting down).
+    let log_handle = app.handle().clone();
+    tauri::async_runtime::spawn(async move {
+        let mut rx = logging::subscribe();
+        loop {
+            match rx.recv().await {
+                Ok(rec) => {
+                    // Not re-logged on an emit failure: the record is already in the ring buffer + JSON
+                    // file, and logging it would feed back into this same stream.
+                    let _ = log_handle.emit("log://record", rec);
+                }
+                Err(RecvError::Lagged(skipped)) => {
+                    tracing::warn!(skipped, "log bridge fell behind; records dropped");
+                }
+                Err(RecvError::Closed) => {
+                    tracing::debug!("log bridge closed");
+                    break;
+                }
+            }
+        }
+    });
+
+    app.manage(AppState::new(&data_dir));
+    // Close handler is always registered; it consults the live `minimize_to_tray` setting. The tray icon
+    // itself is installed only when the setting is on (default off).
+    tray::install_close_handler(app.handle());
+
+    // Push-to-talk (ADR-PROJ-004). A failure to arm the hotkey — most likely another app already holds
+    // the combination — must not take the app down: the user needs the settings window to fix it. It is
+    // never swallowed either; it is shown in the window and the tray menu (rule:overlay-and-input).
+    if let Err(e) = pushtotalk::install(app.handle()) {
+        tracing::error!(error = %e, "push-to-talk is NOT available");
+    }
+
+    // The tray goes up last, so its menu can already state whether the hotkey is armed. Installed
+    // unconditionally: Huginn lives in the background, and without it it could not be opened or quit.
+    tray::install(app.handle());
+
+    // The speech worker + model. Loading a model takes hundreds of milliseconds and must not hold up the
+    // window — and a fresh install has no model at all, a state the app runs in perfectly well.
+    app.manage(speech::SpeechState::new());
+    let handle = app.handle().clone();
+    tauri::async_runtime::spawn_blocking(move || load_model_at_startup(&handle));
+
+    tracing::info!("startup complete");
+    Ok(())
 }
 
 /// Load the user's model into the worker, if it is installed.

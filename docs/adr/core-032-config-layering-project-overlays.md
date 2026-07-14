@@ -124,7 +124,7 @@ every commit is now covered by tests against a temp repo (rule:testing).
 
 ## References
 
-- Migration briefing for projects: [`docs/migrations/001-config-layering.md`](../migrations/001-config-layering.md)
+- Migration briefing for projects: [`docs/migrations/core-001-config-layering.md`](../migrations/core-001-config-layering.md)
   (pinned core, printed by `governance:update`).
 - ADR-CORE-033 (layered governance — "core" here reads as "any upstream-owned layer"), ADR-CORE-030 (superseded),
   ADR-CORE-007 (hash gate), ADR-CORE-009/ADR-CORE-011 (dependency + security exceptions),

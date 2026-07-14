@@ -8,6 +8,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **No entry point dies silently** (ADR-CORE-037, ADR-APP-032 — pulled from the upstream governance and
+  implemented here). A crash is permitted; a silent crash is not. Both runtimes now have a last-resort
+  handler: a Rust panic (or a startup failure that happens before there is a window) logs, writes a crash
+  report to `<app-data>/crashes/`, shows a native message box, and exits with a defined code; the webview
+  installs global handlers plus a `CrashBoundary` and shows a Huginn-styled fatal screen. A crash the app
+  was too broken to show at the time is surfaced on the next launch (`CrashNotice`). Nothing leaves the
+  device (rule:privacy). Every background task is declared in `crash-boundaries.json` — the crash gate in
+  `npm run lint` fails on any undeclared spawn — and the log bridge no longer dies silently on a `Lagged`
+  broadcast (it warns and keeps bridging). Delivered by a governance update to the app layer (v0.8.0),
+  which also renamed migration briefings and ADR ids to carry their layer.
 - **The recording overlay now says what the app is doing** (ADR-PROJ-004). It no longer sits on
   "Ich höre zu …" through the whole (seconds-long) transcription while the user wonders whether anything
   is happening: on release it switches to **"Verarbeite …"** (the live input meter hides, since no audio
