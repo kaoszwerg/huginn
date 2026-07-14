@@ -125,6 +125,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **The `spike` module is renamed to `pushtotalk`** — it is proven production code, not a spike, so it
+  now carries a production name. Pure rename (no behaviour change): the cross-platform push-to-talk
+  orchestration is the module, the Windows platform code stays isolated in its `win32` submodule
+  (`win32` is the Windows-API name, not a bitness — Huginn is 64-bit). The macOS implementation joins as
+  a sibling on the Mac (PLAN.md phase 1b).
 - **Huginn's own visual identity replaces the template's neon HUD** (ADR-PROJ-003) — this closes one of
   the five release blockers. Gone: the cyan/green/gold neon palette, the chamfered `clip-path` corners,
   the glow shadows, the animated conic-gradient window frame, and the Orbitron display font. In their

@@ -8,9 +8,9 @@ pub mod commands;
 pub mod dto;
 pub mod error;
 pub mod logging;
+pub mod pushtotalk;
 pub mod settings;
 pub mod speech;
-pub mod spike;
 pub mod state;
 pub mod tray;
 
@@ -79,7 +79,7 @@ pub fn run() {
             // application already holds the combination — must not take the app down: the user needs
             // the settings window to fix it. It is never swallowed either; it is shown in the window
             // and in the tray menu (rule:overlay-and-input).
-            if let Err(e) = spike::install(app.handle()) {
+            if let Err(e) = pushtotalk::install(app.handle()) {
                 tracing::error!(error = %e, "push-to-talk is NOT available");
             }
 

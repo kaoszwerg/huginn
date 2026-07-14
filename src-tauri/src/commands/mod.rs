@@ -105,7 +105,7 @@ pub fn update_settings(
 /// instead of leaving the user to discover a dead key (rule:overlay-and-input).
 #[tauri::command]
 pub fn get_hotkey_status(app: tauri::AppHandle) -> HotkeyStatus {
-    let status = crate::spike::status(&app);
+    let status = crate::pushtotalk::status(&app);
     tracing::debug!(
         shortcut = %status.shortcut,
         registered = status.registered,
@@ -131,7 +131,7 @@ pub fn set_hotkey(app: tauri::AppHandle, shortcut: String) -> Result<HotkeyStatu
             spec.len()
         )));
     }
-    crate::spike::set_hotkey(&app, spec)
+    crate::pushtotalk::set_hotkey(&app, spec)
 }
 
 /// Whether Huginn starts with the desktop.

@@ -28,7 +28,7 @@ pub struct SettingsPatch {
     pub recognition_language: Option<String>,
     pub sounds: Option<bool>,
     /// The push-to-talk combination. Persisted only *after* the OS accepted it (see
-    /// `spike::set_hotkey`): storing a shortcut that cannot be registered would leave the user with
+    /// `pushtotalk::set_hotkey`): storing a shortcut that cannot be registered would leave the user with
     /// a setting that lies.
     pub hotkey: Option<String>,
     /// The full voice-command list, replacing whatever was there (the editor owns the list and sends

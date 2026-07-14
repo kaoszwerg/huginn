@@ -206,7 +206,7 @@ fn uses_clipboard(rules: &[crate::dto::VoiceRuleDto]) -> bool {
 fn read_clipboard() -> String {
     #[cfg(target_os = "windows")]
     {
-        crate::spike::win32::clipboard::read_text().unwrap_or_default()
+        crate::pushtotalk::win32::clipboard::read_text().unwrap_or_default()
     }
     #[cfg(not(target_os = "windows"))]
     {

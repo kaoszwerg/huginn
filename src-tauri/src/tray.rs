@@ -193,7 +193,7 @@ fn wants_dark_icon() -> bool {
 /// The menu. Its first line is a disabled label carrying the one fact that matters: is the dictation
 /// key alive, and which one is it?
 fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
-    let status = crate::spike::status(app);
+    let status = crate::pushtotalk::status(app);
     let label = if status.registered {
         format!("Push-to-talk: {}", status.shortcut)
     } else {
