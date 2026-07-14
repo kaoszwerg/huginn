@@ -133,11 +133,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- **The `spike` module is renamed to `pushtotalk`** — it is proven production code, not a spike, so it
-  now carries a production name. Pure rename (no behaviour change): the cross-platform push-to-talk
-  orchestration is the module, the Windows platform code stays isolated in its `win32` submodule
-  (`win32` is the Windows-API name, not a bitness — Huginn is 64-bit). The macOS implementation joins as
-  a sibling on the Mac (PLAN.md phase 1b).
+- **The `spike` module is renamed to `pushtotalk` and its platform code is separated out** — it is
+  proven production code, not a spike. `pushtotalk/mod.rs` is now purely the cross-platform half (hotkey
+  registration, the single-threaded event loop, the session); the Windows session driver (the overlay
+  window, `SendInput`, the caret move, the level pump) moved into `win32/session.rs`, and the
+  non-Windows placeholders into `fallback.rs`. No behaviour change on Windows. This also closed a latent
+  gap: the event loop called an overlay-builder that had **no** non-Windows stub, so the non-Windows
+  build would not have compiled — `fallback` now provides it, and both platforms are structurally
+  complete. (`win32` is the Windows-API name, not a bitness — Huginn is 64-bit.) The macOS session
+  driver joins as a sibling on the Mac (PLAN.md phase 1b).
 - **Huginn's own visual identity replaces the template's neon HUD** (ADR-PROJ-003) — this closes one of
   the five release blockers. Gone: the cyan/green/gold neon palette, the chamfered `clip-path` corners,
   the glow shadows, the animated conic-gradient window frame, and the Orbitron display font. In their
