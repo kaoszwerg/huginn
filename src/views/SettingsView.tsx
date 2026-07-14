@@ -52,6 +52,7 @@ export function SettingsView() {
             active={section === id}
             aria-current={section === id ? "page" : undefined}
             onClick={() => setSection(id)}
+            data-testid={`section-${id}`}
             className="justify-start gap-2 px-3 py-2"
           >
             <Icon size={15} strokeWidth={section === id ? 2.25 : 1.75} />

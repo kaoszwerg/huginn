@@ -40,4 +40,10 @@ export default [
       "no-secrets/no-secrets": ["error", { ignoreContent: NOT_A_SECRET }],
     },
   },
+  {
+    // The end-to-end tests are a separate toolchain (WebdriverIO/Mocha, `npm run e2e`), with their own
+    // globals and their own tsconfig — the app's React-oriented lint (and its ui-boundary/no-secrets
+    // rules) does not apply to them. They are typechecked by the WDIO loader when they run, not here.
+    ignores: ["e2e/**"],
+  },
 ];

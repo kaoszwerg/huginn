@@ -69,6 +69,7 @@ function NavButton({
       active={active}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
+      data-testid={`nav-${item.id}`}
       className="h-9 w-9"
     >
       <Icon size={18} strokeWidth={active ? 2.25 : 1.75} />

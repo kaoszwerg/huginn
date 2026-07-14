@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **An end-to-end test harness for the UI/config surface** (`e2e/`, `npm run e2e`). It drives the real
+  built window through `tauri-driver` + WebdriverIO and asserts what the webview renders — settings
+  navigation, the voice-command editor — selecting by stable `data-testid`s so it survives copy and
+  language changes. It is a **separate, local toolchain**: not part of `check:all`, and not in CI (which
+  builds releases only). Push-to-talk, the overlay and injection are OS-level and stay covered by the
+  PowerShell proofs and the worker pipeline test; see `e2e/README.md` for prerequisites and the
+  disposable-profile note.
 - **Spoken special characters, a `{weekday}` placeholder, and spacing that reads right** (ADR-PROJ-010).
   The opt-in "dictate punctuation" set now covers common symbols too — "Klammer auf/zu" → "()", "at
   Zeichen" → "@", "Bindestrich" → "-", "Schrägstrich" → "/", "Raute" → "#", "Anführungszeichen" → "\""

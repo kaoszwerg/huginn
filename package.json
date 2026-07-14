@@ -46,7 +46,8 @@
     "setup:memory": "bash scripts/setup-claude-memory.sh",
     "prepare": "husky",
     "icons": "node scripts/project/build-icons.mjs",
-    "setup:build": "node scripts/project/setup-build-tools.mjs"
+    "setup:build": "node scripts/project/setup-build-tools.mjs",
+    "e2e": "wdio run e2e/wdio.conf.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.1",
@@ -62,6 +63,11 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.3",
     "@vitest/coverage-v8": "4.1.10",
+    "@wdio/cli": "9.29.1",
+    "@wdio/globals": "9.29.1",
+    "@wdio/local-runner": "9.29.1",
+    "@wdio/mocha-framework": "9.29.1",
+    "@wdio/spec-reporter": "9.29.1",
     "eslint": "9.39.5",
     "eslint-plugin-import-x": "4.17.1",
     "eslint-plugin-jsx-a11y": "6.10.2",

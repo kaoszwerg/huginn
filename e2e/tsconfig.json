@@ -1,0 +1,14 @@
+{
+  "//": "For the WebdriverIO TypeScript loader when `npm run e2e` runs. NOT part of the app build: the root tsconfig only includes `src`, so `npm run typecheck` never touches these files (they use WDIO/Mocha globals the app does not have).",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node", "@wdio/globals/types", "@wdio/mocha-framework"],
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noEmit": true
+  },
+  "include": ["**/*.ts"]
+}

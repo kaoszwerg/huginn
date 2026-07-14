@@ -125,6 +125,7 @@ export function CommandsSection() {
                   placeholder={t("commands.phrasesPlaceholder")}
                   value={draft.phrases}
                   onChange={(e) => setDraft({ ...draft, phrases: e.target.value })}
+                  data-testid="commands-phrases"
                 />
               </Field>
 
@@ -151,6 +152,7 @@ export function CommandsSection() {
                     placeholder={t("commands.templatePlaceholder")}
                     value={draft.template}
                     onChange={(e) => setDraft({ ...draft, template: e.target.value })}
+                    data-testid="commands-template"
                   />
                 </Field>
               ) : null}
@@ -181,6 +183,7 @@ export function CommandsSection() {
                   tone="accent"
                   disabled={setRules.isPending || phrasesInvalid || templateInvalid}
                   onClick={save}
+                  data-testid="commands-save"
                 >
                   {t("commands.save")}
                 </Button>
@@ -191,7 +194,12 @@ export function CommandsSection() {
             </div>
           ) : (
             <div>
-              <Button variant="ghost" onClick={startAdd} disabled={setRules.isPending}>
+              <Button
+                variant="ghost"
+                onClick={startAdd}
+                disabled={setRules.isPending}
+                data-testid="commands-add"
+              >
                 <Plus size={13} strokeWidth={2} />
                 {t("commands.add")}
               </Button>
@@ -271,7 +279,10 @@ function RuleRow({
       : t(`commands.action_${rule.action.kind}`);
 
   return (
-    <div className="border-line flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-control)] border p-2.5">
+    <div
+      data-testid="rule-row"
+      className="border-line flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-control)] border p-2.5"
+    >
       <div className="flex min-w-0 flex-col">
         <span className="text-fg truncate text-sm">
           {rule.phrases.map((p) => `„${p}"`).join(", ")}
@@ -301,6 +312,7 @@ function RuleRow({
           tone="danger"
           onClick={onDelete}
           disabled={disabled}
+          data-testid="rule-delete"
           className="h-7 w-7"
         >
           <Trash2 size={13} strokeWidth={2} />
