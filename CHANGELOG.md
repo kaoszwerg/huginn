@@ -8,6 +8,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Import a model from disk** (ADR-PROJ-006). A file picker (`tauri-plugin-dialog`, granted only to the
+  main window) lets the user bring their own Whisper `.bin` model. It is **not verifiable** — there is no
+  compiled-in hash for a file we have never seen — so it is **never** labelled verified: the row carries a
+  "not verified" badge and the panel says why. It is safe to allow because a model is parsed only in the
+  deprivileged worker, never in the process that holds the microphone and keyboard (ADR-PROJ-005). The
+  copy is atomic (a `.part` file renamed into place) and runs as a Job with byte progress and a working
+  cancel (rule:jobs); the chosen path is validated in Rust (a real file, a sane size) before a byte is
+  copied. Imported models are found by scanning the store — the directory is the source of truth, so a
+  file dropped in by hand appears too. Also: `gen:types` now regenerates the workspace crates' bindings,
+  not only the app crate's.
 - **A live input-level meter in the recording overlay** (ADR-PROJ-004). While the hotkey is held, the
   overlay now shows the microphone level — proof, at a glance, that the voice is arriving and how
   strongly, next to the "listening" state. The level is computed lock-free in the audio callback (a peak

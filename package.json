@@ -1,6 +1,6 @@
 {
   "name": "huginn",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "type": "module",
   "description": "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings.",
@@ -38,7 +38,7 @@
     "rust:fmt": "cargo fmt --manifest-path src-tauri/Cargo.toml --all --check",
     "rust:clippy": "cargo clippy --locked --manifest-path src-tauri/Cargo.toml --workspace --all-targets -- -D warnings",
     "rust:test": "cargo test --locked --manifest-path src-tauri/Cargo.toml --workspace",
-    "gen:types": "cargo test --locked --manifest-path src-tauri/Cargo.toml export_bindings",
+    "gen:types": "cargo test --locked --manifest-path src-tauri/Cargo.toml --workspace export_bindings",
     "security:deny": "cargo deny --manifest-path src-tauri/Cargo.toml check",
     "security:audit": "cargo audit --file src-tauri/Cargo.lock",
     "check:all": "npm run version:check && npm run identity:check && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run knip && npm run secrets && npm run governance:check && npm run rust:fmt && npm run rust:clippy && npm run rust:test && npm run security:deny && npm run security:audit",
@@ -87,6 +87,7 @@
   "dependencies": {
     "@tanstack/react-query": "5.101.2",
     "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-dialog": "2.7.1",
     "i18next": "^26.3.6",
     "lucide-react": "1.24.0",
     "react": "19.2.7",

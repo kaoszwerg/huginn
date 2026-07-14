@@ -1,6 +1,7 @@
 //! Where models live on disk (ADR-PROJ-006, ADR-PROJ-007).
 
 use crate::catalogue::{self, ModelInfo};
+use crate::import;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use ts_rs::TS;
@@ -17,6 +18,10 @@ pub struct ModelStatus {
     /// True when the file is on disk **and** verified. A downloaded-but-unverified file does not
     /// count as installed — that is the whole point of verifying it.
     pub installed: bool,
+    /// True for a model the **user brought from disk** (ADR-PROJ-006). It is present and usable, but it
+    /// is **not verified** — there is no compiled-in hash for it — and the UI must say so. It is never
+    /// labelled "verified".
+    pub imported: bool,
 }
 
 /// Where a model file lives.
@@ -29,9 +34,9 @@ pub fn model_path(models_dir: &Path, id: &str) -> PathBuf {
     models_dir.join(format!("{id}.bin"))
 }
 
-/// The catalogue, annotated with what is on disk right now.
+/// The catalogue, annotated with what is on disk right now — followed by any models the user imported.
 pub fn installed(models_dir: &Path) -> Vec<ModelStatus> {
-    catalogue::MODELS
+    let mut models: Vec<ModelStatus> = catalogue::MODELS
         .iter()
         .map(|m| ModelStatus {
             id: m.id.to_string(),
@@ -40,8 +45,50 @@ pub fn installed(models_dir: &Path) -> Vec<ModelStatus> {
             size_mb: m.size_mb(),
             multilingual: m.multilingual,
             installed: is_installed(models_dir, m),
+            imported: false,
         })
-        .collect()
+        .collect();
+    models.extend(imported(models_dir));
+    models
+}
+
+/// The models the user brought from disk: every `.bin` in the store whose id is not a catalogue id.
+///
+/// Scanned rather than tracked in a registry — the directory *is* the source of truth (ADR-PROJ-007), so
+/// a file dropped in by hand shows up too, and one deleted by hand disappears, with nothing to fall out
+/// of sync.
+fn imported(models_dir: &Path) -> Vec<ModelStatus> {
+    let Ok(entries) = std::fs::read_dir(models_dir) else {
+        return Vec::new();
+    };
+
+    let mut out = Vec::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) != Some("bin") {
+            continue;
+        }
+        let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
+            continue;
+        };
+        // A catalogue model is already listed above; anything else on disk is the user's own.
+        if catalogue::find(stem).is_some() {
+            continue;
+        }
+        let size_mb = entry.metadata().map(|m| m.len()).unwrap_or(0) / 1_000_000;
+        out.push(ModelStatus {
+            id: stem.to_string(),
+            label: import::display_label(stem),
+            note: String::new(),
+            size_mb,
+            // Unknown for an imported file; assume multilingual, the more useful default.
+            multilingual: true,
+            installed: true,
+            imported: true,
+        });
+    }
+    out.sort_by(|a, b| a.label.cmp(&b.label));
+    out
 }
 
 /// Is this model present and the right size?

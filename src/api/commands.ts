@@ -86,6 +86,11 @@ export const api = {
   downloadModel: (id: string) => invoke<void>("download_model", { id }),
   /** Choose the model that recognises speech, and load it into the worker. */
   setModel: (id: string) => invoke<SettingsDto>("set_model", { id }),
+  /**
+   * Import a model file the user picked from disk (ADR-PROJ-006). It is **not** verified — there is no
+   * compiled-in hash for it — and it is never labelled verified. Resolves with the new model's id.
+   */
+  importModel: (path: string) => invoke<string>("import_model", { path }),
   /** Everything slow the backend is doing right now (ADR-PROJ-008). */
   listJobs: () => invoke<Job[]>("list_jobs"),
   /** Stop a job. The work actually stops; the row is not merely hidden. */

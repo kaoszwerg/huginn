@@ -1,4 +1,5 @@
-import { Check, Download } from "lucide-react";
+import { Check, Download, Upload } from "lucide-react";
+import { open } from "@tauri-apps/plugin-dialog";
 import { useTranslation } from "react-i18next";
 import { Panel } from "../../components/ui/Panel";
 import { Button } from "../../components/ui/Button";
@@ -6,6 +7,7 @@ import { Notice } from "../../components/ui/Notice";
 import { useSettings } from "../../hooks/useSettings";
 import {
   useDownloadModel,
+  useImportModel,
   useMicrophones,
   useModels,
   useSetMicrophone,
@@ -30,8 +32,19 @@ export function SpeechSection() {
 
   const models = useModels();
   const download = useDownloadModel();
+  const importModel = useImportModel();
   const setModel = useSetModel();
   const setSounds = useSetSounds();
+
+  /** Pick a model file from disk and import it. The picked path is validated in the backend before a
+   *  byte is copied; an imported model is never labelled verified (ADR-PROJ-006). */
+  const onImport = async () => {
+    const picked = await open({
+      multiple: false,
+      filters: [{ name: t("speech.modelFileType"), extensions: ["bin"] }],
+    });
+    if (typeof picked === "string") importModel.mutate(picked);
+  };
 
   const chosenMic = settings.data?.microphone ?? null;
   const chosenModel = settings.data?.model ?? "ggml-base";
@@ -60,8 +73,15 @@ export function SpeechSection() {
                   {model.installed && chosenModel === model.id ? (
                     <Check size={14} className="text-success" aria-label={t("speech.inUse")} />
                   ) : null}
+                  {model.imported ? (
+                    <span className="text-warning border-warning/40 rounded-full border px-1.5 py-0.5 text-[10px] leading-none">
+                      {t("speech.notVerified")}
+                    </span>
+                  ) : null}
                 </span>
-                <span className="text-dim text-xs">{model.note}</span>
+                <span className="text-dim text-xs">
+                  {model.imported ? t("speech.importedHint") : model.note}
+                </span>
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
@@ -100,6 +120,23 @@ export function SpeechSection() {
 
           {/* Said before the click, not in a privacy policy (ADR-PROJ-006). */}
           <p className="text-dim text-xs leading-relaxed">{t("speech.networkNote")}</p>
+
+          {/* Bring your own model. It cannot be verified — the UI says so, here and on the row. */}
+          <div className="border-line flex flex-col gap-2 border-t pt-3">
+            <div>
+              <Button variant="ghost" disabled={importModel.isPending} onClick={onImport}>
+                <Upload size={13} strokeWidth={2} />
+                {t("speech.import")}
+              </Button>
+            </div>
+            <p className="text-dim text-xs leading-relaxed">{t("speech.importNote")}</p>
+            {importModel.isError ? (
+              <Notice tone="danger">
+                {t("speech.importFailed")}{" "}
+                {importModel.error instanceof Error ? importModel.error.message : ""}
+              </Notice>
+            ) : null}
+          </div>
         </div>
       </Panel>
 

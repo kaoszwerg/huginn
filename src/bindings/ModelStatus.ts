@@ -8,4 +8,10 @@ export type ModelStatus = { id: string, label: string, note: string, size_mb: bi
  * True when the file is on disk **and** verified. A downloaded-but-unverified file does not
  * count as installed — that is the whole point of verifying it.
  */
-installed: boolean, };
+installed: boolean, 
+/**
+ * True for a model the **user brought from disk** (ADR-PROJ-006). It is present and usable, but it
+ * is **not verified** — there is no compiled-in hash for it — and the UI must say so. It is never
+ * labelled "verified".
+ */
+imported: boolean, };

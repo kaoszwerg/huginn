@@ -14,10 +14,12 @@
 
 mod catalogue;
 mod download;
+mod import;
 mod store;
 
 pub use catalogue::{find, ModelInfo, DEFAULT_MODEL, MODELS};
 pub use download::download_and_verify;
+pub use import::import_model;
 pub use store::{installed, model_path, ModelStatus};
 
 #[derive(Debug, thiserror::Error)]

@@ -53,6 +53,23 @@ export function useDownloadModel() {
   });
 }
 
+/**
+ * Import a model file from disk.
+ *
+ * The copy is a Job, so — like a download — the promise resolves when it *finishes*; the progress the
+ * user watches comes from the job list. On settle, the catalogue is refreshed so the new model appears.
+ */
+export function useImportModel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (path: string) => api.importModel(path),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: ["models"] });
+      void qc.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+}
+
 /** Choose the model that recognises speech. Loads it into the worker. */
 export function useSetModel() {
   const qc = useQueryClient();

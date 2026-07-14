@@ -280,6 +280,26 @@ pub async fn download_model(app: tauri::AppHandle, id: String) -> Result<()> {
     Ok(())
 }
 
+/// Import a model file the user chose from disk (ADR-PROJ-006).
+///
+/// It is **not verified** — there is no compiled-in hash for a file we have never seen — and it is never
+/// labelled verified (the UI says so). `path` comes from the file dialog and is treated as hostile: it
+/// is validated in `huginn_models::import_model` (a real file, a sane size) before a byte is copied
+/// (ADR-CORE-011). The copy is a Job and runs off the IPC thread (rule:jobs). The file is parsed only
+/// later, in the deprivileged worker (ADR-PROJ-005). Returns the new model's id.
+#[tauri::command]
+pub async fn import_model(app: tauri::AppHandle, path: String) -> Result<String> {
+    let dir = crate::models_dir(&app)?;
+    let jobs = app.state::<crate::state::AppState>().jobs.clone();
+    let source = std::path::PathBuf::from(path);
+    tracing::info!(source = %source.display(), "import_model");
+
+    tauri::async_runtime::spawn_blocking(move || huginn_models::import_model(&dir, &source, &jobs))
+        .await
+        .map_err(|e| AppError::Other(format!("the import task failed: {e}")))?
+        .map_err(|e| AppError::Other(e.to_string()))
+}
+
 /// Choose the model that recognises the speech, and load it into the worker.
 ///
 /// The model must be installed — the UI only offers installed ones, but the boundary is validated
