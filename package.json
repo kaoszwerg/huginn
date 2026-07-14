@@ -1,6 +1,6 @@
 {
   "name": "huginn",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "description": "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings.",
@@ -16,6 +16,7 @@
     "app:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "app:build": "tauri build",
     "release:check": "node scripts/project/check-release-ready.mjs",
+    "prepare:model": "node scripts/project/prepare-bundled-model.mjs",
     "version:sync": "node scripts/sync-version.mjs",
     "version:check": "node scripts/sync-version.mjs --check",
     "identity:sync": "node scripts/sync-identity.mjs",

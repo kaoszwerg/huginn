@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **The default speech model ships in the installer — the app works out of the box** (ADR-PROJ-006).
+  A fresh install no longer sits at "no model installed" waiting for a download: the default model
+  (`ggml-base`, ~147 MB) is bundled and installed into the store on first run. Shipping it inside the
+  signed installer does **not** exempt it from the checksum — it is verified against the SHA-256 compiled
+  into the binary before it is accepted, exactly as a download is (a mismatch is rejected and the download
+  path remains). The 147 MB file is never committed: `npm run prepare:model` fetches and verifies it from
+  the catalogue's source of truth into the bundle-resources directory, and `beforeBuildCommand` runs it for
+  a release build only — `tauri dev` ships no model, so development never needs the file. A build slug
+  (version + commit) now also sits in the title bar, so successive test builds are told apart at a glance.
 - **An end-to-end test harness for the UI/config surface** (`e2e/`, `npm run e2e`). It drives the real
   built window through `tauri-driver` + WebdriverIO and asserts what the webview renders — settings
   navigation, the voice-command editor — selecting by stable `data-testid`s so it survives copy and
@@ -145,6 +154,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **The recording overlay no longer hangs on screen at startup** (ADR-PROJ-004). On the installed build
+  the overlay ("Ich höre zu …") appeared over the app the moment it launched and never left — because the
+  window-state plugin was persisting and restoring the overlay window's geometry and visibility, bringing
+  it back on screen at startup where no key-release ever runs to hide it. The overlay is now denied to that
+  plugin: its position and visibility are owned solely by the push-to-talk code (built off-screen and
+  hidden at startup, shown only while the hotkey is held). The main window still remembers its size and
+  position.
 - **The process monitor now appears during a model download or import** (ADR-PROJ-008). It was invisible:
   the job poll only started once a job was *already* visible, but a fresh download registers its job a
   moment later — a chicken-and-egg the running-only check could never break, so the monitor row and its

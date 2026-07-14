@@ -90,9 +90,14 @@ there now:
 - **Tone is a role, never a hue.** A control asks for `accent` / `neutral` / `danger`
   (`src/components/ui/controlClass.ts`) — never for a colour, because the same control must work on both
   grounds.
+- **The app icon and tray mark are Huginn's own** (commit 8c163bc): a sound wave whose amplitudes trace a
+  wing — what the product does, in the shape of what it is named after. Two masters live in `assets/`
+  (`icon-app.svg`, `icon-tray.svg`); the ICO/ICNS, every PNG, the two-tint monochrome tray marks and
+  `icons/icon.svg` (the mark the frontend imports) are **generated** from them by `npm run icons`
+  (`scripts/project/build-icons.mjs`), never hand-drawn (ADR-CORE-005). Edit a master and regenerate.
 
-**Still open:** the app icon (`src-tauri/icons/**`) is still the template's mark — the last piece of the
-`visual-identity` release blocker.
+Both halves of `visual-identity` — the design system and the mark — have landed, so that release blocker
+is **resolved** (`release-blockers.json`).
 
 ## One system, two surfaces
 

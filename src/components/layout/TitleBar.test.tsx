@@ -62,6 +62,12 @@ describe("TitleBar", () => {
     expect(screen.queryByText("Dev")).toBeNull();
   });
 
+  it("shows the build slug (version and commit) so successive builds are told apart", async () => {
+    renderTitleBar({ ...devBuild, channel: "release", version: "0.13.0", git_sha: "beefcafe" });
+    // The same identity the status bar and About dialog carry — legible at a glance in the title bar.
+    expect(await screen.findByText(/v0\.13\.0 \(beefcafe\)/)).toBeInTheDocument();
+  });
+
   it("wires the window controls to the Tauri window API", () => {
     renderTitleBar(devBuild);
 

@@ -31,6 +31,17 @@ export function TitleBar() {
         <span data-tauri-drag-region className="text-fg text-sm font-semibold tracking-tight">
           {APP_NAME}
         </span>
+        {/* The build slug: which version and commit is running, so it is legible at a glance while
+            testing successive builds (the same identity the status bar and About dialog carry). */}
+        {build ? (
+          <span
+            data-tauri-drag-region
+            className="text-dim ml-1 font-mono text-[11px] tracking-tight"
+          >
+            v{build.version} ({build.git_sha}
+            {build.git_dirty ? "+" : ""})
+          </span>
+        ) : null}
         {build?.channel === "dev" ? (
           <span className="border-warning text-warning ml-1 rounded-[4px] border px-1.5 py-px text-[10px] font-medium tracking-wider uppercase">
             {t("app.dev")}

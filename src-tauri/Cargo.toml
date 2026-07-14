@@ -39,7 +39,7 @@ chrono = { version = "0.4.44", features = ["serde"] }
 
 [package]
 name = "huginn"
-version = "0.12.0"
+version = "0.13.0"
 description = "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings."
 authors = ["kaoszwerg"]
 edition = "2021"

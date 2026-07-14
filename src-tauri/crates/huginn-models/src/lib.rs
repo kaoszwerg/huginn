@@ -12,11 +12,13 @@
 //! * A model is **data**. Huginn never downloads code — no DLL, no GPU backend, no plugin. Backends
 //!   ship with the app.
 
+mod bundled;
 mod catalogue;
 mod download;
 mod import;
 mod store;
 
+pub use bundled::install_default_if_missing;
 pub use catalogue::{find, ModelInfo, DEFAULT_MODEL, MODELS};
 pub use download::download_and_verify;
 pub use import::import_model;

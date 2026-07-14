@@ -34,8 +34,19 @@ pub fn models_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        // Persist + restore window size and position across runs.
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        // Persist + restore window size and position across runs — for the MAIN window only.
+        //
+        // The overlay is denied on purpose (ADR-PROJ-004). Its geometry and visibility are owned
+        // entirely by the push-to-talk code: it is built off-screen and hidden at startup, and shown —
+        // on the monitor the user is actually typing on — *only* while the hotkey is held. Letting the
+        // window-state plugin persist and restore it is exactly the bug reported on the installed build:
+        // the plugin brings the overlay back on screen at startup, and because no key-release ever runs,
+        // `hide_overlay` is never called, so it hangs there forever. The plugin must never touch it.
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_denylist(&[crate::pushtotalk::OVERLAY_LABEL])
+                .build(),
+        )
         // Push-to-talk (ADR-PROJ-004). The hotkey is registered from Rust only, so the webview
         // needs no global-shortcut capability at all (least privilege, ADR-CORE-011).
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -135,6 +146,23 @@ fn load_model_at_startup(app: &tauri::AppHandle) {
         tracing::error!("cannot resolve the models directory — speech is unavailable");
         return;
     };
+
+    // First run: the installer ships the default model so dictation works out of the box, without the
+    // user downloading anything (ADR-PROJ-006). Shipping it inside the signed installer does **not**
+    // exempt it from the checksum — `install_default_if_missing` verifies it against the compiled-in
+    // SHA-256 before accepting it. A missing bundle (a dev build) or a mismatch is not fatal: the
+    // download path in the settings remains.
+    match app.path().resolve(
+        format!("resources/models/{}.bin", huginn_models::DEFAULT_MODEL),
+        tauri::path::BaseDirectory::Resource,
+    ) {
+        Ok(bundled) => match huginn_models::install_default_if_missing(&dir, &bundled) {
+            Ok(true) => tracing::info!("first run: the bundled model was installed"),
+            Ok(false) => {}
+            Err(e) => tracing::error!(error = %e, "the bundled model could not be installed"),
+        },
+        Err(e) => tracing::debug!(error = %e, "no bundled model resource on this build"),
+    }
 
     let path = huginn_models::model_path(&dir, &settings.model);
     if !path.is_file() {
