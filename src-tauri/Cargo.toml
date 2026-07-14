@@ -11,6 +11,7 @@ members = [
     "crates/huginn-asr-proto",
     "crates/huginn-asr-worker",
     "crates/huginn-models",
+    "crates/huginn-text",
 ]
 
 # Internal crates carry a fixed, meaningless version (0.0.0) and are path dependencies. The product
@@ -27,6 +28,7 @@ huginn-audio = { path = "crates/huginn-audio", version = "0.0.0" }
 huginn-asr = { path = "crates/huginn-asr", version = "0.0.0" }
 huginn-asr-proto = { path = "crates/huginn-asr-proto", version = "0.0.0" }
 huginn-models = { path = "crates/huginn-models", version = "0.0.0" }
+huginn-text = { path = "crates/huginn-text", version = "0.0.0" }
 
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
@@ -37,7 +39,7 @@ chrono = { version = "0.4.44", features = ["serde"] }
 
 [package]
 name = "huginn"
-version = "0.6.0"
+version = "0.7.0"
 description = "Huginn is a fully local, system-wide voice input for Windows and macOS. It turns speech into text on the device and inserts it into the active application — no cloud, no telemetry, no stored recordings."
 authors = ["kaoszwerg"]
 edition = "2021"
@@ -65,6 +67,7 @@ huginn-core = { workspace = true }
 huginn-audio = { workspace = true }
 huginn-models = { workspace = true }
 huginn-asr-proto = { workspace = true }
+huginn-text = { workspace = true }
 tauri = { version = "2.11.2", features = ["tray-icon", "macos-private-api", "image-png"] }
 tauri-plugin-window-state = "2.4.1"
 # >= 2.3.2 is mandatory: earlier versions burn a full CPU core for as long as the key is held

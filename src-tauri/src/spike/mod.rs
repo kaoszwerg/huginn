@@ -418,7 +418,10 @@ fn on_released(app: &AppHandle, session: &mut Option<Session>, at: Instant) {
     // The text is never logged (ADR-PROJ-007). It goes from the worker's pipe into the focused
     // window, and nowhere else.
     match crate::speech::finish_recording(app) {
-        Ok(Some(text)) if !text.trim().is_empty() => {
+        // `is_empty`, not `trim().is_empty()`: `finish_recording` already collapses silence to an empty
+        // string, and a dictation that is *only* a "neue Zeile" command comes back as "\n" — whitespace
+        // to `trim`, but real output that must be inserted, not discarded (huginn-text).
+        Ok(Some(text)) if !text.is_empty() => {
             let injected = Instant::now();
             match win32::inject::send_text(&text) {
                 Ok(events) => tracing::info!(

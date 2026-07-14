@@ -96,8 +96,10 @@ pub fn start_recording(app: &AppHandle) -> Result<()> {
 
 /// Stop capturing and recognise. Called on key-up.
 ///
-/// Returns the recognised text, or `None` when there was nothing to recognise (the key was tapped
-/// rather than held). **The text is returned, never logged.**
+/// Returns the text ready to insert — the recognised words plus a single trailing space so that
+/// back-to-back dictations do not run together (see [`with_insertion_spacing`]) — or `None` when
+/// there was nothing to recognise (the key was tapped rather than held). **The text is returned,
+/// never logged.**
 pub fn finish_recording(app: &AppHandle) -> Result<Option<String>> {
     let state = app.state::<SpeechState>();
 
@@ -147,7 +149,10 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<String>> {
         "text recognised and about to be inserted"
     );
 
-    Ok(Some(transcript))
+    // Post-process into the text actually inserted: spoken structure commands ("neue Zeile" → a real
+    // newline) and a trailing space so consecutive dictations do not stick together. Applied here, the
+    // one place both platforms funnel through, so neither injection path can forget it (`huginn-text`).
+    Ok(Some(huginn_text::process(&transcript, &language)))
 }
 
 /// Load a model into the worker, starting the worker if it is not running.

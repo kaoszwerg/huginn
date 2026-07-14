@@ -107,7 +107,12 @@ observed. The spike code is throwaway; the findings are not.
 - ✅ **Huginn's own design system** (ADR-PROJ-003) — release blocker closed.
 - ✅ Settings, substantially: hotkey, model, recognition language, microphone, start/stop sounds,
   autostart, theme, UI language.
-- ⬜ Text post-processing (`huginn-text`): punctuation, a user dictionary, spoken commands — **not built**.
+- **Text post-processing (`huginn-text`)** — the crate exists and is wired into the pipeline:
+  - ✅ Trailing-space between dictations, and spoken structure commands ("neue Zeile" → newline, "neuer
+    Absatz" → blank line), per recognition language (German + English).
+  - ⬜ Spoken **punctuation** ("Komma" → ",") and special characters, as an opt-in mode — **not built**.
+  - ⬜ A user dictionary / custom vocabulary — **not built**.
+  - ⬜ **In-app discoverability** of the voice commands (a reference in Settings) — **not built**.
 - ⬜ Injection strategy choice (keystrokes vs. clipboard) and overlay position — **open**.
 
 ## Release blockers (they stop a build, not the work)

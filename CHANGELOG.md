@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Text post-processing — dictations no longer stick together, and you can speak line breaks**
+  (`huginn-text`, PLAN.md phase 5). Whisper trims its output, so two dictations in a row were landing as
+  one word ("Hallo Weltwie geht's"); every dictation now ends with a single trailing space. And because
+  Whisper can never emit a newline from speech, spoken **structure commands** now do it: say **"neue
+  Zeile"** for a line break or **"neuer Absatz"** for a blank line (English: "new line" / "new
+  paragraph"). The commands are **per recognition language** — German phrases do not fire on English
+  audio — matched case-insensitively and through the punctuation Whisper attaches, and a break absorbs
+  the spaces around it. Spoken *punctuation* ("Komma" → ",") is deliberately deferred to an opt-in mode,
+  because mapping it steals the literal word.
 - **On-device speech recognition — the product now does the thing it is for.** Holding the hotkey
   records from the microphone; releasing it transcribes the audio with whisper.cpp and inserts the
   recognised text into the application you were working in. **The recogniser runs in a separate,

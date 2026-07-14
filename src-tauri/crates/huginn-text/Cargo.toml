@@ -1,0 +1,9 @@
+[package]
+name = "huginn-text"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# No dependencies on purpose. Post-processing a transcript is pure string work — the moment it needs a
+# crate, that is a signal the rule got too clever, not that the crate is missing.
+[dependencies]
