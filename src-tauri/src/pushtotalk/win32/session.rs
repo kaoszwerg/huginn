@@ -12,6 +12,8 @@ use super::{focus, inject, overlay};
 use crate::error::{AppError, Result};
 use crate::pushtotalk::{centre_bottom, Session, OVERLAY_HEIGHT, OVERLAY_LABEL, OVERLAY_WIDTH};
 use crate::state::AppState;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 use tauri::{AppHandle, Manager};
 
@@ -82,31 +84,88 @@ pub(crate) fn on_pressed(app: &AppHandle, session: &mut Option<Session>, at: Ins
         tracing::error!(error = %e, "the microphone could not be opened");
     }
 
-    // Drive the overlay's input-level meter for the duration of this recording.
-    start_level_pump(app);
+    // Streaming (ADR-PROJ-011): one pump drives the overlay's level meter AND cuts, transcribes and
+    // inserts silence-bounded segments while the key is still held — so text appears as the user speaks,
+    // not only after release. `stopping` lets the key-release stop it cleanly; `inserted` records whether
+    // any segment already produced text, so an empty final tail after a full dictation still reads "done".
+    let stopping = Arc::new(AtomicBool::new(false));
+    let inserted = Arc::new(AtomicBool::new(false));
+    let pump = start_stream_pump(app, stopping.clone(), inserted.clone());
 
     *session = Some(Session {
         target,
         started: at,
+        stopping,
+        pump: Some(pump),
+        inserted,
     });
 }
 
-/// Feed the overlay's input-level meter while a recording is open.
+/// The streaming pump (ADR-PROJ-011). While the key is held it drives the overlay level meter and,
+/// whenever a silence-bounded segment is ready, transcribes and inserts it — so the text lands as the
+/// user speaks. It runs until `stopping` is set on key-release, then settles the meter.
 ///
-/// The overlay holds **no IPC capability** (ADR-PROJ-004): it cannot subscribe to an event. So the
-/// level is *pushed* into it with `eval`, exactly as its language is pushed via the URL — the backend
-/// tells it, the overlay never asks, and it gains no capability it could be steered through. The pump
-/// stops on its own when the recording ends ([`crate::speech::recording_level`] returns `None`).
-fn start_level_pump(app: &AppHandle) {
+/// **Sequential by construction:** one segment is transcribed and inserted before the next is even cut,
+/// so words can never arrive out of order; and the key-release joins this thread *before* transcribing
+/// the final tail, so the tail can never interleave with a streamed segment.
+///
+/// The overlay is pushed with `eval` (ADR-PROJ-004): it holds no IPC capability and is told, never asks.
+fn start_stream_pump(
+    app: &AppHandle,
+    stopping: Arc<AtomicBool>,
+    inserted: Arc<AtomicBool>,
+) -> std::thread::JoinHandle<()> {
     let app = app.clone();
     std::thread::spawn(move || {
-        while let Some(level) = crate::speech::recording_level(&app) {
-            push_level(&app, level);
-            std::thread::sleep(std::time::Duration::from_millis(50));
+        while !stopping.load(Ordering::Relaxed) {
+            if let Some(level) = crate::speech::recording_level(&app) {
+                push_level(&app, level);
+            }
+            match crate::speech::stream_segment(&app) {
+                Ok(Some(processed)) if !processed.text.is_empty() => {
+                    if inject_processed(&processed) {
+                        inserted.store(true, Ordering::Relaxed);
+                    }
+                }
+                Ok(_) => {}
+                Err(e) => {
+                    tracing::error!(error = %e, "a streamed segment could not be transcribed")
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(120));
         }
         // The recording ended: let the meter settle back to rest rather than freeze at the last value.
         push_level(&app, 0.0);
-    });
+    })
+}
+
+/// Insert processed text into the focused window, applying a macro's `{cursor}` placeholder. Returns
+/// whether the text actually reached the window (SendInput events were produced). Shared by the streaming
+/// pump and the final-tail path so both insert identically (ADR-PROJ-010, rule:reusability).
+fn inject_processed(processed: &huginn_text::Processed) -> bool {
+    let started = Instant::now();
+    match inject::send_text(&processed.text) {
+        Ok(events) => {
+            tracing::info!(
+                events,
+                inject_ms = started.elapsed().as_millis(),
+                "text inserted into the focused window"
+            );
+            // A macro's {cursor} placeholder: put the caret where the user asked (ADR-PROJ-010).
+            if let Some(steps) = processed.cursor_from_end {
+                if let Err(e) = inject::move_caret_left(steps) {
+                    tracing::warn!(error = %e, "could not reposition the caret after a macro");
+                }
+            }
+            true
+        }
+        Err(e) => {
+            // Text that vanished silently is the worst possible bug in a dictation tool
+            // (rule:overlay-and-input). It is reported, never swallowed.
+            tracing::error!(error = %e, "the text did not reach the target window");
+            false
+        }
+    }
 }
 
 /// Push one level value into the capability-less overlay window.
@@ -132,11 +191,19 @@ fn push_state(app: &AppHandle, state: &str) {
 
 /// Key up: type into the remembered target while the overlay is still up, then take it down.
 pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: Instant) {
-    let Some(session) = session.take() else {
+    let Some(mut session) = session.take() else {
         tracing::debug!("push-to-talk released without an open session");
         return;
     };
     let hold_ms = at.duration_since(session.started).as_millis();
+
+    // Stop the streaming pump and WAIT for it to finish its current segment, so the final tail is
+    // transcribed and inserted strictly AFTER every streamed segment — never interleaved (ADR-PROJ-011).
+    session.stopping.store(true, Ordering::Relaxed);
+    if let Some(pump) = session.pump.take() {
+        let _ = pump.join();
+    }
+    let streamed_any = session.inserted.load(Ordering::Relaxed);
 
     // Is the focus still where it was?
     let now = focus::foreground();
@@ -148,6 +215,7 @@ pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: In
     tracing::info!(
         hold_ms,
         focus_kept,
+        streamed_any,
         target_process = %session.target.process,
         now_process = now.as_ref().map(|f| f.process.as_str()).unwrap_or("<none>"),
         "push-to-talk released"
@@ -165,46 +233,30 @@ pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: In
         );
     }
 
-    // The app is now working: transcription blocks this thread for as long as whisper takes (seconds),
-    // and without this the overlay would still say "listening" the whole time — the user cannot tell it
-    // is doing anything and believes it is still recording (ADR-PROJ-004). The text itself is never
-    // logged (ADR-PROJ-007); it goes from the worker's pipe into the focused window and nowhere else.
+    // Show "working" for the final tail: whatever audio is left after the last streamed segment (or the
+    // whole recording, if it never paused long enough to stream — the batch fallback, ADR-PROJ-011). The
+    // text is never logged (ADR-PROJ-007); it goes from the worker's pipe into the focused window only.
     push_state(app, "working");
 
     let outcome = match crate::speech::finish_recording(app) {
-        // `is_empty`, not `trim().is_empty()`: `finish_recording` already collapses silence to an empty
-        // string, and a dictation that is *only* a "neue Zeile" command comes back as "\n" — whitespace
-        // to `trim`, but real output that must be inserted, not discarded (huginn-text).
+        // `is_empty`, not `trim().is_empty()`: a dictation that is *only* a "neue Zeile" command comes
+        // back as "\n" — whitespace to `trim`, but real output that must be inserted (huginn-text).
         Ok(Some(processed)) if !processed.text.is_empty() => {
-            let injected = Instant::now();
-            match inject::send_text(&processed.text) {
-                Ok(events) => {
-                    tracing::info!(
-                        events,
-                        inject_ms = injected.elapsed().as_millis(),
-                        focus_kept,
-                        "text inserted into the focused window"
-                    );
-                    // A macro's {cursor} placeholder: put the caret where the user asked (ADR-PROJ-010).
-                    if let Some(steps) = processed.cursor_from_end {
-                        if let Err(e) = inject::move_caret_left(steps) {
-                            tracing::warn!(error = %e, "could not reposition the caret after a macro");
-                        }
-                    }
-                    "done"
-                }
-                Err(e) => {
-                    // Text that vanished silently is the worst possible bug in a dictation tool
-                    // (rule:overlay-and-input). It is reported, never swallowed.
-                    tracing::error!(error = %e, "the text did not reach the target window");
-                    "error"
-                }
+            if inject_processed(&processed) {
+                "done"
+            } else {
+                "error"
             }
         }
+        // The tail was empty. If segments already inserted text this is a normal end to a full dictation
+        // ("done"); only if NOTHING was ever inserted did the model truly hear nothing (ADR-PROJ-011).
         Ok(Some(_)) => {
-            // The model heard nothing — silence, or a key tapped rather than held.
-            tracing::info!("nothing was recognised");
-            "error"
+            if streamed_any {
+                "done"
+            } else {
+                tracing::info!("nothing was recognised");
+                "error"
+            }
         }
         Ok(None) => {
             tracing::debug!("no recording was open");

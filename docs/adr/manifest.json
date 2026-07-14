@@ -1,6 +1,6 @@
 {
   "generated": true,
-  "count": 38,
+  "count": 39,
   "adrs": [
     {
       "id": "ADR-APP-001",
@@ -1111,6 +1111,39 @@
       "supersededBy": null,
       "path": "docs/adr/project/proj-010-voice-rules-and-macros.md",
       "hash": "f62b68f8443bb2a1"
+    },
+    {
+      "id": "ADR-PROJ-011",
+      "layer": "proj",
+      "title": "Streaming transcription — insert while speaking, bounded memory",
+      "tldr": "Transcribe while speaking, in silence-cut segments inserted as ready; the key-release does the final tail; falls back to batch when there is no pause.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "streaming",
+        "stream",
+        "segment",
+        "chunk",
+        "silence",
+        "vad",
+        "latency",
+        "transcribe",
+        "transcription",
+        "incremental",
+        "pump",
+        "real-time",
+        "buffer",
+        "memory"
+      ],
+      "applies-to": [
+        "src-tauri/crates/huginn-audio/**",
+        "src-tauri/src/speech/**",
+        "src-tauri/src/pushtotalk/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-011-streaming-transcription.md",
+      "hash": "b8fb476d0d4076c2"
     }
   ]
 }

@@ -8,6 +8,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Streaming transcription — text appears while you speak** (ADR-PROJ-011). Push-to-talk was batch: the
+  whole clip was transcribed only after the key was released, so a 20-second dictation meant 20+ seconds of
+  staring at "Ich höre zu …" (and on the large model a long clip could crash the worker). Now the recording
+  is cut into **silence-bounded segments** taken off the front of the recorder's own buffer — so memory is
+  bounded by how far transcription lags behind speech, not by the whole dictation — and each segment is
+  transcribed and inserted the moment it is ready, while the next is still being spoken. The key-release
+  transcribes only the final tail. It **degrades to batch**: if there is never a pause, nothing is cut and
+  the release transcribes the whole thing, exactly as before — streaming is an accelerator, never a
+  regression. Segments run through the **same** deprivileged worker and `huginn-text` post-processing, and
+  are inserted **strictly in order** (the release joins the streaming pump before doing the tail). The
+  silence-cut policy (`find_silence_cut`) is pure and unit-tested; the perceived speed-up is what the
+  maintainer verifies with a real microphone. Note: this makes the *wait* disappear behind the speaking, but
+  the raw throughput ceiling is still the model's (a smaller/quantised model is a separate lever,
+  ADR-PROJ-006).
 - **No entry point dies silently** (ADR-CORE-037, ADR-APP-032 — pulled from the upstream governance and
   implemented here). A crash is permitted; a silent crash is not. Both runtimes now have a last-resort
   handler: a Rust panic (or a startup failure that happens before there is a window) logs, writes a crash

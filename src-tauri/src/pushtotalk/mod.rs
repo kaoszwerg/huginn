@@ -88,6 +88,17 @@ pub(crate) struct Session {
     #[cfg(target_os = "windows")]
     target: win32::focus::FocusTarget,
     started: Instant,
+    /// Streaming (ADR-PROJ-011): set on key-release to stop the pump. The pump then exits after its
+    /// current segment, so the final tail is transcribed strictly **after** every streamed segment.
+    #[cfg(target_os = "windows")]
+    stopping: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    /// The streaming pump thread — joined on release so segment and tail transcription never interleave.
+    #[cfg(target_os = "windows")]
+    pump: Option<std::thread::JoinHandle<()>>,
+    /// Whether any streamed segment already inserted text, so an empty final tail after a full dictation
+    /// reads as "done", not "nothing recognised".
+    #[cfg(target_os = "windows")]
+    inserted: std::sync::Arc<std::sync::atomic::AtomicBool>,
 }
 
 /// The event the frontend listens on to learn that push-to-talk changed state.

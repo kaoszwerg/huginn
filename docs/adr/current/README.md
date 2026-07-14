@@ -2,7 +2,7 @@
 
 # Current ADRs (accepted snapshot)
 
-36 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
+37 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
 in [../README.md](../README.md).
 
 | ADR | Layer | Title | Load |
@@ -43,3 +43,4 @@ in [../README.md](../README.md).
 | [ADR-PROJ-008](../project/proj-008-jobs-and-the-process-monitor.md) | proj | Every long operation is a Job — asynchronous, observable, cancellable — and the footer shows them | conditional |
 | [ADR-PROJ-009](../project/proj-009-crate-structure.md) | proj | Crate structure — one Cargo workspace, rooted at src-tauri/ | conditional |
 | [ADR-PROJ-010](../project/proj-010-voice-rules-and-macros.md) | proj | Voice rules — one mechanism for structure commands, spoken punctuation and macros | conditional |
+| [ADR-PROJ-011](../project/proj-011-streaming-transcription.md) | proj | Streaming transcription — insert while speaking, bounded memory | conditional |

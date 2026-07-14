@@ -116,7 +116,9 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<huginn_text::Processed
         return Ok(None);
     };
 
-    // Stops the microphone and hands back 16 kHz mono — resampled properly, low-passed first.
+    // Stops the microphone and hands back 16 kHz mono — resampled properly, low-passed first. In the
+    // streaming path (ADR-PROJ-011) most of this has already been transcribed as segments; whatever is
+    // left in the buffer is the final tail.
     let audio = recorder.finish();
 
     let settings = app.state::<crate::state::AppState>().settings.get();
@@ -128,9 +130,20 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<huginn_text::Processed
         huginn_audio::cue::play(Cue::Stop);
     }
 
+    Ok(Some(process_audio(app, &audio)?))
+}
+
+/// Transcribe a 16 kHz-mono buffer and post-process it into the text to insert.
+///
+/// Shared by the key-release path (the final tail) and the streaming path (each silence-bounded
+/// segment, ADR-PROJ-011), so both funnel through the one place that applies spoken commands, macros
+/// and spacing (`huginn-text`, ADR-PROJ-010). **The text is NEVER logged** (ADR-PROJ-007).
+fn process_audio(app: &AppHandle, audio: &[f32]) -> Result<huginn_text::Processed> {
+    let settings = app.state::<crate::state::AppState>().settings.get();
     let language = settings.recognition_language.clone();
 
     let transcript = {
+        let state = app.state::<SpeechState>();
         let mut worker = state
             .worker
             .lock()
@@ -142,7 +155,7 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<huginn_text::Processed
             ));
         };
 
-        worker.transcribe(&audio, Some(&language))?
+        worker.transcribe(audio, Some(&language))?
     };
 
     // Counts and durations. NEVER the text (ADR-PROJ-007).
@@ -151,21 +164,40 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<huginn_text::Processed
         "text recognised and about to be inserted"
     );
 
-    // Post-process into the text actually inserted: spoken commands, macros, spacing (`huginn-text`,
-    // ADR-PROJ-010). Applied here, the one place both platforms funnel through, so neither injection
-    // path can forget it.
     let user_rules: Vec<huginn_text::Rule> = settings.rules.iter().map(|r| r.to_rule()).collect();
     let options = huginn_text::Options {
         dictate_punctuation: settings.dictate_punctuation,
     };
     let ctx = build_context(&settings.rules, &language);
-    Ok(Some(huginn_text::process(
+    Ok(huginn_text::process(
         &transcript,
         &language,
         &user_rules,
         &options,
         &ctx,
-    )))
+    ))
+}
+
+/// Cut, transcribe and post-process the next silence-bounded segment, **while recording continues**
+/// (ADR-PROJ-011). `Ok(None)` means nothing was ready to cut yet — keep recording. `Ok(Some(_))` is a
+/// finished segment (its text may be empty, e.g. a pause the model heard nothing in); the caller
+/// inserts it and the audio is already gone from the recorder's buffer.
+pub fn stream_segment(app: &AppHandle) -> Result<Option<huginn_text::Processed>> {
+    let segment = {
+        let state = app.state::<SpeechState>();
+        let slot = state
+            .recording
+            .lock()
+            .map_err(|_| AppError::Other("the recording lock is poisoned".into()))?;
+        match slot.as_ref() {
+            Some(recorder) => recorder.take_silence_segment(),
+            None => None,
+        }
+    };
+    match segment {
+        Some(audio) => Ok(Some(process_audio(app, &audio)?)),
+        None => Ok(None),
+    }
 }
 
 /// Resolve the runtime values a macro template might need — the clock, and the clipboard **only if a

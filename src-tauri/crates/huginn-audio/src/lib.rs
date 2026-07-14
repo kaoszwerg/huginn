@@ -208,6 +208,32 @@ impl Recorder {
         self.level.take()
     }
 
+    /// Cut a silence-bounded segment off the **front** of the still-recording buffer, if one is ready
+    /// (ADR-PROJ-011). Returns it as 16 kHz mono, normalised — exactly what [`finish`] would return for
+    /// that slice — and **removes it from the buffer**, so the buffer only ever holds the audio that has
+    /// not been transcribed yet. `None` means "keep recording, nothing to cut yet".
+    ///
+    /// The buffer is inspected and drained under a single lock; the capture callback only ever appends
+    /// to the end, so a cut chosen at the front stays valid even as recording continues.
+    pub fn take_silence_segment(&self) -> Option<Vec<f32>> {
+        let mut buffer = match self.captured.lock() {
+            Ok(b) => b,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        let cut = find_silence_cut(&buffer, self.channels, self.source_rate)?;
+        // Align to a frame boundary so the interleaved channels stay paired.
+        let ch = self.channels.max(1) as usize;
+        let cut = (cut / ch) * ch;
+        if cut == 0 {
+            return None;
+        }
+        let front: Vec<f32> = buffer.drain(..cut).collect();
+        drop(buffer);
+
+        let mono = to_mono(&front, self.channels);
+        Some(normalise(resample_to_16k(&mono, self.source_rate)))
+    }
+
     /// Stop the microphone and hand over the audio, converted to what whisper wants: 16 kHz mono.
     ///
     /// Consumes the recorder — a recording is finished exactly once, and the samples are moved out
@@ -307,6 +333,76 @@ fn normalise(mut samples: Vec<f32>) -> Vec<f32> {
 /// this.
 const SILENCE_THRESHOLD: f32 = 0.01;
 
+// --- streaming segmentation (ADR-PROJ-011) -------------------------------------------------------
+
+/// A segment must be at least this long before it is worth cutting — below it, whisper has too little
+/// context and the overhead per segment dominates.
+const MIN_SEGMENT_SECONDS: f32 = 1.5;
+/// A continuous talker who never pauses still gets cut here, so latency and memory stay bounded. The
+/// cut is placed at the quietest point in the tail, not blindly at the end.
+const MAX_SEGMENT_SECONDS: f32 = 12.0;
+/// The window of audio judged for "is the tail quiet enough to cut here".
+const SILENCE_WINDOW_SECONDS: f32 = 0.35;
+/// Peak below which a window counts as a pause between phrases (not the muted-mic floor, which is
+/// [`SILENCE_THRESHOLD`]). Higher than that: a real pause carries some room tone. Deliberately
+/// conservative — cutting too eagerly risks slicing a word, and NOT cutting simply degrades to the
+/// batch behaviour, which is safe (ADR-PROJ-011).
+const SILENCE_CUT_PEAK: f32 = 0.03;
+
+/// Peak amplitude over `native[frame*ch .. (frame+len)*ch]` — across all interleaved channels.
+fn window_peak(native: &[f32], ch: usize, start_frame: usize, len_frames: usize) -> f32 {
+    let a = (start_frame * ch).min(native.len());
+    let b = ((start_frame + len_frames) * ch).min(native.len());
+    native[a..b].iter().fold(0.0f32, |p, s| p.max(s.abs()))
+}
+
+/// Where to cut a silence-bounded segment off the front of `native` (interleaved, `channels` at
+/// `source_rate`), or `None` to keep recording (ADR-PROJ-011). Pure, so the segmentation policy is
+/// unit-tested without a microphone. Returns a **native sample** offset (frame-aligned by the caller).
+///
+/// Two ways a cut happens, in order:
+/// 1. **A quiet tail.** Enough speech has accumulated and the most recent window is below
+///    [`SILENCE_CUT_PEAK`] — a natural pause. Cut just before that quiet tail, keeping the pause in the
+///    buffer for the next segment.
+/// 2. **Too long.** The segment reached [`MAX_SEGMENT_SECONDS`] without a pause; cut at the quietest
+///    window past the minimum, so even a run-on is split at its least-bad point rather than mid-word.
+pub fn find_silence_cut(native: &[f32], channels: u16, source_rate: u32) -> Option<usize> {
+    let ch = channels.max(1) as usize;
+    let frames = native.len() / ch;
+    let per_sec = source_rate as f32;
+    let min_frames = (MIN_SEGMENT_SECONDS * per_sec) as usize;
+    let max_frames = (MAX_SEGMENT_SECONDS * per_sec) as usize;
+    let win = ((SILENCE_WINDOW_SECONDS * per_sec) as usize).max(1);
+
+    if frames < min_frames + win {
+        return None;
+    }
+
+    // 1) Is the tail quiet right now?
+    let tail_start = frames - win;
+    if window_peak(native, ch, tail_start, win) < SILENCE_CUT_PEAK && tail_start >= min_frames {
+        return Some(tail_start * ch);
+    }
+
+    // 2) Too long without a pause: cut at the quietest window past the minimum.
+    if frames >= max_frames {
+        let mut best_start = min_frames;
+        let mut best_peak = f32::INFINITY;
+        let mut s = min_frames;
+        while s + win <= frames {
+            let p = window_peak(native, ch, s, win);
+            if p < best_peak {
+                best_peak = p;
+                best_start = s;
+            }
+            s += win;
+        }
+        return Some(best_start * ch);
+    }
+
+    None
+}
+
 fn build_stream<T>(
     device: &cpal::Device,
     config: cpal::StreamConfig,
@@ -396,5 +492,62 @@ mod tests {
         assert_eq!(level.take(), 0.0);
         level.observe(0.2);
         assert_eq!(level.take(), 0.2);
+    }
+
+    // --- streaming segmentation (ADR-PROJ-011) --------------------------------------------------
+    //
+    // A small `source_rate` keeps the test buffers tiny while exercising the real second→frame maths:
+    // at 1000 "Hz", MIN=1500, MAX=12000, WINDOW=350 frames.
+    const RATE: u32 = 1000;
+    fn frames(level: f32, n: usize) -> Vec<f32> {
+        vec![level; n]
+    }
+
+    #[test]
+    fn no_cut_while_the_segment_is_still_too_short() {
+        // 1000 frames of speech: below MIN (1500) + WINDOW (350), so keep recording.
+        let audio = frames(0.5, 1000);
+        assert_eq!(find_silence_cut(&audio, 1, RATE), None);
+    }
+
+    #[test]
+    fn cuts_just_before_a_quiet_tail_once_there_is_enough_speech() {
+        // 1650 frames of speech, then a 350-frame pause = 2000 frames. The tail window is quiet and
+        // sits past the minimum, so the cut is placed at the start of the pause (frame 1650).
+        let mut audio = frames(0.5, 1650);
+        audio.extend(frames(0.001, 350));
+        assert_eq!(find_silence_cut(&audio, 1, RATE), Some(1650));
+    }
+
+    #[test]
+    fn does_not_cut_a_loud_tail_below_the_maximum() {
+        // 3000 frames of unbroken speech, no pause, still under MAX (12000): keep recording rather than
+        // slice a word.
+        let audio = frames(0.5, 3000);
+        assert_eq!(find_silence_cut(&audio, 1, RATE), None);
+    }
+
+    #[test]
+    fn forces_a_cut_at_the_quietest_point_once_too_long() {
+        // 12000 frames of speech with one quieter dip: no natural pause, but past MAX it must cut, and
+        // at the quietest window (the dip), not blindly at the end.
+        let mut audio = frames(0.5, 5000);
+        audio.extend(frames(0.02, 350)); // a dip at frame 5000
+        audio.extend(frames(0.5, 6650)); // total 12000 frames
+        let cut = find_silence_cut(&audio, 1, RATE).expect("a run-on past MAX must be cut");
+        assert!(
+            (4900..=5350).contains(&cut),
+            "cut should land at the quiet dip near frame 5000, got {cut}"
+        );
+    }
+
+    #[test]
+    fn the_cut_is_frame_aligned_for_stereo() {
+        // Stereo: the returned native offset must be even so channels stay paired.
+        let mut audio = frames(0.5, 1650 * 2);
+        audio.extend(frames(0.001, 350 * 2));
+        let cut = find_silence_cut(&audio, 2, RATE).expect("a quiet tail must cut");
+        assert_eq!(cut % 2, 0, "a stereo cut must fall on a frame boundary");
+        assert_eq!(cut, 1650 * 2);
     }
 }
