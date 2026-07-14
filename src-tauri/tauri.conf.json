@@ -7,7 +7,7 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run release:check && npm run prepare:model && npm run build",
+    "beforeBuildCommand": "npm run release:check && npm run prepare:model && npm run prepare:worker:release && npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -50,6 +50,7 @@
         "template": "windows/installer.nsi"
       }
     },
-    "resources": ["icons/tray-light.png", "icons/tray-dark.png", "resources/models/*"]
+    "resources": ["icons/tray-light.png", "icons/tray-dark.png", "resources/models/*"],
+    "externalBin": ["binaries/huginn-asr-worker"]
   }
 }

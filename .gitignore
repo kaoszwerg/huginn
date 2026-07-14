@@ -55,3 +55,7 @@ Thumbs.db
 # The bundled speech model, fetched by `npm run prepare:model` into the bundle-resources dir for a
 # release build (ADR-PROJ-006). ~147 MB of verifiable data — never committed; the build fetches it.
 src-tauri/resources/models/*.bin
+
+# The ASR worker sidecar, built and staged by `npm run prepare:worker` for a release build's
+# externalBin (ADR-PROJ-005). A build artefact — never committed; the release build produces it.
+src-tauri/binaries/

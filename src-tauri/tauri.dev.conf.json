@@ -3,7 +3,6 @@
   "productName": "Huginn Dev",
   "identifier": "ai.lysis.huginn.dev",
   "bundle": {
-    "$comment": "The dev build ships NO bundled model: `tauri dev` would otherwise require the 147 MB resource on every checkout. Overrides (replaces) the base config's resources array. The bundled model is a release-only artefact, fetched by `prepare:model` in beforeBuildCommand.",
-    "resources": ["icons/tray-light.png", "icons/tray-dark.png"]
+    "externalBin": []
   }
 }

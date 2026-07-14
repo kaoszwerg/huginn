@@ -154,6 +154,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **The installed app can actually transcribe — the ASR worker is now bundled** (ADR-PROJ-005). An
+  installed release could never load a model: the deprivileged worker process (`huginn-asr-worker.exe`)
+  was never built for release nor shipped, so the UI showed the model as "installed" while the log said
+  "the speech worker is missing … the installation is incomplete." (It worked in `tauri dev` only because
+  `cargo … --workspace` builds the worker into the target directory next to the dev binary.) The worker is
+  now a Tauri `externalBin` sidecar, built and staged by `npm run prepare:worker` and bundled next to the
+  main executable — where `worker.rs` resolves it. The worker and the bundled model are declared in the
+  base `tauri.conf.json`, so **any** build (including the upstream release CI) ships them without a special
+  flag. To keep the gate fast, `check:all`/`gen:types` stage the *debug* worker (which `cargo … --workspace`
+  builds anyway) and a committed README keeps the model-resource glob non-empty; only the release build
+  (`prepare:worker:release`, `prepare:model`) builds the optimised worker and fetches the 147 MB model.
+  `tauri dev` sets `externalBin: []` and runs the worker from the Cargo target directory, unchanged.
 - **The recording overlay no longer hangs on screen at startup** (ADR-PROJ-004). On the installed build
   the overlay ("Ich höre zu …") appeared over the app the moment it launched and never left — because the
   window-state plugin was persisting and restoring the overlay window's geometry and visibility, bringing
