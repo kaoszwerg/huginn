@@ -123,6 +123,14 @@ All notable changes to this project are documented here. The format follows
   tag-triggered CI release alike. `HUGINN_UNRELEASABLE_BUILD=1` allows an explicitly-labelled test build;
   CI never sets it.
 
+### Fixed
+
+- **The process monitor now appears during a model download or import** (ADR-PROJ-008). It was invisible:
+  the job poll only started once a job was *already* visible, but a fresh download registers its job a
+  moment later — a chicken-and-egg the running-only check could never break, so the monitor row and its
+  progress bar never showed. The poll now also runs while a job-creating operation is in flight, so the
+  job is caught the instant the backend registers it.
+
 ### Changed
 
 - **The `spike` module is renamed to `pushtotalk`** — it is proven production code, not a spike, so it

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/commands";
+import { MODEL_OP_MUTATION_KEY } from "./useJobs";
 import type { VoiceRuleDto } from "../bindings/VoiceRuleDto";
 
 /**
@@ -45,7 +46,11 @@ export function useModels() {
 export function useDownloadModel() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: MODEL_OP_MUTATION_KEY,
     mutationFn: (id: string) => api.downloadModel(id),
+    // Kick the job poll the instant the download starts, so the monitor row appears without waiting for
+    // the mutation to resolve (which is when the download *finishes*, minutes later).
+    onMutate: () => void qc.invalidateQueries({ queryKey: ["jobs"] }),
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: ["models"] });
       void qc.invalidateQueries({ queryKey: ["jobs"] });
@@ -62,7 +67,9 @@ export function useDownloadModel() {
 export function useImportModel() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: MODEL_OP_MUTATION_KEY,
     mutationFn: (path: string) => api.importModel(path),
+    onMutate: () => void qc.invalidateQueries({ queryKey: ["jobs"] }),
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: ["models"] });
       void qc.invalidateQueries({ queryKey: ["jobs"] });
