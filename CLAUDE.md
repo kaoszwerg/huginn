@@ -27,12 +27,13 @@ above — and they are read at boot, so nothing is lost by keeping this file fre
 9. Log everything in every component; never log secrets; no silent failures. → [rule:logging](.claude/rules/logging.md)
 10. The UI is never a default: where a design system exists, every control the user touches belongs to it — nothing ships looking or behaving like a stock element, whatever it is built on. → [rule:core-principles](.claude/rules/core-principles.md)
 11. Hand the knowledge over: enforce new mechanisms in the gate, place them where the next agent actually loads them, and **prove** it with `context-for.mjs`. → [rule:knowledge-handover](.claude/rules/knowledge-handover.md)
+12. Challenge the premise, not just the task: agreement is a conclusion, never a default — object with evidence, never invent an objection, and once the maintainer has decided, execute. → [ADR-CORE-036](docs/adr/core-036-challenge-the-premise.md) · [rule:challenge-premises](.claude/rules/challenge-premises.md)
 
 ## Rule packs (`.claude/rules/`)
 
 Always: `core-principles`, `response-format`, `context-loading`, `agent-delegation`,
-`clarify-and-plan`, `git-workflow`, `knowledge-handover` — plus every `load: core` rule the project's own
-layers contribute. Load the rest by task scope: `no-guessing`, `verification`, `code-quality`,
+`clarify-and-plan`, `challenge-premises`, `git-workflow`, `knowledge-handover` — plus every `load: core`
+rule the project's own layers contribute. Load the rest by task scope: `no-guessing`, `verification`, `code-quality`,
 `reusability`, `editing-workflow`, `rule-maintenance`, `logging`, `testing`, `documentation`, `security`,
 `privacy`, `dependencies`, `automation`, `versioning`.
 Index: [`.claude/rules/INDEX.md`](.claude/rules/INDEX.md).

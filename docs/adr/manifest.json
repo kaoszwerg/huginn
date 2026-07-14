@@ -1,6 +1,6 @@
 {
   "generated": true,
-  "count": 34,
+  "count": 35,
   "adrs": [
     {
       "id": "ADR-APP-001",
@@ -644,6 +644,34 @@
       "supersededBy": null,
       "path": "docs/adr/core-035-cross-layer-supersession.md",
       "hash": "0e9e71cdffb5f75c"
+    },
+    {
+      "id": "ADR-CORE-036",
+      "layer": "core",
+      "title": "Challenge the premise — the agent is a critical partner, not an executor",
+      "tldr": "Nothing guarded against the agent being agreeable: a wrong premise, executed perfectly, passes every gate. Object with evidence — and never invent an objection.",
+      "scope": "governance",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "premise",
+        "assumption",
+        "challenge",
+        "counter-argument",
+        "disagree",
+        "objection",
+        "critique",
+        "agree",
+        "sycophancy",
+        "pushback"
+      ],
+      "applies-to": [
+        ".claude/rules/challenge-premises.md",
+        ".claude/rules/core-principles.md"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/core-036-challenge-the-premise.md",
+      "hash": "f06a0befce3d79a7"
     },
     {
       "id": "ADR-PROJ-001",

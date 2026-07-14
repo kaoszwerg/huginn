@@ -1,21 +1,21 @@
 {
   "generated": true,
-  "governanceVersion": "0.5.0",
+  "governanceVersion": "0.6.0",
   "upstream": "kaoszwerg/saga-rust-template",
   "layers": [
     {
       "id": "core",
       "source": "kaoszwerg/althing",
-      "version": "0.5.1"
+      "version": "0.6.0"
     },
     {
       "id": "app",
       "source": "kaoszwerg/saga-rust-template",
-      "version": "0.5.0"
+      "version": "0.6.0"
     }
   ],
   "optedOut": [],
-  "count": 109,
+  "count": 111,
   "files": [
     {
       "path": ".claude/memory/glossary.md",
@@ -63,6 +63,11 @@
       "layer": "core"
     },
     {
+      "path": ".claude/rules/challenge-premises.md",
+      "hash": "8d1a45128f27f705",
+      "layer": "core"
+    },
+    {
       "path": ".claude/rules/clarify-and-plan.md",
       "hash": "2a2fa1b9fa47ab35",
       "layer": "core"
@@ -79,7 +84,7 @@
     },
     {
       "path": ".claude/rules/core-principles.md",
-      "hash": "d08b16c578346bcc",
+      "hash": "da80dadf4f839292",
       "layer": "core"
     },
     {
@@ -249,7 +254,7 @@
     },
     {
       "path": "CLAUDE.md",
-      "hash": "83d6cbe3a2c54007",
+      "hash": "e6c3d3f818517847",
       "layer": "core"
     },
     {
@@ -375,6 +380,11 @@
     {
       "path": "docs/adr/core-035-cross-layer-supersession.md",
       "hash": "99ce550ddf9e0768",
+      "layer": "core"
+    },
+    {
+      "path": "docs/adr/core-036-challenge-the-premise.md",
+      "hash": "b1a19c6960b1c3d5",
       "layer": "core"
     },
     {

@@ -2,7 +2,7 @@
 
 # Current ADRs (accepted snapshot)
 
-32 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
+33 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
 in [../README.md](../README.md).
 
 | ADR | Layer | Title | Load |
@@ -29,6 +29,7 @@ in [../README.md](../README.md).
 | [ADR-CORE-033](../core-033-governance-layers-cascade.md) | core | Governance layers — an agnostic core, an application layer, and a publishing cascade | conditional |
 | [ADR-CORE-034](../core-034-layered-adr-identifiers.md) | core | The layer is part of the ADR id — ADR-<LAYER>-<NNN>, not a number block | conditional |
 | [ADR-CORE-035](../core-035-cross-layer-supersession.md) | core | Cross-layer supersession — declared in the superseding document, never in the superseded one | conditional |
+| [ADR-CORE-036](../core-036-challenge-the-premise.md) | core | Challenge the premise — the agent is a critical partner, not an executor | conditional |
 | [ADR-PROJ-001](../project/proj-001-ui-stack-tauri-over-rust-toolkits.md) | proj | UI stack — Tauri 2 + React on the saga shell, not a pure-Rust GUI toolkit | conditional |
 | [ADR-PROJ-002](../project/proj-002-provisional-identity-and-release-blockers.md) | proj | The publisher is undecided — the identity is provisional and the release build refuses to run | conditional |
 | [ADR-PROJ-003](../project/proj-003-visual-identity.md) | proj | Huginn's visual identity replaces the template's HUD look | conditional |

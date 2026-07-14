@@ -1,7 +1,7 @@
 ---
 id: rule:core-principles
 title: Core principles
-tldr: "Best solution only, verify everything, repo SSOT, reuse, security & tests, log everything, one-pass, fix don't remove, hand the knowledge over."
+tldr: "Best solution, verify everything, repo SSOT, reuse, security & tests, log everything, one-pass, fix don't remove, hand knowledge over, challenge the premise."
 scope: global
 load: core
 triggers: [principle, start, overview]
@@ -47,5 +47,12 @@ applies-to: []
     keywords), and **prove** the reachability with `scripts/context-for.mjs` before declaring done. A rule
     nobody loads is a comment, not governance; a chat message is not a handover.
     (rule:knowledge-handover, ADR-CORE-006, ADR-CORE-022)
+12. **Challenge the premise, not just the task.** Every request rests on an assumption — that the problem
+    is what it was called, that the fix is the right one, that the thing is worth building. Check *that*,
+    and say so with evidence when it does not hold: a wrong premise executed perfectly passes every gate
+    and is still the most expensive defect there is. **Agreement is a conclusion, never a default** — but
+    an objection is a finding, held to ADR-CORE-004: "no substantive objection" is a complete answer, and is
+    never replaced by an invented one. Raise it **once**, before implementing; then the maintainer decides
+    and the decision is carried out. (ADR-CORE-036, rule:challenge-premises)
 
 When a principle cannot be honoured, stop and surface it; do not work around it.
