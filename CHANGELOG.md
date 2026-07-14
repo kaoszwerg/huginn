@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **A live input-level meter in the recording overlay** (ADR-PROJ-004). While the hotkey is held, the
+  overlay now shows the microphone level — proof, at a glance, that the voice is arriving and how
+  strongly, next to the "listening" state. The level is computed lock-free in the audio callback (a peak
+  per window, never a blocking mutex on the real-time thread) and **pushed** into the overlay with `eval`
+  the same way its language is — the overlay still holds no IPC capability and subscribes to nothing; it
+  is told the level, it never asks. The meter eases with a fast attack and slow release, rests low when
+  silent, and respects reduced-motion.
 - **Custom voice commands and macros, an opt-in punctuation mode, and an in-app guide** (ADR-PROJ-010).
   `huginn-text` is now a **rule engine**: every spoken command is a rule mapping trigger phrase(s) to an
   action — a line break, a paragraph, or **inserting a template**. That one mechanism is the built-in

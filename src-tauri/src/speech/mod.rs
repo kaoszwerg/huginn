@@ -238,6 +238,15 @@ pub fn load_model(app: &AppHandle, model_path: &std::path::Path) -> Result<()> {
     Ok(())
 }
 
+/// The current microphone input level while recording, `0.0..=1.0`, or `None` when nothing is being
+/// recorded. Polled ~20×/s by the overlay's level pump so the user can see their voice arriving
+/// (ADR-PROJ-004). Reading it resets the level's window (see [`huginn_audio::Recorder::level`]).
+pub fn recording_level(app: &AppHandle) -> Option<f32> {
+    let state = app.state::<SpeechState>();
+    let slot = state.recording.lock().ok()?;
+    slot.as_ref().map(|recorder| recorder.level())
+}
+
 /// Is a model loaded and ready to transcribe?
 pub fn is_ready(app: &AppHandle) -> bool {
     app.state::<SpeechState>()

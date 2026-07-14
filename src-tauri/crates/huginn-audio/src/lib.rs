@@ -17,8 +17,40 @@ pub use resample::resample_to_16k;
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use ts_rs::TS;
+
+/// The microphone's input level, shared between the capture callback (which raises it) and the UI pump
+/// (which reads and resets it, ~20×/s, to drive the overlay meter — ADR-PROJ-004).
+///
+/// Lock-free on purpose: the audio callback runs on a real-time thread and must **never** block on a
+/// mutex — a stalled callback is dropped audio, which is lost words.
+#[derive(Clone, Default)]
+struct SharedLevel(Arc<AtomicU32>);
+
+impl SharedLevel {
+    /// Raise the stored peak to at least `peak`. Called from the audio callback.
+    fn observe(&self, peak: f32) {
+        let mut cur = self.0.load(Ordering::Relaxed);
+        while f32::from_bits(cur) < peak {
+            match self.0.compare_exchange_weak(
+                cur,
+                peak.to_bits(),
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            ) {
+                Ok(_) => break,
+                Err(actual) => cur = actual,
+            }
+        }
+    }
+
+    /// The peak seen since the last call, resetting to zero — so each poll reads its own window.
+    fn take(&self) -> f32 {
+        f32::from_bits(self.0.swap(0, Ordering::Relaxed))
+    }
+}
 
 /// What whisper wants, and therefore what everything here converts to (ADR-PROJ-005).
 pub const TARGET_SAMPLE_RATE: u32 = 16_000;
@@ -87,6 +119,7 @@ fn device_name(device: &cpal::Device) -> Option<String> {
 pub struct Recorder {
     stream: cpal::Stream,
     captured: Arc<Mutex<Vec<f32>>>,
+    level: SharedLevel,
     source_rate: u32,
     channels: u16,
 }
@@ -137,12 +170,19 @@ impl Recorder {
             source_rate as usize * channels as usize * 4,
         )));
         let sink = captured.clone();
+        let level = SharedLevel::default();
         let cap = MAX_SECONDS * source_rate as usize * channels as usize;
 
         let stream = match config.sample_format() {
-            cpal::SampleFormat::F32 => build_stream::<f32>(&device, config.into(), sink, cap),
-            cpal::SampleFormat::I16 => build_stream::<i16>(&device, config.into(), sink, cap),
-            cpal::SampleFormat::U16 => build_stream::<u16>(&device, config.into(), sink, cap),
+            cpal::SampleFormat::F32 => {
+                build_stream::<f32>(&device, config.into(), sink, level.clone(), cap)
+            }
+            cpal::SampleFormat::I16 => {
+                build_stream::<i16>(&device, config.into(), sink, level.clone(), cap)
+            }
+            cpal::SampleFormat::U16 => {
+                build_stream::<u16>(&device, config.into(), sink, level.clone(), cap)
+            }
             other => Err(AudioError::Device(format!(
                 "{name}: unsupported sample format {other:?}"
             ))),
@@ -155,9 +195,17 @@ impl Recorder {
         Ok(Self {
             stream,
             captured,
+            level,
             source_rate,
             channels,
         })
+    }
+
+    /// The input level since the last call, `0.0..=1.0` — the peak amplitude the microphone captured in
+    /// that window, reset each time. Polled ~20×/s to drive the overlay meter, so the user can see that
+    /// their voice is arriving and how strongly (ADR-PROJ-004). Reading it resets the window.
+    pub fn level(&self) -> f32 {
+        self.level.take()
     }
 
     /// Stop the microphone and hand over the audio, converted to what whisper wants: 16 kHz mono.
@@ -263,6 +311,7 @@ fn build_stream<T>(
     device: &cpal::Device,
     config: cpal::StreamConfig,
     sink: Arc<Mutex<Vec<f32>>>,
+    level: SharedLevel,
     cap: usize,
 ) -> Result<cpal::Stream>
 where
@@ -277,7 +326,15 @@ where
                 if buffer.len() >= cap {
                     return; // a stuck key; stop growing rather than exhaust memory
                 }
-                buffer.extend(data.iter().map(|s| cpal::Sample::to_sample::<f32>(*s)));
+                // One pass: convert, keep the sample, and track the chunk's peak for the overlay meter.
+                let mut chunk_peak = 0.0f32;
+                for s in data {
+                    let v = cpal::Sample::to_sample::<f32>(*s);
+                    chunk_peak = chunk_peak.max(v.abs());
+                    buffer.push(v);
+                }
+                drop(buffer);
+                level.observe(chunk_peak);
             },
             |e| {
                 // The microphone died mid-recording (unplugged). Logged, never swallowed — the user
@@ -326,5 +383,18 @@ mod tests {
         // A stream can end mid-frame. Losing the last sample is fine; crashing is not.
         let interleaved = vec![1.0, 0.0, 3.0];
         assert_eq!(to_mono(&interleaved, 2), vec![0.5, 3.0]);
+    }
+
+    #[test]
+    fn shared_level_keeps_the_peak_and_resets_on_read() {
+        let level = SharedLevel::default();
+        level.observe(0.3);
+        level.observe(0.7);
+        level.observe(0.5); // a lower value must not lower the window's peak
+        assert_eq!(level.take(), 0.7);
+        // After taking, the window starts fresh.
+        assert_eq!(level.take(), 0.0);
+        level.observe(0.2);
+        assert_eq!(level.take(), 0.2);
     }
 }

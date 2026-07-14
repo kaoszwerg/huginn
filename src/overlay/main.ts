@@ -40,3 +40,43 @@ render();
 // The window is reused between recordings (it is shown and hidden, never rebuilt — see the spike
 // report), so a language change while it is hidden must still reach it.
 window.addEventListener("hashchange", render);
+
+// --- the input-level meter -------------------------------------------------------------------------
+//
+// The backend pushes the microphone level in here ~20×/s (ADR-PROJ-004): `window.__huginnLevel(v)`,
+// `v` the raw peak in 0..1. The overlay holds no IPC capability and cannot subscribe to an event, so it
+// is *told* the level exactly as it is told its language — via a push from the backend, never a request
+// from here. This function is the only surface that push touches.
+//
+// It only stores a target; a requestAnimationFrame loop eases the bars toward it, so the meter is
+// smooth between the 50 ms pushes and settles gently when a recording ends.
+
+const bars = Array.from(document.querySelectorAll<HTMLElement>("[data-overlay-meter] .bar"));
+let target = 0;
+let shown = 0;
+
+/** Map the raw microphone peak to a fuller, more legible bar level — quiet speech should still move it. */
+function perceptual(level: number): number {
+  return Math.min(1, Math.sqrt(Math.max(0, level) * 2.5));
+}
+
+(window as Window & { __huginnLevel?: (level: number) => void }).__huginnLevel = (level) => {
+  target = perceptual(level);
+};
+
+function animateMeter(): void {
+  // Fast attack, slower release — the way a level meter should feel.
+  const rate = target > shown ? 0.5 : 0.16;
+  shown += (target - shown) * rate;
+
+  const count = bars.length;
+  bars.forEach((bar, i) => {
+    const fill = Math.max(0, Math.min(1, shown * count - i));
+    bar.style.transform = `scaleY(${(0.18 + 0.82 * fill).toFixed(3)})`;
+    bar.style.opacity = (0.35 + 0.65 * fill).toFixed(3);
+  });
+
+  requestAnimationFrame(animateMeter);
+}
+
+if (bars.length > 0) requestAnimationFrame(animateMeter);

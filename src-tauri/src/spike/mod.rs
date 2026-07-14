@@ -370,10 +370,42 @@ fn on_pressed(app: &AppHandle, session: &mut Option<Session>, at: Instant) {
         tracing::error!(error = %e, "the microphone could not be opened");
     }
 
+    // Drive the overlay's input-level meter for the duration of this recording.
+    start_level_pump(app);
+
     *session = Some(Session {
         target,
         started: at,
     });
+}
+
+/// Feed the overlay's input-level meter while a recording is open.
+///
+/// The overlay holds **no IPC capability** (ADR-PROJ-004): it cannot subscribe to an event. So the
+/// level is *pushed* into it with `eval`, exactly as its language is pushed via the URL — the backend
+/// tells it, the overlay never asks, and it gains no capability it could be steered through. The pump
+/// stops on its own when the recording ends ([`crate::speech::recording_level`] returns `None`).
+#[cfg(target_os = "windows")]
+fn start_level_pump(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        while let Some(level) = crate::speech::recording_level(&app) {
+            push_level(&app, level);
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        // The recording ended: let the meter settle back to rest rather than freeze at the last value.
+        push_level(&app, 0.0);
+    });
+}
+
+/// Push one level value into the capability-less overlay window.
+#[cfg(target_os = "windows")]
+fn push_level(app: &AppHandle, level: f32) {
+    if let Some(overlay) = app.get_webview_window(OVERLAY_LABEL) {
+        let _ = overlay.eval(format!(
+            "window.__huginnLevel && window.__huginnLevel({level:.3})"
+        ));
+    }
 }
 
 /// Key up: type into the remembered target while the overlay is still up, then take it down.

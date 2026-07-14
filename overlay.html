@@ -68,6 +68,38 @@
         animation: breathe 1.8s ease-in-out infinite;
       }
 
+      /* The input-level meter: proof, while recording, that the voice is arriving and how strongly
+         (ADR-PROJ-004). Driven by the backend via `window.__huginnLevel` — the overlay holds no IPC
+         capability and cannot subscribe to anything; it is told the level, it never asks for it. */
+      .meter {
+        display: flex;
+        align-items: flex-end;
+        gap: 1.5px;
+        flex: none;
+        height: 0.75rem;
+      }
+
+      .meter .bar {
+        width: 2px;
+        height: 100%;
+        flex: none;
+        border-radius: 1px;
+        background: var(--huginn-accent);
+        /* Rests low and dim; the backend raises each bar as the level crosses its band. */
+        transform: scaleY(0.18);
+        transform-origin: bottom;
+        opacity: 0.35;
+        transition:
+          transform 90ms ease-out,
+          opacity 90ms ease-out;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .meter .bar {
+          transition: none;
+        }
+      }
+
       .hint {
         margin-left: auto;
         color: var(--huginn-overlay-dim);
@@ -95,6 +127,15 @@
   <body>
     <div class="overlay">
       <span class="pulse" aria-hidden="true"></span>
+      <!-- The input-level meter. Its bars are driven by the backend via `window.__huginnLevel`; when
+           nothing drives them they rest low, which is a truthful "recording, but silent". -->
+      <span class="meter" aria-hidden="true" data-overlay-meter>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </span>
       <!-- Filled by src/overlay/main.ts from the language in the URL fragment. The German text is
            here as the fallback: if the script ever fails to load, the overlay says something rather
            than showing an empty bar over the user's work. -->
