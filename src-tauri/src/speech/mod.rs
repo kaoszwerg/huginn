@@ -257,6 +257,23 @@ pub fn load_model(app: &AppHandle, model_path: &std::path::Path) -> Result<()> {
     Ok(())
 }
 
+/// Reload the current model into a **fresh** worker — recovery after a worker crash (ADR-PROJ-005).
+///
+/// A worker that died mid-transcription leaves a dead handle behind; every later recording would fail
+/// until the app is restarted. This brings recognition back on its own. Slow (it spawns the worker and
+/// loads the model), so it is called off the keypress path, on its own thread.
+pub fn reload_model(app: &AppHandle) -> Result<()> {
+    let settings = app.state::<crate::state::AppState>().settings.get();
+    let dir = crate::models_dir(app)?;
+    let path = huginn_models::model_path(&dir, &settings.model);
+    if !path.is_file() {
+        return Err(AppError::Other(
+            "there is no installed model to reload".into(),
+        ));
+    }
+    load_model(app, &path)
+}
+
 /// The current microphone input level while recording, `0.0..=1.0`, or `None` when nothing is being
 /// recorded. Polled ~20×/s by the overlay's level pump so the user can see their voice arriving
 /// (ADR-PROJ-004). Reading it resets the level's window (see [`huginn_audio::Recorder::level`]).

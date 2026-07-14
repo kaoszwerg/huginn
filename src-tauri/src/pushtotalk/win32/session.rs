@@ -118,6 +118,18 @@ fn push_level(app: &AppHandle, level: f32) {
     }
 }
 
+/// Push the overlay's state — `listening` while the key is held, `working` while whisper runs,
+/// `done`/`error` after (ADR-PROJ-004). Same push channel as the level and the language: the overlay
+/// holds no IPC capability and cannot subscribe to anything, so it is *told*. The state names are a
+/// fixed vocabulary the overlay script (`src/overlay/main.ts`) pins — never free text.
+fn push_state(app: &AppHandle, state: &str) {
+    if let Some(overlay) = app.get_webview_window(OVERLAY_LABEL) {
+        let _ = overlay.eval(format!(
+            "window.__huginnState && window.__huginnState('{state}')"
+        ));
+    }
+}
+
 /// Key up: type into the remembered target while the overlay is still up, then take it down.
 pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: Instant) {
     let Some(session) = session.take() else {
@@ -153,51 +165,71 @@ pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: In
         );
     }
 
-    // Recognise, then insert — while the overlay is still on screen, which is also the honest sequence:
-    // the user should see "listening" until the words actually land.
-    //
-    // The text is never logged (ADR-PROJ-007). It goes from the worker's pipe into the focused window,
-    // and nowhere else.
-    match crate::speech::finish_recording(app) {
+    // The app is now working: transcription blocks this thread for as long as whisper takes (seconds),
+    // and without this the overlay would still say "listening" the whole time — the user cannot tell it
+    // is doing anything and believes it is still recording (ADR-PROJ-004). The text itself is never
+    // logged (ADR-PROJ-007); it goes from the worker's pipe into the focused window and nowhere else.
+    push_state(app, "working");
+
+    let outcome = match crate::speech::finish_recording(app) {
         // `is_empty`, not `trim().is_empty()`: `finish_recording` already collapses silence to an empty
         // string, and a dictation that is *only* a "neue Zeile" command comes back as "\n" — whitespace
         // to `trim`, but real output that must be inserted, not discarded (huginn-text).
         Ok(Some(processed)) if !processed.text.is_empty() => {
             let injected = Instant::now();
             match inject::send_text(&processed.text) {
-                Ok(events) => tracing::info!(
-                    events,
-                    inject_ms = injected.elapsed().as_millis(),
-                    focus_kept,
-                    "text inserted into the focused window"
-                ),
+                Ok(events) => {
+                    tracing::info!(
+                        events,
+                        inject_ms = injected.elapsed().as_millis(),
+                        focus_kept,
+                        "text inserted into the focused window"
+                    );
+                    // A macro's {cursor} placeholder: put the caret where the user asked (ADR-PROJ-010).
+                    if let Some(steps) = processed.cursor_from_end {
+                        if let Err(e) = inject::move_caret_left(steps) {
+                            tracing::warn!(error = %e, "could not reposition the caret after a macro");
+                        }
+                    }
+                    "done"
+                }
                 Err(e) => {
                     // Text that vanished silently is the worst possible bug in a dictation tool
                     // (rule:overlay-and-input). It is reported, never swallowed.
                     tracing::error!(error = %e, "the text did not reach the target window");
-                }
-            }
-            // A macro's {cursor} placeholder: put the caret back where the user asked (ADR-PROJ-010).
-            if let Some(steps) = processed.cursor_from_end {
-                if let Err(e) = inject::move_caret_left(steps) {
-                    tracing::warn!(error = %e, "could not reposition the caret after a macro");
+                    "error"
                 }
             }
         }
         Ok(Some(_)) => {
             // The model heard nothing — silence, or a key tapped rather than held.
             tracing::info!("nothing was recognised");
+            "error"
         }
         Ok(None) => {
             tracing::debug!("no recording was open");
+            ""
         }
         Err(e) => {
-            // No model installed, the worker died, the microphone failed. The user is told (the log
-            // feeds the Logs view, and the UI shows the state) — never silence.
+            // No model installed, the worker died, the microphone failed. The user is told — never
+            // silence. A worker that crashed (ADR-PROJ-005) is brought back **off this thread**, so the
+            // next recording works instead of failing until the app is restarted.
             tracing::error!(error = %e, "the recording could not be transcribed");
+            let app_restart = app.clone();
+            std::thread::spawn(move || match crate::speech::reload_model(&app_restart) {
+                Ok(()) => tracing::info!("speech worker restarted after a failure"),
+                Err(e) => tracing::error!(error = %e, "could not restart the speech worker"),
+            });
+            "error"
         }
-    }
+    };
 
+    // Let the outcome linger a moment so the user actually sees "inserted" / "not recognised", then take
+    // the overlay down. A tapped key (`Ok(None)`) barely showed the overlay, so it hides at once.
+    if !outcome.is_empty() {
+        push_state(app, outcome);
+        std::thread::sleep(std::time::Duration::from_millis(650));
+    }
     if let Err(e) = hide_overlay(app) {
         tracing::error!(error = %e, "overlay failed to close");
     }
@@ -302,6 +334,9 @@ fn show_overlay(app: &AppHandle, target: Option<&focus::FocusTarget>, t0: Instan
     let (x, y) = bottom_centre_of_monitor(app, anchor)?;
 
     overlay::show_without_activating(hwnd, x, y)?;
+    // The window is reused; reset it to "listening" every time it appears, so a leftover "done" or
+    // "error" from the previous recording is never what the user sees at the start of the next.
+    push_state(app, "listening");
     let shown_ms = t0.elapsed().as_millis();
 
     // Measure, do not assume (ADR-CORE-004).

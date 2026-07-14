@@ -3,23 +3,40 @@
  *
  * **No React here, on purpose.** The overlay must be on screen within a keystroke; a framework and a
  * component tree would be paid for on every recording and would buy nothing — the overlay renders a
- * dot and two words. This file exists solely so those two words can be in the user's language.
+ * dot, a meter and a couple of words. This file exists so those words can be in the user's language
+ * and can say **what the app is actually doing** — listening, then working, then done.
  *
- * The language arrives in the URL (`overlay.html#de`), set by the backend when it shows the window,
- * because the overlay window holds **no IPC capability at all** (least privilege, ADR-CORE-011): it
- * cannot ask, so it is told. Nothing else about it can be steered from outside, which is exactly the
- * point — a window that floats over other applications is the last place to accept instructions.
+ * The language arrives in the URL (`overlay.html#de`) and the state is pushed in via
+ * `window.__huginnState(...)`, both set by the backend: the overlay window holds **no IPC capability
+ * at all** (least privilege, ADR-CORE-011). It cannot ask; it is told. Nothing else about it can be
+ * steered from outside, which is the point — a window that floats over other applications is the last
+ * place to accept instructions.
  */
 
-/** The overlay's strings, kept here rather than in the locale files: they are the only two it has,
- * and shipping the whole translation bundle into this window to fetch two keys would defeat its
- * entire reason for existing. `i18n.test.ts` pins them against the locales. */
+/** The overlay's strings per state, kept here rather than in the locale files: they are the only ones
+ * it has, and shipping the whole translation bundle into this window to fetch a handful of keys would
+ * defeat its entire reason for existing. */
 const STRINGS = {
-  de: { listening: "Ich höre zu …", hint: "loslassen zum Einfügen" },
-  en: { listening: "Listening…", hint: "release to insert" },
+  de: {
+    listening: { state: "Ich höre zu …", hint: "loslassen zum Einfügen" },
+    working: { state: "Verarbeite …", hint: "" },
+    done: { state: "Eingefügt", hint: "" },
+    error: { state: "Nicht erkannt", hint: "" },
+  },
+  en: {
+    listening: { state: "Listening …", hint: "release to insert" },
+    working: { state: "Working …", hint: "" },
+    done: { state: "Inserted", hint: "" },
+    error: { state: "Not recognised", hint: "" },
+  },
 } as const;
 
 type OverlayLanguage = keyof typeof STRINGS;
+type OverlayState = keyof (typeof STRINGS)[OverlayLanguage];
+
+/** The state the overlay is in. Starts at `listening`: the window is only ever shown to begin a
+ * recording, and it is reset to `listening` each time the backend shows it. */
+let currentState: OverlayState = "listening";
 
 /** The language from the URL fragment, or German — Huginn's first language (ADR-PROJ-010). */
 function language(): OverlayLanguage {
@@ -28,25 +45,53 @@ function language(): OverlayLanguage {
 }
 
 function render(): void {
-  const strings = STRINGS[language()];
+  // Static property access per state (rather than a computed `[currentState]` index): the state is a
+  // closed union, but the object-injection lint cannot see that, and a switch says the same thing safely.
+  const s = STRINGS[language()];
+  const strings =
+    currentState === "working"
+      ? s.working
+      : currentState === "done"
+        ? s.done
+        : currentState === "error"
+          ? s.error
+          : s.listening;
   const state = document.querySelector("[data-overlay-state]");
   const hint = document.querySelector("[data-overlay-hint]");
-  if (state) state.textContent = strings.listening;
+  if (state) state.textContent = strings.state;
   if (hint) hint.textContent = strings.hint;
   document.documentElement.lang = language();
+
+  // The live input meter belongs to "listening" only — there is no audio arriving once the key is
+  // released, so it is hidden while the app works and after it is done.
+  const meter = document.querySelector<HTMLElement>("[data-overlay-meter]");
+  if (meter) meter.style.display = currentState === "listening" ? "" : "none";
+
+  // The pulse turns to the danger tone when a recording could not be recognised, so a failure reads
+  // at a glance rather than looking like a normal "done".
+  const pulse = document.querySelector<HTMLElement>(".pulse");
+  if (pulse) pulse.style.background = currentState === "error" ? "var(--huginn-danger)" : "";
 }
 
 render();
-// The window is reused between recordings (it is shown and hidden, never rebuilt — see the spike
-// report), so a language change while it is hidden must still reach it.
+// The window is reused between recordings (shown and hidden, never rebuilt — see the spike report),
+// so a language change while it is hidden must still reach it.
 window.addEventListener("hashchange", render);
+
+// The backend pushes the state (`listening` → `working` → `done`/`error`) exactly as it pushes the
+// language and the level: the overlay holds no IPC capability and cannot subscribe to an event.
+(window as Window & { __huginnState?: (state: string) => void }).__huginnState = (state) => {
+  if (state in STRINGS.de) {
+    currentState = state as OverlayState;
+    render();
+  }
+};
 
 // --- the input-level meter -------------------------------------------------------------------------
 //
 // The backend pushes the microphone level in here ~20×/s (ADR-PROJ-004): `window.__huginnLevel(v)`,
-// `v` the raw peak in 0..1. The overlay holds no IPC capability and cannot subscribe to an event, so it
-// is *told* the level exactly as it is told its language — via a push from the backend, never a request
-// from here. This function is the only surface that push touches.
+// `v` the raw peak in 0..1. Same channel as the state and the language — a push from the backend,
+// never a request from here.
 //
 // It only stores a target; a requestAnimationFrame loop eases the bars toward it, so the meter is
 // smooth between the 50 ms pushes and settles gently when a recording ends.

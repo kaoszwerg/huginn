@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **The recording overlay now says what the app is doing** (ADR-PROJ-004). It no longer sits on
+  "Ich höre zu …" through the whole (seconds-long) transcription while the user wonders whether anything
+  is happening: on release it switches to **"Verarbeite …"** (the live input meter hides, since no audio
+  is arriving any more), then to **"Eingefügt"** or **"Nicht erkannt"** for a moment before it disappears.
+  The state is pushed into the capability-less overlay the same way its language and level are
+  (`window.__huginnState`), so the overlay still holds no IPC capability.
 - **The default speech model ships in the installer — the app works out of the box** (ADR-PROJ-006).
   A fresh install no longer sits at "no model installed" waiting for a download: the default model
   (`ggml-base`, ~147 MB) is bundled and installed into the store on first run. Shipping it inside the
@@ -154,6 +160,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Recognition recovers on its own after a worker failure** (ADR-PROJ-005). If the ASR worker died
+  mid-transcription (a long clip, a native whisper.cpp abort), every later recording failed until the app
+  was restarted — the dead worker handle was never replaced. A transcription failure now restarts the
+  worker off the keypress thread and shows "Nicht erkannt" in the overlay, so the next recording works and
+  the failure is never silent. (The underlying long-clip crash and streaming transcription are tracked
+  separately.)
 - **The installed app can actually transcribe — the ASR worker is now bundled** (ADR-PROJ-005). An
   installed release could never load a model: the deprivileged worker process (`huginn-asr-worker.exe`)
   was never built for release nor shipped, so the UI showed the model as "installed" while the log said
