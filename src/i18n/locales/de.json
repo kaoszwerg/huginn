@@ -156,7 +156,7 @@
     "action_insert": "Text einfügen",
     "templateLabel": "Text",
     "templatePlaceholder": "Mit freundlichen Grüßen,\n{cursor}",
-    "placeholderHelp": "Platzhalter: {date} {time} {clipboard} {cursor} — für geschweifte Klammern {{ und }}.",
+    "placeholderHelp": "Platzhalter: {date} {time} {weekday} {clipboard} {cursor} — für geschweifte Klammern {{ und }}.",
     "languageLabel": "Sprache",
     "thisLanguage": "Nur {{lang}}",
     "allLanguages": "Alle Sprachen",

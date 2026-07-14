@@ -156,7 +156,7 @@
     "action_insert": "Insert text",
     "templateLabel": "Text",
     "templatePlaceholder": "Kind regards,\n{cursor}",
-    "placeholderHelp": "Placeholders: {date} {time} {clipboard} {cursor} — for literal braces use {{ and }}.",
+    "placeholderHelp": "Placeholders: {date} {time} {weekday} {clipboard} {cursor} — for literal braces use {{ and }}.",
     "languageLabel": "Language",
     "thisLanguage": "{{lang}} only",
     "allLanguages": "All languages",

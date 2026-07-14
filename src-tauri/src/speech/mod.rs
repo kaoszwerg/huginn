@@ -172,6 +172,7 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<huginn_text::Processed
 /// rule actually uses it**. Reading the clipboard on every dictation would be needless, and needlessly
 /// touching the user's clipboard (rule:privacy); so it is read lazily, and never logged (ADR-PROJ-007).
 fn build_context(rules: &[crate::dto::VoiceRuleDto], language: &str) -> huginn_text::Context {
+    use chrono::Datelike;
     let now = chrono::Local::now();
     let base = language.split('-').next().unwrap_or("").to_lowercase();
     let date = match base.as_str() {
@@ -180,6 +181,7 @@ fn build_context(rules: &[crate::dto::VoiceRuleDto], language: &str) -> huginn_t
         _ => now.format("%Y-%m-%d").to_string(),
     };
     let time = now.format("%H:%M").to_string();
+    let weekday = weekday_name(now.weekday(), &base);
 
     let clipboard = if uses_clipboard(rules) {
         read_clipboard()
@@ -190,8 +192,25 @@ fn build_context(rules: &[crate::dto::VoiceRuleDto], language: &str) -> huginn_t
     huginn_text::Context {
         date,
         time,
+        weekday,
         clipboard,
     }
+}
+
+/// The weekday's name in the recognition language. `chrono`'s own `%A` is English-only, so the handful
+/// of names is mapped here rather than pulling in a localisation crate for seven words.
+fn weekday_name(day: chrono::Weekday, base: &str) -> String {
+    use chrono::Weekday::*;
+    let (de, en) = match day {
+        Mon => ("Montag", "Monday"),
+        Tue => ("Dienstag", "Tuesday"),
+        Wed => ("Mittwoch", "Wednesday"),
+        Thu => ("Donnerstag", "Thursday"),
+        Fri => ("Freitag", "Friday"),
+        Sat => ("Samstag", "Saturday"),
+        Sun => ("Sonntag", "Sunday"),
+    };
+    if base == "de" { de } else { en }.to_string()
 }
 
 /// Does any enabled rule's template reference `{clipboard}`? Only then is it worth reading.

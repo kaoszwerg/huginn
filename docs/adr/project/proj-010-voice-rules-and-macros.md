@@ -78,10 +78,12 @@ A **voice rule** is:
 The built-in rules are just the default seed of this list:
 
 - **Structure commands** (enabled): the existing German/English newline and paragraph phrases.
-- **Spoken punctuation** (built-in but **disabled by default**): "Komma" → ",", "Punkt" → ".",
-  "Fragezeichen" → "?", … Off by default on purpose — mapping "Komma" to a comma **steals the literal
-  word**, so it lives behind one opt-in toggle, "dictate punctuation". A user who turns it on has chosen
-  that trade.
+- **Spoken punctuation and special characters** (built-in but **disabled by default**): "Komma" → ",",
+  "Punkt" → ".", "Klammer auf" → "(", "at Zeichen" → "@", … Off by default on purpose — mapping "Komma"
+  to a comma **steals the literal word**, so it lives behind one opt-in toggle, "dictate punctuation". A
+  user who turns it on has chosen that trade. Their spacing follows symbol categories (left-hugging like
+  a comma, right-hugging like an opening bracket, both-hugging connectors like `@`/`-`/`/`) so the result
+  reads right — "(wort)", "name@host", not "( wort )".
 
 User rules — custom commands and macros — are rows the user adds. There is nothing structurally special
 about them; a macro is an `Insert` rule whose template is longer.
@@ -91,7 +93,7 @@ about them; a macro is an `Insert` rule whose template is longer.
 An `Insert` template is literal text (newlines allowed — macros are multi-line) with `{placeholder}`
 tokens resolved at insertion time:
 
-- `{date}` / `{time}` — the current date / time, localized.
+- `{date}` / `{time}` / `{weekday}` — the current date / time / weekday name, localized.
 - `{clipboard}` — the current clipboard text.
 - `{cursor}` — where the caret ends up after the text is inserted (at most one per template). "Sehr
   geehrte {cursor}," leaves the caret ready to type the name.

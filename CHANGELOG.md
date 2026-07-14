@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Spoken special characters, a `{weekday}` placeholder, and spacing that reads right** (ADR-PROJ-010).
+  The opt-in "dictate punctuation" set now covers common symbols too — "Klammer auf/zu" → "()", "at
+  Zeichen" → "@", "Bindestrich" → "-", "Schrägstrich" → "/", "Raute" → "#", "Anführungszeichen" → "\""
+  (and the English equivalents). A spacing model makes them read correctly: left-hugging symbols follow
+  their word (","), right-hugging ones open onto the next ("("), and connectors hug both sides — so a
+  dictation comes out "(wort)", "name@host", "und/oder", never "( wort )". Macros gain a `{weekday}`
+  placeholder (the localized weekday name) alongside `{date}`/`{time}`/`{clipboard}`/`{cursor}`.
 - **Import a model from disk** (ADR-PROJ-006). A file picker (`tauri-plugin-dialog`, granted only to the
   main window) lets the user bring their own Whisper `.bin` model. It is **not verifiable** — there is no
   compiled-in hash for a file we have never seen — so it is **never** labelled verified: the row carries a

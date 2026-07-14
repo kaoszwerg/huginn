@@ -46,6 +46,8 @@ pub struct Context {
     pub date: String,
     /// The current time, already localized.
     pub time: String,
+    /// The current weekday name, already localized.
+    pub weekday: String,
     /// The current clipboard text.
     pub clipboard: String,
 }
@@ -132,9 +134,27 @@ pub fn process(
 // Emitting, with spacing that reads right
 // ---------------------------------------------------------------------------------------------------
 
-/// A normal word: one space before it, unless we are at the start or just emitted a break.
+/// Symbols that hug the word **before** them, with no space in front — a comma follows its word
+/// ("Hallo," not "Hallo ,"), and so does a closing bracket.
+const ATTACH_LEFT: &str = ",.;:!?%)]}";
+/// Symbols that hug the word **after** them, with no space behind — an opening bracket opens straight
+/// onto its word ("(wort" not "( wort").
+const ATTACH_RIGHT: &str = "([{";
+/// Connectors that hug on **both** sides — a hyphen, slash or at-sign has no space either way
+/// ("wort-teil", "name@host", "und/oder").
+const ATTACH_BOTH: &str = "-/@#&";
+
+/// True if the char immediately before the cursor lets the next token join with no space.
+fn joins_after(out: &str) -> bool {
+    out.chars()
+        .last()
+        .is_some_and(|c| ATTACH_RIGHT.contains(c) || ATTACH_BOTH.contains(c))
+}
+
+/// A normal word: one space before it, unless we are at the start, just emitted a break, or the last
+/// thing emitted was an opening bracket or a connector it should hug.
 fn push_word(out: &mut String, out_chars: &mut usize, word: &str) {
-    if *out_chars > 0 && !out.ends_with(char::is_whitespace) {
+    if *out_chars > 0 && !out.ends_with(char::is_whitespace) && !joins_after(out) {
         out.push(' ');
         *out_chars += 1;
     }
@@ -152,12 +172,18 @@ fn push_break(out: &mut String, out_chars: &mut usize, control: &str) {
     *out_chars += control.chars().count();
 }
 
-/// Inserted template text. Punctuation (",", ".") attaches to the previous word with no space before it
-/// — "Hallo Komma" → "Hallo,"; anything else is spaced like a word — "Text Grußformel" → "Text …".
+/// Inserted template text. Its spacing follows the symbol categories above: text starting with a
+/// left-hugging or connecting symbol (",", ")", "@") takes no space before it — "Hallo Komma" → "Hallo,",
+/// "Klammer zu" → ")"; a macro that starts with a letter is spaced like a word. The space *after* is not
+/// decided here — the next [`push_word`]/[`push_insert`] reads the last char and hugs it if it should.
 /// Returns the character position at which the inserted text begins, for cursor tracking.
 fn push_insert(out: &mut String, out_chars: &mut usize, text: &str) -> usize {
-    let attaches = text.chars().next().is_some_and(|c| ",.;:!?".contains(c));
-    if *out_chars > 0 && !out.ends_with(char::is_whitespace) && !attaches {
+    let attaches_left = text
+        .chars()
+        .next()
+        .is_some_and(|c| ATTACH_LEFT.contains(c) || ATTACH_BOTH.contains(c));
+    if *out_chars > 0 && !out.ends_with(char::is_whitespace) && !attaches_left && !joins_after(out)
+    {
         out.push(' ');
         *out_chars += 1;
     }
@@ -208,6 +234,10 @@ fn render_template(template: &str, ctx: &Context) -> (String, Option<usize>) {
                         "time" => {
                             out.push_str(&ctx.time);
                             chars += ctx.time.chars().count();
+                        }
+                        "weekday" => {
+                            out.push_str(&ctx.weekday);
+                            chars += ctx.weekday.chars().count();
                         }
                         "clipboard" => {
                             out.push_str(&ctx.clipboard);
@@ -446,6 +476,89 @@ const PUNCTUATION: &[Spec] = &[
         phrases: &["colon"],
         action: BuiltinAction::Insert(":"),
     },
+    // Special characters — spoken symbols, part of the same opt-in as punctuation. Kept to phrases
+    // nobody dictates as literal words (so "raute", not "Gitter"), and the spacing categories above make
+    // the result read right ("(wort)", "name@host", "und/oder").
+    Spec {
+        lang: "de",
+        phrases: &["klammer auf"],
+        action: BuiltinAction::Insert("("),
+    },
+    Spec {
+        lang: "de",
+        phrases: &["klammer zu"],
+        action: BuiltinAction::Insert(")"),
+    },
+    Spec {
+        lang: "de",
+        phrases: &["bindestrich"],
+        action: BuiltinAction::Insert("-"),
+    },
+    Spec {
+        lang: "de",
+        phrases: &["schrägstrich"],
+        action: BuiltinAction::Insert("/"),
+    },
+    Spec {
+        lang: "de",
+        phrases: &["at zeichen", "at-zeichen"],
+        action: BuiltinAction::Insert("@"),
+    },
+    Spec {
+        lang: "de",
+        phrases: &["raute"],
+        action: BuiltinAction::Insert("#"),
+    },
+    Spec {
+        lang: "de",
+        phrases: &["und zeichen"],
+        action: BuiltinAction::Insert("&"),
+    },
+    Spec {
+        lang: "de",
+        phrases: &["anführungszeichen"],
+        action: BuiltinAction::Insert("\""),
+    },
+    Spec {
+        lang: "en",
+        phrases: &["open paren", "open parenthesis"],
+        action: BuiltinAction::Insert("("),
+    },
+    Spec {
+        lang: "en",
+        phrases: &["close paren", "close parenthesis"],
+        action: BuiltinAction::Insert(")"),
+    },
+    Spec {
+        lang: "en",
+        phrases: &["hyphen"],
+        action: BuiltinAction::Insert("-"),
+    },
+    Spec {
+        lang: "en",
+        phrases: &["slash", "forward slash"],
+        action: BuiltinAction::Insert("/"),
+    },
+    Spec {
+        lang: "en",
+        phrases: &["at sign"],
+        action: BuiltinAction::Insert("@"),
+    },
+    Spec {
+        lang: "en",
+        phrases: &["hash", "pound sign"],
+        action: BuiltinAction::Insert("#"),
+    },
+    Spec {
+        lang: "en",
+        phrases: &["ampersand"],
+        action: BuiltinAction::Insert("&"),
+    },
+    Spec {
+        lang: "en",
+        phrases: &["quotation mark"],
+        action: BuiltinAction::Insert("\""),
+    },
 ];
 
 // ---------------------------------------------------------------------------------------------------
@@ -648,11 +761,45 @@ mod tests {
         let ctx = Context {
             date: "14.07.2026".into(),
             time: "09:30".into(),
+            weekday: "Dienstag".into(),
             clipboard: "PASTED".into(),
         };
-        let rules = [macro_rule("kopf", "Am {date} um {time}: {clipboard}")];
+        let rules = [macro_rule(
+            "kopf",
+            "{weekday}, {date} um {time}: {clipboard}",
+        )];
         let got = process("kopf", "de", &rules, &Options::default(), &ctx);
-        assert_eq!(got.text, "Am 14.07.2026 um 09:30: PASTED ");
+        assert_eq!(got.text, "Dienstag, 14.07.2026 um 09:30: PASTED ");
+    }
+
+    #[test]
+    fn spoken_special_characters_hug_their_neighbours() {
+        let opts = Options {
+            dictate_punctuation: true,
+        };
+        // A bracketed word: "( wort )" would be wrong — the brackets hug.
+        let got = process(
+            "klammer auf wort klammer zu",
+            "de",
+            &[],
+            &opts,
+            &Context::default(),
+        );
+        assert_eq!(got, plain("(wort) "));
+        // A connector hugs on both sides.
+        let mail = process(
+            "name at zeichen host",
+            "de",
+            &[],
+            &opts,
+            &Context::default(),
+        );
+        assert_eq!(mail, plain("name@host "));
+    }
+
+    #[test]
+    fn special_characters_stay_literal_words_when_punctuation_is_off() {
+        assert_eq!(de("klammer auf wort"), plain("klammer auf wort "));
     }
 
     #[test]
