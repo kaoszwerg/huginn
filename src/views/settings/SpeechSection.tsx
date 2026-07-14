@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Check, Download, Upload } from "lucide-react";
-import { open } from "@tauri-apps/plugin-dialog";
 import { useTranslation } from "react-i18next";
 import { Panel } from "../../components/ui/Panel";
 import { Button } from "../../components/ui/Button";
 import { Notice } from "../../components/ui/Notice";
+import { FileDropZone } from "../../components/ui/FileDropZone";
+import { FilePicker } from "../../components/FilePicker";
 import { useSettings } from "../../hooks/useSettings";
 import {
   useDownloadModel,
@@ -36,15 +38,9 @@ export function SpeechSection() {
   const setModel = useSetModel();
   const setSounds = useSetSounds();
 
-  /** Pick a model file from disk and import it. The picked path is validated in the backend before a
-   *  byte is copied; an imported model is never labelled verified (ADR-PROJ-006). */
-  const onImport = async () => {
-    const picked = await open({
-      multiple: false,
-      filters: [{ name: t("speech.modelFileType"), extensions: ["bin"] }],
-    });
-    if (typeof picked === "string") importModel.mutate(picked);
-  };
+  // Browsing for a file opens a design-system modal (`FilePicker`) on demand — never a native OS
+  // dialog (rule:design-system, ADR-APP-026). Drag-and-drop is the primary path; this is the fallback.
+  const [picking, setPicking] = useState(false);
 
   const chosenMic = settings.data?.microphone ?? null;
   const chosenModel = settings.data?.model ?? "ggml-base";
@@ -122,19 +118,31 @@ export function SpeechSection() {
           {/* Said before the click, not in a privacy policy (ADR-PROJ-006). */}
           <p className="text-dim text-xs leading-relaxed">{t("speech.networkNote")}</p>
 
-          {/* Bring your own model. It cannot be verified — the UI says so, here and on the row. */}
+          {/* Bring your own model. It cannot be verified — the UI says so, here and on the row.
+              Drag a file onto the zone, or browse for one — both go through the same import, and
+              neither is a native OS dialog (rule:design-system). */}
           <div className="border-line flex flex-col gap-2 border-t pt-3">
-            <div>
+            <FileDropZone
+              onDrop={(paths) => importModel.mutate(paths[0])}
+              extensions={["bin"]}
+              disabled={importModel.isPending}
+              data-testid="model-drop"
+            >
+              <span className="text-fg flex items-center gap-2 text-sm">
+                <Upload size={14} strokeWidth={2} />
+                {t("speech.dropTitle")}
+              </span>
+              <span>{t("speech.dropHint")}</span>
               <Button
                 variant="ghost"
+                className="mt-1"
                 disabled={importModel.isPending}
-                onClick={onImport}
+                onClick={() => setPicking(true)}
                 data-testid="model-import"
               >
-                <Upload size={13} strokeWidth={2} />
-                {t("speech.import")}
+                {t("speech.browse")}
               </Button>
-            </div>
+            </FileDropZone>
             <p className="text-dim text-xs leading-relaxed">{t("speech.importNote")}</p>
             {importModel.isError ? (
               <Notice tone="danger">
@@ -145,6 +153,15 @@ export function SpeechSection() {
           </div>
         </div>
       </Panel>
+
+      {picking ? (
+        <FilePicker
+          heading={t("speech.pickTitle")}
+          extensions={["bin"]}
+          onSelect={(path) => importModel.mutate(path)}
+          onClose={() => setPicking(false)}
+        />
+      ) : null}
 
       <Panel label={t("speech.microphoneTitle")}>
         <div className="flex flex-col gap-2">

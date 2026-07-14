@@ -128,14 +128,26 @@
     "importFailed": "Der Import ist fehlgeschlagen.",
     "notVerified": "nicht verifiziert",
     "importedHint": "Importiert — nicht verifiziert.",
-    "modelFileType": "Whisper-Modell",
     "microphoneTitle": "Mikrofon",
     "systemDefault": "Standard des Systems",
     "isDefault": "Systemstandard",
     "microphoneHint": "Ist das gewählte Mikrofon nicht verfügbar, nimmt Huginn das Standardgerät — damit dein Satz nicht verloren geht.",
     "microphonesFailed": "Die Mikrofone konnten nicht gelesen werden.",
     "soundsTitle": "Signalton",
-    "soundsHint": "Ein kurzer Ton beim Start und Ende der Aufnahme. Bei Push-to-talk ist er oft die einzige Rückmeldung, dass das Mikrofon wirklich offen ist."
+    "soundsHint": "Ein kurzer Ton beim Start und Ende der Aufnahme. Bei Push-to-talk ist er oft die einzige Rückmeldung, dass das Mikrofon wirklich offen ist.",
+    "dropTitle": "Eigenes Modell importieren",
+    "dropHint": "Zieh eine Whisper-Modelldatei (.bin) hierher — oder durchsuche die Platte.",
+    "browse": "Datei auswählen…",
+    "pickTitle": "Modelldatei auswählen"
+  },
+  "filepicker": {
+    "up": "Eine Ebene höher",
+    "home": "Persönlicher Ordner",
+    "loading": "Wird geladen…",
+    "empty": "Keine passenden Dateien in diesem Ordner.",
+    "readFailed": "Der Ordner konnte nicht gelesen werden.",
+    "cancel": "Abbrechen",
+    "select": "Auswählen"
   },
   "commands": {
     "info": "Alles, was du sprichst und was kein Diktat ist: Umbrüche, optional Satzzeichen, und Makros — ein gesprochenes Wort, das eine ganze Passage einfügt. Alles bleibt auf dem Gerät.",

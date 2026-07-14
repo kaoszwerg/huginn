@@ -128,14 +128,26 @@
     "importFailed": "The import failed.",
     "notVerified": "not verified",
     "importedHint": "Imported — not verified.",
-    "modelFileType": "Whisper model",
     "microphoneTitle": "Microphone",
     "systemDefault": "System default",
     "isDefault": "system default",
     "microphoneHint": "If the chosen microphone is unavailable, Huginn falls back to the default — so the sentence you are speaking is not lost.",
     "microphonesFailed": "The microphones could not be listed.",
     "soundsTitle": "Sound",
-    "soundsHint": "A short tone when recording starts and stops. With push-to-talk it is often the only confirmation that the microphone is really open."
+    "soundsHint": "A short tone when recording starts and stops. With push-to-talk it is often the only confirmation that the microphone is really open.",
+    "dropTitle": "Import your own model",
+    "dropHint": "Drag a Whisper model file (.bin) here — or browse your disk.",
+    "browse": "Browse…",
+    "pickTitle": "Choose a model file"
+  },
+  "filepicker": {
+    "up": "Up one level",
+    "home": "Home folder",
+    "loading": "Loading…",
+    "empty": "No matching files in this folder.",
+    "readFailed": "This folder could not be read.",
+    "cancel": "Cancel",
+    "select": "Select"
   },
   "commands": {
     "info": "Everything you speak that is not dictation: line and paragraph breaks, optional punctuation, and macros — a spoken word that inserts a whole passage. All of it stays on the device.",

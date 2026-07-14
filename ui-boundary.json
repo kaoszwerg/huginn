@@ -3,7 +3,6 @@
   "viewSafe": [
     "@tanstack/react-query",
     "@tauri-apps/api",
-    "@tauri-apps/plugin-dialog",
     "i18next",
     "lucide-react",
     "react",
@@ -15,7 +14,6 @@
   "notes": {
     "@tanstack/react-query": "Async/IPC state. Renders nothing.",
     "@tauri-apps/api": "The IPC boundary to the Rust backend. Renders nothing.",
-    "@tauri-apps/plugin-dialog": "Opens the OS-native file picker (importing a model, ADR-PROJ-006). It exposes functions that trigger the platform dialog; it renders nothing in our own tree, and there is no un-styled control of ours to bring into the design system.",
     "lucide-react": "Icon glyphs — SVG paths, no chrome, no behaviour, and they inherit the surrounding colour. An icon is not a control; the control around it is a primitive.",
     "react": "The renderer itself.",
     "react-dom": "The renderer itself.",

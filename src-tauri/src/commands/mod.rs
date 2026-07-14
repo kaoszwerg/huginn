@@ -280,6 +280,68 @@ pub async fn download_model(app: tauri::AppHandle, id: String) -> Result<()> {
     Ok(())
 }
 
+/// List a directory for the in-app file picker (ADR-APP-026 — the OS file dialog is a native control we
+/// do not use; the picker is built from our own primitives and this command feeds it).
+///
+/// `path` empty/`None` starts at the user's home directory. **Read-only**: it returns entry names and
+/// whether each is a directory — never file contents. The file the user finally picks is validated when
+/// it is imported (`import_model`), not here.
+#[tauri::command]
+pub fn list_directory(
+    app: tauri::AppHandle,
+    path: Option<String>,
+) -> Result<crate::dto::DirListingDto> {
+    let dir = match path.filter(|p| !p.trim().is_empty()) {
+        Some(p) => std::path::PathBuf::from(p),
+        None => app
+            .path()
+            .home_dir()
+            .map_err(|e| AppError::Other(format!("cannot resolve the home directory: {e}")))?,
+    };
+
+    read_listing(&dir)
+}
+
+/// Read a directory into a [`DirListingDto`]: directories first, then files, each alphabetical
+/// (case-insensitive). **Read-only** — it collects each entry's name and whether it is a directory,
+/// never any file's contents.
+///
+/// Split out from the [`list_directory`] command so the read-and-sort behaviour can be tested against a
+/// temporary directory without an `AppHandle` (rule:testing). An unreadable directory is an `Err`, not
+/// an empty listing — a silent empty result would read as "this folder is empty" (rule:logging).
+fn read_listing(dir: &std::path::Path) -> Result<crate::dto::DirListingDto> {
+    use crate::dto::{DirEntryDto, DirListingDto};
+
+    let read = std::fs::read_dir(dir)
+        .map_err(|e| AppError::Other(format!("cannot read {}: {e}", dir.display())))?;
+
+    let mut entries: Vec<DirEntryDto> = read
+        .flatten()
+        .map(|entry| {
+            let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
+            DirEntryDto {
+                name: entry.file_name().to_string_lossy().to_string(),
+                path: entry.path().to_string_lossy().to_string(),
+                is_dir,
+            }
+        })
+        .collect();
+
+    // Directories first, then files, each alphabetical (case-insensitive).
+    entries.sort_by(|a, b| {
+        b.is_dir
+            .cmp(&a.is_dir)
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+    });
+
+    tracing::debug!(dir = %dir.display(), count = entries.len(), "list_directory");
+    Ok(DirListingDto {
+        parent: dir.parent().map(|p| p.to_string_lossy().to_string()),
+        path: dir.to_string_lossy().to_string(),
+        entries,
+    })
+}
+
 /// Import a model file the user chose from disk (ADR-PROJ-006).
 ///
 /// It is **not verified** — there is no compiled-in hash for a file we have never seen — and it is never
@@ -427,5 +489,37 @@ mod tests {
     fn open_external_rejects_non_http_urls() {
         let err = open_external("file:///etc/passwd".to_string()).expect_err("must be rejected");
         assert!(err.to_string().contains("refusing to open non-http url"));
+    }
+
+    #[test]
+    fn read_listing_sorts_directories_first_then_files_alphabetically() {
+        use std::fs;
+        let tmp = tempfile::tempdir().expect("temp dir");
+        let root = tmp.path();
+        // Deliberately out of order and mixed-case, so the sort is actually exercised.
+        fs::create_dir(root.join("Zeta")).unwrap();
+        fs::create_dir(root.join("alpha")).unwrap();
+        fs::write(root.join("b.bin"), b"x").unwrap();
+        fs::write(root.join("A.txt"), b"x").unwrap();
+
+        let listing = read_listing(root).expect("listing");
+        let names: Vec<&str> = listing.entries.iter().map(|e| e.name.as_str()).collect();
+        // Directories first (case-insensitive alpha), then files (case-insensitive alpha).
+        assert_eq!(names, ["alpha", "Zeta", "A.txt", "b.bin"]);
+        assert!(listing.entries[0].is_dir, "a directory reports is_dir");
+        assert!(!listing.entries[2].is_dir, "a file does not");
+        assert_eq!(
+            listing.parent,
+            root.parent().map(|p| p.to_string_lossy().to_string()),
+            "the parent is offered so the picker can step back up"
+        );
+    }
+
+    #[test]
+    fn read_listing_errors_on_a_missing_directory() {
+        let tmp = tempfile::tempdir().expect("temp dir");
+        let missing = tmp.path().join("does-not-exist");
+        // Not an empty listing — an unreadable path is surfaced as an error (rule:logging).
+        assert!(read_listing(&missing).is_err());
     }
 }

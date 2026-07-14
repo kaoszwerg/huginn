@@ -36,9 +36,6 @@ pub fn run() {
     tauri::Builder::default()
         // Persist + restore window size and position across runs.
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        // The file picker for importing a local model (ADR-PROJ-006). Only the main window is granted
-        // the capability (capabilities/default.json); the overlay never gets it (least privilege).
-        .plugin(tauri_plugin_dialog::init())
         // Push-to-talk (ADR-PROJ-004). The hotkey is registered from Rust only, so the webview
         // needs no global-shortcut capability at all (least privilege, ADR-CORE-011).
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -116,6 +113,7 @@ pub fn run() {
             commands::list_builtin_commands,
             commands::list_models,
             commands::download_model,
+            commands::list_directory,
             commands::import_model,
             commands::set_model,
             commands::list_jobs,

@@ -16,7 +16,6 @@
     "core:window:allow-set-focus",
     "core:webview:allow-set-webview-zoom",
     "core:event:default",
-    "window-state:default",
-    "dialog:allow-open"
+    "window-state:default"
   ]
 }

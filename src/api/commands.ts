@@ -11,6 +11,7 @@ import type { ModelStatus } from "../bindings/ModelStatus";
 import type { Job } from "../bindings/Job";
 import type { VoiceRuleDto } from "../bindings/VoiceRuleDto";
 import type { BuiltinCommandDto } from "../bindings/BuiltinCommandDto";
+import type { DirListingDto } from "../bindings/DirListingDto";
 
 /**
  * Typed facade over the backend `#[tauri::command]` surface. Every IPC call in the app flows through
@@ -86,6 +87,13 @@ export const api = {
   downloadModel: (id: string) => invoke<void>("download_model", { id }),
   /** Choose the model that recognises speech, and load it into the worker. */
   setModel: (id: string) => invoke<SettingsDto>("set_model", { id }),
+  /**
+   * List a directory for the in-app file picker (ADR-PROJ-006). Read-only — it returns each entry's
+   * name and whether it is a directory, never any file's contents. `path` omitted → the user's home
+   * directory (the picker's starting point). This is what lets Huginn offer a "browse" fallback to
+   * drag-and-drop without a native OS dialog (rule:design-system, ADR-APP-026).
+   */
+  listDirectory: (path?: string) => invoke<DirListingDto>("list_directory", { path: path ?? null }),
   /**
    * Import a model file the user picked from disk (ADR-PROJ-006). It is **not** verified — there is no
    * compiled-in hash for it — and it is never labelled verified. Resolves with the new model's id.

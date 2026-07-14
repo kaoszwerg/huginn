@@ -22,16 +22,22 @@ All notable changes to this project are documented here. The format follows
   their word (","), right-hugging ones open onto the next ("("), and connectors hug both sides — so a
   dictation comes out "(wort)", "name@host", "und/oder", never "( wort )". Macros gain a `{weekday}`
   placeholder (the localized weekday name) alongside `{date}`/`{time}`/`{clipboard}`/`{cursor}`.
-- **Import a model from disk** (ADR-PROJ-006). A file picker (`tauri-plugin-dialog`, granted only to the
-  main window) lets the user bring their own Whisper `.bin` model. It is **not verifiable** — there is no
-  compiled-in hash for a file we have never seen — so it is **never** labelled verified: the row carries a
-  "not verified" badge and the panel says why. It is safe to allow because a model is parsed only in the
-  deprivileged worker, never in the process that holds the microphone and keyboard (ADR-PROJ-005). The
-  copy is atomic (a `.part` file renamed into place) and runs as a Job with byte progress and a working
-  cancel (rule:jobs); the chosen path is validated in Rust (a real file, a sane size) before a byte is
-  copied. Imported models are found by scanning the store — the directory is the source of truth, so a
-  file dropped in by hand appears too. Also: `gen:types` now regenerates the workspace crates' bindings,
-  not only the app crate's.
+- **Import a model from disk — by drag-and-drop or an in-app file picker, never a native OS dialog**
+  (ADR-PROJ-006, ADR-APP-026). The user brings their own Whisper `.bin` model by **dragging it onto a drop
+  zone** (`FileDropZone`, which reports the real file path through Tauri's drag-drop event and filters by
+  extension) or by clicking **browse**, which opens a **design-system file picker** (`FilePicker`) built
+  entirely from HUD primitives. Both replace the platform file dialog that the "no stock UI" rule forbids
+  (rule:design-system) — the picker lists directories through a new read-only `list_directory` command
+  (names and `is_dir` only, never file contents; a home-directory default resolved in Rust) and steps up,
+  down and home, surfacing a folder it cannot read instead of silently showing the last one. The imported
+  model is **not verifiable** — there is no compiled-in hash for a file we have never seen — so it is
+  **never** labelled verified: the row carries a "not verified" badge and the panel says why. It is safe to
+  allow because a model is parsed only in the deprivileged worker, never in the process that holds the
+  microphone and keyboard (ADR-PROJ-005). The copy is atomic (a `.part` file renamed into place) and runs
+  as a Job with byte progress and a working cancel (rule:jobs); the chosen path is validated in Rust (a
+  real file, a sane size) before a byte is copied. Imported models are found by scanning the store — the
+  directory is the source of truth, so a file dropped in by hand appears too. Also: `gen:types` now
+  regenerates the workspace crates' bindings, not only the app crate's.
 - **A live input-level meter in the recording overlay** (ADR-PROJ-004). While the hotkey is held, the
   overlay now shows the microphone level — proof, at a glance, that the voice is arriving and how
   strongly, next to the "listening" state. The level is computed lock-free in the audio callback (a peak

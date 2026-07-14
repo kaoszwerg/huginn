@@ -105,6 +105,31 @@ impl From<huginn_text::BuiltinInfo> for BuiltinCommandDto {
     }
 }
 
+/// One entry in a directory listing, for the in-app file picker (ADR-APP-026: the OS file dialog is a
+/// native control we do not use — the picker is built from our own primitives instead).
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../src/bindings/")]
+pub struct DirEntryDto {
+    /// The entry's display name (the last path component).
+    pub name: String,
+    /// The full path, for navigating into it or selecting it.
+    pub path: String,
+    /// True for a directory, false for a file.
+    pub is_dir: bool,
+}
+
+/// A directory's contents plus where it sits, so the picker can render a list and a way back up.
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../src/bindings/")]
+pub struct DirListingDto {
+    /// The directory being listed.
+    pub path: String,
+    /// Its parent, or `None` at a filesystem root.
+    pub parent: Option<String>,
+    /// Directories first, then files, each alphabetical.
+    pub entries: Vec<DirEntryDto>,
+}
+
 /// Persisted user preferences. Stored as JSON under `<app_data_dir>/settings.json`.
 ///
 /// Every field carries a serde default so a settings file written by an older version — missing a

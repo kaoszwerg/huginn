@@ -23,6 +23,13 @@ triggers:
     component,
     primitive,
     ui,
+    dialog,
+    modal,
+    picker,
+    file,
+    browse,
+    drag,
+    native,
   ]
 applies-to: ["src/styles/**", "src/components/**", "src-tauri/icons/**"]
 supersedes: [rule:theming]
@@ -38,6 +45,16 @@ never runes as body type, never a gaming HUD.
 
 **The recording overlay sits on top of someone else's work.** It states the state ("listening",
 "working", "inserted") and gets out of the way. An overlay that wants attention is a defect, not a style.
+
+**No native OS dialog — the file picker included.** "Not a native/unstyled platform control dropped in
+as-is" (ADR-CORE-002 §10) covers the *file open* dialog too: `@tauri-apps/plugin-dialog`'s `open()` puts an
+OS window on screen that reads as itself, not as Huginn, so it does not ship. To let the user pick a file
+from disk, use the design-system pair that already exists: **`FileDropZone`** (`src/components/ui/`, the
+drag-and-drop target) and **`FilePicker`** (`src/components/`, the click-to-browse modal, backed by the
+read-only `list_directory` command). If a future need is not covered, **extend those** — never reach for
+`plugin-dialog`. The gate backs this: re-adding the dependency fails `npm run lint` at the `ui-boundary`
+check until it is classified, and there is no honest way to classify an OS dialog as anything but a native
+control we do not use (ADR-APP-026).
 
 ## The mechanism (inherited from the template — this part is right)
 

@@ -14,8 +14,9 @@ do not run in CI (GitHub only builds releases — ADR-CORE-008 / rule:automation
 - **Appearance:** theme (dark / light / follow-system, verified on `<html data-theme>`), the interface
   language switch, and the UI size.
 - **Background:** close-to-tray, and autostart (toggled and restored to the original OS state).
-- **Speech:** the model catalogue lists, the system-default microphone and import button are present, and
-  the start/stop sound toggles.
+- **Speech:** the model catalogue lists, the system-default microphone and browse button are present, the
+  in-app file picker opens and cancels (it is a design-system modal, not a native dialog), and the
+  start/stop sound toggles.
 - **Commands:** the built-in reference, the spoken-punctuation toggle, and the full add / edit / delete
   lifecycle of user commands (a macro, a line-break command).
 
@@ -26,8 +27,11 @@ do not run in CI (GitHub only builds releases — ADR-CORE-008 / rule:automation
   `scripts/project/prove-*.ps1` and the worker pipeline test.
 - **Model download** — a real ~150 MB network fetch; it needs a mock server with a known checksum to be
   deterministic. The download logic is unit-tested in `huginn-models`.
-- **The model-import file picker** — a native OS dialog outside the webview; WebDriver cannot click it.
-  Cover the copy/verify path by calling the `import_model` command directly.
+- **Importing a real model file** — the picker's open/navigate/cancel is in-webview and E2E-driven; the
+  actual selection would need a real model file on the test machine, so the navigation and selection are
+  unit-tested (`FilePicker.test.tsx`) and the copy/verify path in `huginn-models`. The **drop zone** is a
+  native OS drag-and-drop WebDriver cannot synthesise into the webview; its filtering and hit-testing are
+  unit-tested (`FileDropZone.test.tsx`).
 - **Recording a new hotkey** — drivable, but avoided: it persists a real hotkey change and re-registers a
   global shortcut. The recorder's open/cancel UI is reachable; the capture itself is a side effect the
   suite does not want.
