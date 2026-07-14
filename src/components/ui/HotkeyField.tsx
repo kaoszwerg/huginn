@@ -56,11 +56,12 @@ export function HotkeyField({ value, onChange, busy = false }: HotkeyFieldProps)
       <div className="flex items-center gap-2">
         <span
           role="status"
+          data-testid="hotkey-recording"
           className="border-accent text-accent rounded-[var(--radius-control)] border border-dashed px-3 py-1.5 text-xs"
         >
           {t("hotkey.recordPrompt")}
         </span>
-        <Button variant="ghost" onClick={stop}>
+        <Button variant="ghost" onClick={stop} data-testid="hotkey-cancel">
           {t("hotkey.cancel")}
         </Button>
       </div>
@@ -69,13 +70,17 @@ export function HotkeyField({ value, onChange, busy = false }: HotkeyFieldProps)
 
   return (
     <div className="flex items-center gap-2">
-      <kbd className="bg-elevated border-line text-fg rounded-[var(--radius-control)] border px-3 py-1.5 text-xs">
+      <kbd
+        data-testid="hotkey-value"
+        className="bg-elevated border-line text-fg rounded-[var(--radius-control)] border px-3 py-1.5 text-xs"
+      >
         {humaniseShortcut(value)}
       </kbd>
       <Button
         onClick={() => setRecording(true)}
         disabled={busy}
         tooltip={t("hotkey.recordTooltip")}
+        data-testid="hotkey-change"
       >
         {t("hotkey.change")}
       </Button>

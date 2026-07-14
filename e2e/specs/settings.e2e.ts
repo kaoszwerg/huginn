@@ -1,23 +1,14 @@
 import { $, expect } from "@wdio/globals";
 
 /**
- * The app opens and its settings are reachable and navigable. Selectors are stable `data-testid`s, so
- * these do not break when the interface language or the copy changes.
+ * The settings section rail offers every section. The sections' contents are covered by their own
+ * specs (appearance/background/speech/commands); this pins the rail itself.
  */
-describe("Settings navigation", () => {
-  it("opens the app with the primary navigation present", async () => {
-    await expect($('[data-testid="nav-home"]')).toBeExisting();
-    await expect($('[data-testid="nav-settings"]')).toBeExisting();
-  });
-
-  it("opens Settings and reaches the Commands section", async () => {
+describe("Settings section rail", () => {
+  it("offers every settings section", async () => {
     await $('[data-testid="nav-settings"]').click();
-
-    const commands = $('[data-testid="section-commands"]');
-    await expect(commands).toBeExisting();
-    await commands.click();
-
-    // The Commands section renders its "add command" control.
-    await expect($('[data-testid="commands-add"]')).toBeDisplayed();
+    for (const id of ["recording", "speech", "commands", "appearance", "background"]) {
+      await expect($(`[data-testid="section-${id}"]`)).toBeExisting();
+    }
   });
 });

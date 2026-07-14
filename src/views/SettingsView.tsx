@@ -133,6 +133,7 @@ function AppearanceSection() {
                 aria-pressed={language === l.code}
                 active={language === l.code}
                 onClick={() => update.mutate({ language: l.code })}
+                data-testid={`lang-${l.code}`}
               >
                 {l.label}
               </Button>
@@ -149,6 +150,7 @@ function AppearanceSection() {
                 aria-pressed={theme === th.id}
                 active={theme === th.id}
                 onClick={() => update.mutate({ theme: th.id })}
+                data-testid={`theme-${th.id}`}
               >
                 {t(th.labelKey)}
               </Button>
@@ -165,6 +167,7 @@ function AppearanceSection() {
                 aria-pressed={Math.abs(scale - s) < 0.001}
                 active={Math.abs(scale - s) < 0.001}
                 onClick={() => update.mutate({ uiScale: s })}
+                data-testid={`size-${Math.round(s * 100)}`}
                 className="font-mono"
               >
                 {Math.round(s * 100)}%
@@ -199,6 +202,7 @@ function BackgroundSection() {
               active={autostart.data === true}
               disabled={setAutostart.isPending}
               onClick={() => setAutostart.mutate(true)}
+              data-testid="autostart-on"
             >
               {t("settings.background.on")}
             </Button>
@@ -208,6 +212,7 @@ function BackgroundSection() {
               active={autostart.data === false}
               disabled={setAutostart.isPending}
               onClick={() => setAutostart.mutate(false)}
+              data-testid="autostart-off"
             >
               {t("settings.background.off")}
             </Button>
@@ -227,6 +232,7 @@ function BackgroundSection() {
               aria-pressed={minimizeToTray}
               active={minimizeToTray}
               onClick={() => update.mutate({ minimizeToTray: true })}
+              data-testid="tray-keep"
             >
               {t("settings.background.keepRunning")}
             </Button>
@@ -235,6 +241,7 @@ function BackgroundSection() {
               aria-pressed={!minimizeToTray}
               active={!minimizeToTray}
               onClick={() => update.mutate({ minimizeToTray: false })}
+              data-testid="tray-close"
             >
               {t("settings.background.quit")}
             </Button>

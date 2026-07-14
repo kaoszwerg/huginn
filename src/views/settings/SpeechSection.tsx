@@ -65,6 +65,7 @@ export function SpeechSection() {
           {models.data?.map((model) => (
             <div
               key={model.id}
+              data-testid="model-row"
               className="border-line flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] border p-3"
             >
               <div className="flex min-w-0 flex-col">
@@ -124,7 +125,12 @@ export function SpeechSection() {
           {/* Bring your own model. It cannot be verified — the UI says so, here and on the row. */}
           <div className="border-line flex flex-col gap-2 border-t pt-3">
             <div>
-              <Button variant="ghost" disabled={importModel.isPending} onClick={onImport}>
+              <Button
+                variant="ghost"
+                disabled={importModel.isPending}
+                onClick={onImport}
+                data-testid="model-import"
+              >
                 <Upload size={13} strokeWidth={2} />
                 {t("speech.import")}
               </Button>
@@ -148,6 +154,7 @@ export function SpeechSection() {
             active={chosenMic === null}
             aria-pressed={chosenMic === null}
             onClick={() => setMicrophone.mutate(null)}
+            data-testid="mic-default"
           >
             {t("speech.systemDefault")}
           </Button>
@@ -184,6 +191,7 @@ export function SpeechSection() {
               active={sounds}
               aria-pressed={sounds}
               onClick={() => setSounds.mutate(true)}
+              data-testid="sounds-on"
             >
               {t("settings.background.on")}
             </Button>
@@ -192,6 +200,7 @@ export function SpeechSection() {
               active={!sounds}
               aria-pressed={!sounds}
               onClick={() => setSounds.mutate(false)}
+              data-testid="sounds-off"
             >
               {t("settings.background.off")}
             </Button>

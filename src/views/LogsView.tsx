@@ -47,7 +47,7 @@ export function LogsView() {
   }, [logs, level, q, desc]);
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-hidden p-6">
+    <div data-testid="view-logs" className="flex h-full flex-col gap-4 overflow-hidden p-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-fg text-lg font-semibold tracking-tight">{t("logs.title")}</h1>
         <div className="flex flex-wrap items-center gap-2">
@@ -70,6 +70,7 @@ export function LogsView() {
             onChange={(e) => setQ(e.target.value)}
             placeholder={t("logs.search")}
             aria-label={t("logs.searchAria")}
+            data-testid="logs-search"
             className="w-40"
           />
           <Button

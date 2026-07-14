@@ -12,7 +12,7 @@ export function HomeView() {
   const { data: build } = useBuildInfo();
 
   return (
-    <div className="h-full space-y-4 overflow-auto p-6">
+    <div data-testid="view-home" className="h-full space-y-4 overflow-auto p-6">
       <header className="space-y-1">
         <h1 className="text-fg text-lg font-semibold tracking-tight">{APP_NAME}</h1>
         <p className="text-dim max-w-2xl text-sm leading-relaxed">{APP_DESCRIPTION}</p>

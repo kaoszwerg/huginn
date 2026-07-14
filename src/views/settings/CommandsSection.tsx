@@ -138,6 +138,7 @@ export function CommandsSection() {
                       active={draft.kind === kind}
                       aria-pressed={draft.kind === kind}
                       onClick={() => setDraft({ ...draft, kind })}
+                      data-testid={`action-${kind}`}
                     >
                       {t(`commands.action_${kind}`)}
                     </Button>
@@ -164,6 +165,7 @@ export function CommandsSection() {
                     active={!draft.allLanguages}
                     aria-pressed={!draft.allLanguages}
                     onClick={() => setDraft({ ...draft, allLanguages: false })}
+                    data-testid="rule-lang-this"
                   >
                     {t("commands.thisLanguage", { lang: recognitionLanguage.toUpperCase() })}
                   </Button>
@@ -172,6 +174,7 @@ export function CommandsSection() {
                     active={draft.allLanguages}
                     aria-pressed={draft.allLanguages}
                     onClick={() => setDraft({ ...draft, allLanguages: true })}
+                    data-testid="rule-lang-all"
                   >
                     {t("commands.allLanguages")}
                   </Button>
@@ -218,6 +221,7 @@ export function CommandsSection() {
               active={dictatePunctuation}
               aria-pressed={dictatePunctuation}
               onClick={() => setPunctuation.mutate(true)}
+              data-testid="punctuation-on"
             >
               {t("settings.background.on")}
             </Button>
@@ -226,6 +230,7 @@ export function CommandsSection() {
               active={!dictatePunctuation}
               aria-pressed={!dictatePunctuation}
               onClick={() => setPunctuation.mutate(false)}
+              data-testid="punctuation-off"
             >
               {t("settings.background.off")}
             </Button>
@@ -240,6 +245,7 @@ export function CommandsSection() {
           {(builtins.data ?? []).map((cmd, i) => (
             <div
               key={`${cmd.kind}-${i}`}
+              data-testid="builtin-row"
               className="flex flex-wrap items-baseline justify-between gap-2 text-xs"
             >
               <span className="text-fg font-mono">
@@ -303,6 +309,7 @@ function RuleRow({
           label={t("commands.edit")}
           onClick={onEdit}
           disabled={disabled}
+          data-testid="rule-edit"
           className="h-7 w-7"
         >
           <Pencil size={13} strokeWidth={2} />
