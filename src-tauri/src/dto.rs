@@ -213,6 +213,16 @@ pub struct SettingsDto {
     /// word, so the user opts in.
     #[serde(default)]
     pub dictate_punctuation: bool,
+    /// Streaming transcription (ADR-PROJ-011): insert text **while speaking**, in silence-bounded
+    /// segments, instead of only after the key is released. On by default; off falls back to batch
+    /// (the whole recording is transcribed on release).
+    #[serde(default = "default_streaming")]
+    pub streaming: bool,
+    /// How readily the streamer cuts a segment at a pause, `0.0..=1.0` (ADR-PROJ-011). Higher cuts on
+    /// smaller, quieter pauses — more and earlier insertions; lower waits for clearer silence. This is
+    /// the environment-dependent knob: a noisy room needs a higher value to ever cut. Default 0.5.
+    #[serde(default = "default_stream_sensitivity")]
+    pub stream_sensitivity: f64,
 }
 
 fn default_ui_scale() -> f64 {
@@ -235,6 +245,14 @@ fn default_model() -> String {
 }
 
 /// German. It is what Huginn is for.
+fn default_streaming() -> bool {
+    true
+}
+
+fn default_stream_sensitivity() -> f64 {
+    0.5
+}
+
 fn default_recognition_language() -> String {
     "de".to_string()
 }
@@ -279,6 +297,8 @@ impl Default for SettingsDto {
             hotkey: default_hotkey(),
             rules: Vec::new(),
             dictate_punctuation: false,
+            streaming: default_streaming(),
+            stream_sensitivity: default_stream_sensitivity(),
         }
     }
 }
@@ -331,6 +351,8 @@ mod tests {
                 enabled: true,
             }],
             dictate_punctuation: true,
+            streaming: false,
+            stream_sensitivity: 0.7,
         };
         let json = serde_json::to_string(&s).expect("serialize");
         let back: SettingsDto = serde_json::from_str(&json).expect("deserialize");
@@ -339,6 +361,8 @@ mod tests {
         assert_eq!(back.theme, ThemeChoice::Dark);
         assert_eq!(back.hotkey, "Ctrl+Shift+KeyJ");
         assert!(back.dictate_punctuation);
+        assert!(!back.streaming);
+        assert_eq!(back.stream_sensitivity, 0.7);
         assert_eq!(back.rules.len(), 1);
         assert_eq!(
             back.rules[0].action,

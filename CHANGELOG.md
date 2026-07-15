@@ -21,7 +21,9 @@ All notable changes to this project are documented here. The format follows
   silence-cut policy (`find_silence_cut`) is pure and unit-tested; the perceived speed-up is what the
   maintainer verifies with a real microphone. Note: this makes the *wait* disappear behind the speaking, but
   the raw throughput ceiling is still the model's (a smaller/quantised model is a separate lever,
-  ADR-PROJ-006).
+  ADR-PROJ-006). **The tuning is in the settings** (Speech → Streaming): an on/off toggle (off falls back to
+  batch) and a five-step **sensitivity** — how readily it cuts at a pause, the one environment-dependent
+  knob — both live, no rebuild. Persisted and clamped like every other setting.
 - **No entry point dies silently** (ADR-CORE-037, ADR-APP-032 — pulled from the upstream governance and
   implemented here). A crash is permitted; a silent crash is not. Both runtimes now have a last-resort
   handler: a Rust panic (or a startup failure that happens before there is a window) logs, writes a crash

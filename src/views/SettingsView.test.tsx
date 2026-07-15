@@ -39,6 +39,8 @@ const DEFAULTS: SettingsDto = {
   hotkey: "Ctrl+Space",
   rules: [],
   dictate_punctuation: false,
+  streaming: true,
+  stream_sensitivity: 0.5,
 };
 
 const ARMED: HotkeyStatus = { shortcut: "Ctrl+Space", registered: true, error: null };

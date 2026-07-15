@@ -138,7 +138,11 @@
     "dropTitle": "Eigenes Modell importieren",
     "dropHint": "Zieh eine Whisper-Modelldatei (.bin) hierher — oder durchsuche die Platte.",
     "browse": "Datei auswählen…",
-    "pickTitle": "Modelldatei auswählen"
+    "pickTitle": "Modelldatei auswählen",
+    "streamingTitle": "Streaming",
+    "streamingInfo": "Fügt Text schon während des Sprechens ein, in Segmenten an Sprechpausen — statt erst nach dem Loslassen. Aus: alles wird erst beim Loslassen transkribiert (wie zuvor).",
+    "sensitivityLabel": "Empfindlichkeit",
+    "sensitivityHint": "Höher schneidet an kleineren, leiseren Pausen — mehr und frühere Einfügungen. Bei viel Hintergrundgeräusch höher stellen; kommt der Text immer erst am Ende, ebenfalls höher."
   },
   "filepicker": {
     "up": "Eine Ebene höher",

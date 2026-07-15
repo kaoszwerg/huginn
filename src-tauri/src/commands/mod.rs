@@ -138,6 +138,8 @@ pub fn update_settings(
         hotkey: None,
         rules: None,
         dictate_punctuation: None,
+        streaming: None,
+        stream_sensitivity: None,
     })?;
     tracing::debug!(
         ui_scale = next.ui_scale,
@@ -281,6 +283,28 @@ pub fn set_dictate_punctuation(state: State<'_, AppState>, enabled: bool) -> Res
     tracing::info!(enabled, "set_dictate_punctuation");
     state.settings.update(SettingsPatch {
         dictate_punctuation: Some(enabled),
+        ..Default::default()
+    })
+}
+
+/// Turn streaming transcription on or off (ADR-PROJ-011). Off falls back to batch — the whole recording
+/// is transcribed on key-release, as before. Takes effect on the next recording.
+#[tauri::command]
+pub fn set_streaming(state: State<'_, AppState>, enabled: bool) -> Result<SettingsDto> {
+    tracing::info!(enabled, "set_streaming");
+    state.settings.update(SettingsPatch {
+        streaming: Some(enabled),
+        ..Default::default()
+    })
+}
+
+/// Set how readily the streamer cuts a segment at a pause, `0.0..=1.0` (ADR-PROJ-011). Clamped on apply;
+/// higher cuts on smaller/quieter pauses. The environment-dependent knob (microphone, room noise).
+#[tauri::command]
+pub fn set_stream_sensitivity(state: State<'_, AppState>, sensitivity: f64) -> Result<SettingsDto> {
+    tracing::info!(sensitivity, "set_stream_sensitivity");
+    state.settings.update(SettingsPatch {
+        stream_sensitivity: Some(sensitivity),
         ..Default::default()
     })
 }

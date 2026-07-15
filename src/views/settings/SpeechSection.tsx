@@ -15,6 +15,8 @@ import {
   useSetMicrophone,
   useSetModel,
   useSetSounds,
+  useSetStreaming,
+  useSetStreamSensitivity,
 } from "../../hooks/useSpeech";
 
 /**
@@ -37,6 +39,8 @@ export function SpeechSection() {
   const importModel = useImportModel();
   const setModel = useSetModel();
   const setSounds = useSetSounds();
+  const setStreaming = useSetStreaming();
+  const setStreamSensitivity = useSetStreamSensitivity();
 
   // Browsing for a file opens a design-system modal (`FilePicker`) on demand — never a native OS
   // dialog (rule:design-system, ADR-APP-026). Drag-and-drop is the primary path; this is the fallback.
@@ -45,6 +49,13 @@ export function SpeechSection() {
   const chosenMic = settings.data?.microphone ?? null;
   const chosenModel = settings.data?.model ?? "ggml-base";
   const sounds = settings.data?.sounds ?? true;
+  const streaming = settings.data?.streaming ?? true;
+  const streamSensitivity = settings.data?.stream_sensitivity ?? 0.5;
+  // Five discrete sensitivity levels (no slider primitive needed): the active one is the closest.
+  const SENSITIVITY_LEVELS = [0.1, 0.3, 0.5, 0.7, 0.9];
+  const activeLevel = SENSITIVITY_LEVELS.reduce((best, l) =>
+    Math.abs(l - streamSensitivity) < Math.abs(best - streamSensitivity) ? l : best,
+  );
 
   const anyInstalled = (models.data ?? []).some((m) => m.installed);
 
@@ -223,6 +234,52 @@ export function SpeechSection() {
             </Button>
           </div>
           <span className="text-dim text-xs">{t("speech.soundsHint")}</span>
+        </div>
+      </Panel>
+
+      <Panel label={t("speech.streamingTitle")} info={<p>{t("speech.streamingInfo")}</p>}>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-1">
+            <Button
+              variant="ghost"
+              active={streaming}
+              aria-pressed={streaming}
+              onClick={() => setStreaming.mutate(true)}
+              data-testid="streaming-on"
+            >
+              {t("settings.background.on")}
+            </Button>
+            <Button
+              variant="ghost"
+              active={!streaming}
+              aria-pressed={!streaming}
+              onClick={() => setStreaming.mutate(false)}
+              data-testid="streaming-off"
+            >
+              {t("settings.background.off")}
+            </Button>
+          </div>
+
+          {streaming ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-dim text-xs">{t("speech.sensitivityLabel")}</span>
+              <div className="flex flex-wrap gap-1">
+                {SENSITIVITY_LEVELS.map((level, i) => (
+                  <Button
+                    key={level}
+                    variant="ghost"
+                    active={activeLevel === level}
+                    aria-pressed={activeLevel === level}
+                    onClick={() => setStreamSensitivity.mutate(level)}
+                    data-testid={`sensitivity-${i + 1}`}
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+              </div>
+              <span className="text-dim text-xs">{t("speech.sensitivityHint")}</span>
+            </div>
+          ) : null}
         </div>
       </Panel>
     </div>

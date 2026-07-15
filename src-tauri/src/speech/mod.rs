@@ -183,6 +183,12 @@ fn process_audio(app: &AppHandle, audio: &[f32]) -> Result<huginn_text::Processe
 /// finished segment (its text may be empty, e.g. a pause the model heard nothing in); the caller
 /// inserts it and the audio is already gone from the recorder's buffer.
 pub fn stream_segment(app: &AppHandle) -> Result<Option<huginn_text::Processed>> {
+    let settings = app.state::<crate::state::AppState>().settings.get();
+    // Streaming off → never cut; the key-release transcribes the whole recording (batch, ADR-PROJ-011).
+    if !settings.streaming {
+        return Ok(None);
+    }
+
     let segment = {
         let state = app.state::<SpeechState>();
         let slot = state
@@ -190,7 +196,7 @@ pub fn stream_segment(app: &AppHandle) -> Result<Option<huginn_text::Processed>>
             .lock()
             .map_err(|_| AppError::Other("the recording lock is poisoned".into()))?;
         match slot.as_ref() {
-            Some(recorder) => recorder.take_silence_segment(),
+            Some(recorder) => recorder.take_silence_segment(settings.stream_sensitivity),
             None => None,
         }
     };

@@ -79,4 +79,16 @@ rules: Array<VoiceRuleDto>,
  * When true, spoken punctuation ("Komma" → ",") is active. Off by default: it steals the literal
  * word, so the user opts in.
  */
-dictate_punctuation: boolean, };
+dictate_punctuation: boolean, 
+/**
+ * Streaming transcription (ADR-PROJ-011): insert text **while speaking**, in silence-bounded
+ * segments, instead of only after the key is released. On by default; off falls back to batch
+ * (the whole recording is transcribed on release).
+ */
+streaming: boolean, 
+/**
+ * How readily the streamer cuts a segment at a pause, `0.0..=1.0` (ADR-PROJ-011). Higher cuts on
+ * smaller, quieter pauses — more and earlier insertions; lower waits for clearer silence. This is
+ * the environment-dependent knob: a noisy room needs a higher value to ever cut. Default 0.5.
+ */
+stream_sensitivity: number, };

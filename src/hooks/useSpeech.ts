@@ -129,3 +129,21 @@ export function useSetDictatePunctuation() {
     onSuccess: (settings) => qc.setQueryData(["settings"], settings),
   });
 }
+
+/** Turn streaming transcription on or off (ADR-PROJ-011). */
+export function useSetStreaming() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled: boolean) => api.setStreaming(enabled),
+    onSuccess: (settings) => qc.setQueryData(["settings"], settings),
+  });
+}
+
+/** Set the streaming silence sensitivity, `0..1` (ADR-PROJ-011). */
+export function useSetStreamSensitivity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sensitivity: number) => api.setStreamSensitivity(sensitivity),
+    onSuccess: (settings) => qc.setQueryData(["settings"], settings),
+  });
+}
