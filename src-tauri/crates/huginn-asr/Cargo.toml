@@ -8,7 +8,16 @@ publish = false
 thiserror = { workspace = true }
 tracing = { workspace = true }
 
-# whisper.cpp, compiled from source. CPU only for now (the maintainer's call): it builds everywhere,
-# needs no CUDA/Vulkan SDK, and a measured 1.5x real-time on the base model is enough for dictation.
-# A GPU backend is an additional path behind the same trait, not a rewrite.
+# whisper.cpp, compiled from source. The default build is CPU-only — it builds everywhere and needs no
+# GPU SDK, so `check:all` and the debug worker stay light. GPU acceleration is opt-in via the features
+# below, behind the same SpeechEngine trait: an additional compute path, never a rewrite (ADR-PROJ-012).
 whisper-rs = "0.16.0"
+
+[features]
+default = []
+# One whisper.cpp compute backend each, selected per-OS by scripts/project/prepare-worker.mjs for the
+# SHIPPED (release) worker only. The runtime falls back to the CPU when no device is present, so an
+# installed app never fails for want of a GPU (ADR-PROJ-012).
+vulkan = ["whisper-rs/vulkan"] # Windows + Linux — vendor-neutral: NVIDIA, AMD/ATI, Intel
+metal = ["whisper-rs/metal"]   # macOS — native
+cuda = ["whisper-rs/cuda"]     # NVIDIA-only; not shipped, available for a CUDA-tuned build

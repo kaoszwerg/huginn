@@ -1,6 +1,6 @@
 {
   "generated": true,
-  "count": 39,
+  "count": 40,
   "adrs": [
     {
       "id": "ADR-APP-001",
@@ -1144,6 +1144,43 @@
       "supersededBy": null,
       "path": "docs/adr/project/proj-011-streaming-transcription.md",
       "hash": "b8fb476d0d4076c2"
+    },
+    {
+      "id": "ADR-PROJ-012",
+      "layer": "proj",
+      "title": "GPU acceleration for transcription — Vulkan and Metal behind the engine trait",
+      "tldr": "GPU acceleration behind the SpeechEngine trait: Vulkan on Windows/Linux, Metal on macOS; opt-in, shipped in the release worker only; CPU fallback if no device.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "gpu",
+        "vulkan",
+        "metal",
+        "cuda",
+        "backend",
+        "acceleration",
+        "accelerate",
+        "whisper",
+        "performance",
+        "speed",
+        "slow",
+        "rtf",
+        "device",
+        "driver",
+        "sdk",
+        "feature",
+        "hipblas",
+        "coreml"
+      ],
+      "applies-to": [
+        "src-tauri/crates/huginn-asr/**",
+        "src-tauri/crates/huginn-asr-worker/**",
+        "scripts/project/prepare-worker.mjs"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-012-gpu-acceleration.md",
+      "hash": "333aee7d66ea7aa5"
     }
   ]
 }

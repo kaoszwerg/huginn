@@ -5,6 +5,22 @@ use std::path::Path;
 use std::time::Instant;
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
 
+/// The whisper.cpp compute backend this worker was compiled with (ADR-PROJ-012).
+///
+/// GPU backends are opt-in and chosen per-OS at build time (Vulkan on Windows/Linux, Metal on macOS)
+/// for the shipped worker; the default build is CPU-only. It is logged at model load and on every
+/// transcription so a slow run is diagnosable from the log alone — CPU-vs-GPU is the single largest
+/// factor in transcription speed, and "which backend is actually active" must never be a guess.
+pub const BACKEND: &str = if cfg!(feature = "vulkan") {
+    "vulkan"
+} else if cfg!(feature = "metal") {
+    "metal"
+} else if cfg!(feature = "cuda") {
+    "cuda"
+} else {
+    "cpu"
+};
+
 /// A loaded whisper model, ready to transcribe.
 pub struct WhisperEngine {
     context: WhisperContext,
@@ -19,15 +35,24 @@ impl WhisperEngine {
     /// (ADR-PROJ-008), never on the path of a keypress.
     pub fn load(model: &Path) -> Result<Self> {
         let path = model.to_string_lossy().to_string();
-        tracing::info!(model = %path, "loading the speech model");
+
+        // `use_gpu` defaults to true when a GPU backend is compiled in and false otherwise (whisper-rs
+        // derives it from `cfg!(feature = "_gpu")`), so the default already matches this build. whisper.cpp
+        // then falls back to the CPU at runtime if the GPU has no usable device — an installed app never
+        // fails for want of a GPU (ADR-PROJ-012).
+        let params = WhisperContextParameters::default();
+        let gpu = params.use_gpu;
+        tracing::info!(model = %path, backend = BACKEND, gpu, "loading the speech model");
 
         let started = Instant::now();
-        let context = WhisperContext::new_with_params(&path, WhisperContextParameters::default())
+        let context = WhisperContext::new_with_params(&path, params)
             .map_err(|e| AsrError::ModelLoad(format!("{path}: {e}")))?;
 
         let threads = optimal_threads();
         tracing::info!(
             model = %path,
+            backend = BACKEND,
+            gpu,
             load_ms = started.elapsed().as_millis() as u64,
             threads,
             "speech model ready"
@@ -98,6 +123,7 @@ impl SpeechEngine for WhisperEngine {
         // Durations, counts, speed — never the text itself (ADR-PROJ-007). A log with transcripts in
         // it is a verbatim record of everything the user has ever said.
         tracing::info!(
+            backend = BACKEND,
             audio_seconds = format!("{audio_seconds:.2}"),
             inference_ms,
             real_time_factor = format!("{:.1}", transcript.real_time_factor()),

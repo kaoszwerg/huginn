@@ -1,7 +1,7 @@
 {
   "entry": ["src/overlay/main.ts", "scripts/project/*.mjs!"],
   "ignore": [],
-  "ignoreBinaries": ["cmake", "cargo", "rustc"],
+  "ignoreBinaries": ["cmake", "cargo", "rustc", "ninja"],
   "ignoreDependencies": [
     "@wdio/local-runner",
     "@wdio/mocha-framework",

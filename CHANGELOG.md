@@ -8,6 +8,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **GPU-accelerated transcription — dictation is now effectively instant** (ADR-PROJ-012). whisper.cpp ran
+  on the CPU, where whisper's fixed 30-second inference window meant every utterance cost seconds
+  regardless of length (measured on the maintainer's machine: `ggml-base` ~7 s, `ggml-small` ~26 s per
+  transcription — a real-time factor below 1, i.e. the user waited longer than they spoke). Transcription
+  now runs on the GPU behind the **same** `SpeechEngine` trait — no rewrite, same models: **Vulkan** on
+  Windows/Linux (vendor-neutral: NVIDIA, AMD/ATI, Intel), **Metal** on macOS. Measured on an RTX 3070, the
+  same 5-second clip drops from **7 219 ms to 135 ms** on `ggml-base` (RTF 0.69 → 37, ~53×) and from
+  **26 121 ms to 163 ms** on `ggml-small` (RTF 0.19 → 31, ~160×). It is **opt-in and shipped in the release
+  worker only**, so `check:all` and the debug build stay CPU-only and need no GPU SDK; the runtime **falls
+  back to the CPU** when no device is present, so an installed app never fails for want of a GPU, and the
+  active backend is logged. Note: the very first transcription on a machine compiles the GPU compute
+  pipelines (~14 s, once — then cached by the driver); every one after is instant. Building the release
+  worker needs the platform GPU SDK (on Windows the Vulkan SDK, auto-detected) and the Ninja generator —
+  `prepare-worker.mjs` sets both up (Ninja avoids MSBuild's 260-char path limit on ggml-vulkan's nested
+  shader build; a short target dir keeps the linker under the same limit).
 - **Streaming transcription — text appears while you speak** (ADR-PROJ-011). Push-to-talk was batch: the
   whole clip was transcribed only after the key was released, so a 20-second dictation meant 20+ seconds of
   staring at "Ich höre zu …" (and on the large model a long clip could crash the worker). Now the recording

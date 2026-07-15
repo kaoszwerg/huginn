@@ -13,3 +13,11 @@ huginn-asr = { workspace = true }
 huginn-asr-proto = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+
+[features]
+default = []
+# Forwarded to huginn-asr. prepare-worker.mjs enables the right one per-OS for the shipped release
+# sidecar; the debug/gate build enables none and stays CPU-only, so no GPU SDK is needed (ADR-PROJ-012).
+vulkan = ["huginn-asr/vulkan"]
+metal = ["huginn-asr/metal"]
+cuda = ["huginn-asr/cuda"]

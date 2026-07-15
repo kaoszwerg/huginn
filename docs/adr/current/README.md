@@ -2,7 +2,7 @@
 
 # Current ADRs (accepted snapshot)
 
-37 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
+38 accepted decisions. Superseded/deprecated ADRs are omitted here; see the full index
 in [../README.md](../README.md).
 
 | ADR | Layer | Title | Load |
@@ -44,3 +44,4 @@ in [../README.md](../README.md).
 | [ADR-PROJ-009](../project/proj-009-crate-structure.md) | proj | Crate structure — one Cargo workspace, rooted at src-tauri/ | conditional |
 | [ADR-PROJ-010](../project/proj-010-voice-rules-and-macros.md) | proj | Voice rules — one mechanism for structure commands, spoken punctuation and macros | conditional |
 | [ADR-PROJ-011](../project/proj-011-streaming-transcription.md) | proj | Streaming transcription — insert while speaking, bounded memory | conditional |
+| [ADR-PROJ-012](../project/proj-012-gpu-acceleration.md) | proj | GPU acceleration for transcription — Vulkan and Metal behind the engine trait | conditional |
