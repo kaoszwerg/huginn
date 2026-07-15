@@ -94,13 +94,23 @@ pub fn start_recording(app: &AppHandle) -> Result<()> {
     Ok(())
 }
 
+/// What a finished recording produced, for the overlay to reflect back to the user (ADR-PROJ-004).
+pub enum Recognition {
+    /// Recognised words, run through `huginn-text` and ready to insert.
+    Text(huginn_text::Processed),
+    /// The microphone carried a signal, but the model recognised nothing in it.
+    Nothing,
+    /// The microphone captured almost no signal — muted, set too low, or the wrong device. Surfaced to
+    /// the user distinctly, so a silent mic is never mistaken for "the model heard nothing".
+    TooQuiet,
+}
+
 /// Stop capturing and recognise. Called on key-up.
 ///
-/// Returns the processed text ready to insert — the recognised words run through `huginn-text` (spoken
-/// commands, macros, a trailing space), together with where the caret should land — or `None` when
-/// there was nothing to recognise (the key was tapped rather than held). **The text is returned,
-/// never logged** (ADR-PROJ-007).
-pub fn finish_recording(app: &AppHandle) -> Result<Option<huginn_text::Processed>> {
+/// Returns what the recording produced ([`Recognition`]) — text to insert, nothing recognised, or a
+/// microphone too quiet to hear — or `None` when no recording was open (the key was tapped, or released
+/// after a session already closed). **Recognised text is returned, never logged** (ADR-PROJ-007).
+pub fn finish_recording(app: &AppHandle) -> Result<Option<Recognition>> {
     let state = app.state::<SpeechState>();
 
     let recorder = {
@@ -116,10 +126,9 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<huginn_text::Processed
         return Ok(None);
     };
 
-    // Stops the microphone and hands back 16 kHz mono — resampled properly, low-passed first. In the
-    // streaming path (ADR-PROJ-011) most of this has already been transcribed as segments; whatever is
-    // left in the buffer is the final tail.
-    let audio = recorder.finish();
+    // Stops the microphone and hands back 16 kHz mono — resampled properly, low-passed first — plus
+    // whether the microphone actually captured a usable signal.
+    let (audio, too_quiet) = recorder.finish();
 
     let settings = app.state::<crate::state::AppState>().settings.get();
 
@@ -130,7 +139,20 @@ pub fn finish_recording(app: &AppHandle) -> Result<Option<huginn_text::Processed
         huginn_audio::cue::play(Cue::Stop);
     }
 
-    Ok(Some(process_audio(app, &audio)?))
+    // Nothing usable reached the microphone — tell the user that, and do not spend a transcription
+    // hallucinating words into silence (ADR-PROJ-004).
+    if too_quiet {
+        return Ok(Some(Recognition::TooQuiet));
+    }
+
+    let processed = process_audio(app, &audio)?;
+    // `is_empty`, not `trim().is_empty()`: a dictation that is *only* a "neue Zeile" command comes back
+    // as "\n" — whitespace to `trim`, but real output that must be inserted (huginn-text).
+    if processed.text.is_empty() {
+        Ok(Some(Recognition::Nothing))
+    } else {
+        Ok(Some(Recognition::Text(processed)))
+    }
 }
 
 /// Transcribe a 16 kHz-mono buffer and post-process it into the text to insert.

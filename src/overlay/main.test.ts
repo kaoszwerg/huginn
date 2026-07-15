@@ -53,6 +53,12 @@ describe("recording overlay", () => {
     expect(stateText()).toBe("Nicht erkannt");
   });
 
+  it("shows a distinct microphone-too-quiet outcome", () => {
+    setState("quiet");
+    expect(stateText()).toBe("Mikro zu leise?");
+    expect(meterDisplay()).toBe("none");
+  });
+
   it("ignores an unknown state name rather than blanking the overlay", () => {
     setState("done");
     setState("this-is-not-a-state");

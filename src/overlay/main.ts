@@ -22,12 +22,14 @@ const STRINGS = {
     working: { state: "Verarbeite …", hint: "" },
     done: { state: "Eingefügt", hint: "" },
     error: { state: "Nicht erkannt", hint: "" },
+    quiet: { state: "Mikro zu leise?", hint: "näher ans Mikrofon" },
   },
   en: {
     listening: { state: "Listening …", hint: "release to insert" },
     working: { state: "Working …", hint: "" },
     done: { state: "Inserted", hint: "" },
     error: { state: "Not recognised", hint: "" },
+    quiet: { state: "Microphone too quiet?", hint: "move closer to the mic" },
   },
 } as const;
 
@@ -55,7 +57,9 @@ function render(): void {
         ? s.done
         : currentState === "error"
           ? s.error
-          : s.listening;
+          : currentState === "quiet"
+            ? s.quiet
+            : s.listening;
   const state = document.querySelector("[data-overlay-state]");
   const hint = document.querySelector("[data-overlay-hint]");
   if (state) state.textContent = strings.state;
@@ -67,10 +71,14 @@ function render(): void {
   const meter = document.querySelector<HTMLElement>("[data-overlay-meter]");
   if (meter) meter.style.display = currentState === "listening" ? "" : "none";
 
-  // The pulse turns to the danger tone when a recording could not be recognised, so a failure reads
-  // at a glance rather than looking like a normal "done".
+  // The pulse turns to the danger tone when a recording produced no text — whether the model heard
+  // nothing ("error") or the microphone was too quiet ("quiet") — so a non-result reads at a glance
+  // rather than looking like a normal "done".
   const pulse = document.querySelector<HTMLElement>(".pulse");
-  if (pulse) pulse.style.background = currentState === "error" ? "var(--huginn-danger)" : "";
+  if (pulse) {
+    pulse.style.background =
+      currentState === "error" || currentState === "quiet" ? "var(--huginn-danger)" : "";
+  }
 }
 
 render();

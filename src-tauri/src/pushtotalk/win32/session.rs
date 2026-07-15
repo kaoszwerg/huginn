@@ -214,19 +214,23 @@ pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: In
     push_state(app, "working");
 
     let outcome = match crate::speech::finish_recording(app) {
-        // `is_empty`, not `trim().is_empty()`: a dictation that is *only* a "neue Zeile" command comes
-        // back as "\n" — whitespace to `trim`, but real output that must be inserted (huginn-text).
-        Ok(Some(processed)) if !processed.text.is_empty() => {
+        Ok(Some(crate::speech::Recognition::Text(processed))) => {
             if inject_processed(&processed) {
                 "done"
             } else {
                 "error"
             }
         }
-        // Nothing recognised — the model truly heard nothing in the recording.
-        Ok(Some(_)) => {
+        // A signal was captured but nothing was recognised in it.
+        Ok(Some(crate::speech::Recognition::Nothing)) => {
             tracing::info!("nothing was recognised");
             "error"
+        }
+        // The microphone captured almost no signal — say so distinctly, not a generic failure
+        // (ADR-PROJ-004). The overlay shows "Mikro zu leise?".
+        Ok(Some(crate::speech::Recognition::TooQuiet)) => {
+            tracing::info!("the microphone captured almost no signal");
+            "quiet"
         }
         Ok(None) => {
             tracing::debug!("no recording was open");

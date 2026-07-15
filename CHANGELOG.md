@@ -23,6 +23,14 @@ All notable changes to this project are documented here. The format follows
   worker needs the platform GPU SDK (on Windows the Vulkan SDK, auto-detected) and the Ninja generator —
   `prepare-worker.mjs` sets both up (Ninja avoids MSBuild's 260-char path limit on ggml-vulkan's nested
   shader build; a short target dir keeps the linker under the same limit).
+- **A microphone that is too quiet now says so** (ADR-PROJ-004). When a recording captures almost no
+  signal — a muted mic, an input set too low, or the wrong device — the overlay shows a distinct
+  **"Mikro zu leise?"** ("Microphone too quiet?") with a hint to move closer, instead of the generic
+  "Nicht erkannt". The check is the captured peak against the noise floor (`captured_too_quiet`); below
+  it Huginn **skips the transcription entirely**, rather than let whisper hallucinate words into silence.
+  The live level meter already shows this while you speak; this catches it after. It is feedback, not a
+  knob — the level is measured, never a threshold the user has to guess (the reason the streaming
+  sensitivity slider was removed).
 - **No entry point dies silently** (ADR-CORE-037, ADR-APP-032 — pulled from the upstream governance and
   implemented here). A crash is permitted; a silent crash is not. Both runtimes now have a last-resort
   handler: a Rust panic (or a startup failure that happens before there is a window) logs, writes a crash

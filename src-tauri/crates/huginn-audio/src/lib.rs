@@ -208,11 +208,15 @@ impl Recorder {
         self.level.take()
     }
 
-    /// Stop the microphone and hand over the audio, converted to what whisper wants: 16 kHz mono.
+    /// Stop the microphone and hand over the audio (16 kHz mono, what whisper wants) together with
+    /// whether the microphone actually captured a usable signal.
     ///
     /// Consumes the recorder — a recording is finished exactly once, and the samples are moved out
-    /// rather than copied, so no second owner can keep the user's voice alive.
-    pub fn finish(self) -> Vec<f32> {
+    /// rather than copied, so no second owner can keep the user's voice alive. The `bool` is `true` when
+    /// the capture stayed below the noise floor (`captured_too_quiet`): a muted mic, an input set too
+    /// low, or the wrong device. The caller surfaces that to the user as its own outcome, rather than
+    /// running whisper on silence and reporting a generic "nothing recognised" (ADR-PROJ-004).
+    pub fn finish(self) -> (Vec<f32>, bool) {
         // Stop capturing *before* taking the buffer, or the last callback races the read.
         drop(self.stream);
 
@@ -233,6 +237,7 @@ impl Recorder {
         // speak" — two failures that look identical to a user, and identical in a log that does not
         // measure them. It is a number about the *signal*, never about the content (ADR-PROJ-007).
         let captured_peak = peak_level(&audio);
+        let too_quiet = captured_too_quiet(&audio);
         let audio = normalise(audio);
 
         tracing::info!(
@@ -241,19 +246,20 @@ impl Recorder {
             source_rate = self.source_rate,
             channels = self.channels,
             peak = format!("{captured_peak:.3}"),
+            too_quiet,
             "recording finished"
         );
 
-        if captured_peak < SILENCE_THRESHOLD {
-            // Loud, because the user is about to be told "nothing was recognised" and would otherwise
-            // have no way to tell a muted microphone from their own silence.
+        if too_quiet {
+            // Loud, because the user is about to be told the microphone was too quiet and would
+            // otherwise have no way to tell a muted microphone from their own silence.
             tracing::warn!(
                 peak = format!("{captured_peak:.4}"),
                 "the microphone captured almost no signal — it may be muted, or the wrong device"
             );
         }
 
-        audio
+        (audio, too_quiet)
     }
 }
 
@@ -306,6 +312,13 @@ fn normalise(mut samples: Vec<f32>) -> Vec<f32> {
 /// whether someone spoke loudly enough; a whisper close to a good microphone still peaks well above
 /// this.
 const SILENCE_THRESHOLD: f32 = 0.01;
+
+/// Did the microphone capture a usable signal at all? Below the noise floor there is nothing to
+/// recognise — the mic is muted, set too low, or the wrong device — so the caller says exactly that to
+/// the user instead of running whisper on silence and reporting a generic "nothing recognised".
+fn captured_too_quiet(audio: &[f32]) -> bool {
+    peak_level(audio) < SILENCE_THRESHOLD
+}
 
 fn build_stream<T>(
     device: &cpal::Device,
@@ -396,5 +409,18 @@ mod tests {
         assert_eq!(level.take(), 0.0);
         level.observe(0.2);
         assert_eq!(level.take(), 0.2);
+    }
+
+    #[test]
+    fn a_capture_below_the_noise_floor_is_flagged_too_quiet() {
+        assert!(captured_too_quiet(&[0.0; 100]), "silence is too quiet");
+        assert!(
+            captured_too_quiet(&[0.005; 100]),
+            "below the 0.01 floor is too quiet"
+        );
+        assert!(
+            !captured_too_quiet(&[0.2; 100]),
+            "a real signal is not too quiet"
+        );
     }
 }
