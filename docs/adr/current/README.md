@@ -43,5 +43,5 @@ in [../README.md](../README.md).
 | [ADR-PROJ-008](../project/proj-008-jobs-and-the-process-monitor.md) | proj | Every long operation is a Job — asynchronous, observable, cancellable — and the footer shows them | conditional |
 | [ADR-PROJ-009](../project/proj-009-crate-structure.md) | proj | Crate structure — one Cargo workspace, rooted at src-tauri/ | conditional |
 | [ADR-PROJ-010](../project/proj-010-voice-rules-and-macros.md) | proj | Voice rules — one mechanism for structure commands, spoken punctuation and macros | conditional |
-| [ADR-PROJ-011](../project/proj-011-streaming-transcription.md) | proj | Streaming transcription — insert while speaking, bounded memory | conditional |
 | [ADR-PROJ-012](../project/proj-012-gpu-acceleration.md) | proj | GPU acceleration for transcription — Vulkan and Metal behind the engine trait | conditional |
+| [ADR-PROJ-013](../project/proj-013-batch-only-transcription.md) | proj | Batch-only transcription — streaming removed | conditional |

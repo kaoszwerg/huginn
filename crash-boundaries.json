@@ -24,7 +24,7 @@
     },
     "src-tauri/src/pushtotalk/win32/session.rs": {
       "spawns": 2,
-      "why": "(1) start_level_pump: polls the recording input level ~20×/s and pushes it into the overlay; its one exit is recording_level() returning None (the recording ended), after which it settles the meter to rest and stops. (2) the worker-restart thread: reloads the model into a fresh worker after a transcription failure (ADR-PROJ-005); it logs the outcome (restarted, or could-not-restart) and ends. Neither loops forever nor dies without a word."
+      "why": "(1) start_level_pump: polls the recording input level ~20×/s and pushes it into the overlay meter while the key is held; it exits when `stopping` is set on key-release, then settles the meter to rest and stops. (2) the worker-restart thread: reloads the model into a fresh worker after a transcription failure (ADR-PROJ-005); it logs the outcome (restarted, or could-not-restart) and ends. Neither loops forever nor dies without a word."
     }
   }
 }

@@ -138,11 +138,7 @@
     "dropTitle": "Import your own model",
     "dropHint": "Drag a Whisper model file (.bin) here — or browse your disk.",
     "browse": "Browse…",
-    "pickTitle": "Choose a model file",
-    "streamingTitle": "Streaming",
-    "streamingInfo": "Inserts text while you speak, in segments at pauses — instead of only after you release the key. Off: the whole recording is transcribed on release (as before).",
-    "sensitivityLabel": "Sensitivity",
-    "sensitivityHint": "Higher cuts on smaller, quieter pauses — more and earlier insertions. Turn it up in a noisy room, or if text only ever appears at the end."
+    "pickTitle": "Choose a model file"
   },
   "filepicker": {
     "up": "Up one level",

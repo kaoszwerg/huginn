@@ -85,11 +85,6 @@ export const api = {
   /** Turn spoken punctuation ("Komma" → ",") on or off. Off by default: it steals the literal word. */
   setDictatePunctuation: (enabled: boolean) =>
     invoke<SettingsDto>("set_dictate_punctuation", { enabled }),
-  /** Turn streaming transcription on or off (ADR-PROJ-011). Off falls back to batch. */
-  setStreaming: (enabled: boolean) => invoke<SettingsDto>("set_streaming", { enabled }),
-  /** How readily the streamer cuts a segment at a pause, 0..1 — higher cuts on smaller/quieter pauses. */
-  setStreamSensitivity: (sensitivity: number) =>
-    invoke<SettingsDto>("set_stream_sensitivity", { sensitivity }),
   /** The built-in voice commands for the current recognition language, for the in-app reference. */
   listBuiltinCommands: () => invoke<BuiltinCommandDto[]>("list_builtin_commands"),
   /** The model catalogue, annotated with what is actually installed. */

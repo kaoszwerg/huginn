@@ -96,8 +96,6 @@ pub fn run() {
             commands::set_sounds,
             commands::set_rules,
             commands::set_dictate_punctuation,
-            commands::set_streaming,
-            commands::set_stream_sensitivity,
             commands::list_builtin_commands,
             commands::list_models,
             commands::download_model,

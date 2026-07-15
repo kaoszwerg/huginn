@@ -32,8 +32,6 @@ function settings(ui_scale: number): SettingsDto {
     hotkey: "Ctrl+Space",
     rules: [],
     dictate_punctuation: false,
-    streaming: true,
-    stream_sensitivity: 0.5,
   };
 }
 

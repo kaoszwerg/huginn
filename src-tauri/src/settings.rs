@@ -36,10 +36,6 @@ pub struct SettingsPatch {
     pub rules: Option<Vec<crate::dto::VoiceRuleDto>>,
     /// Whether spoken punctuation is active.
     pub dictate_punctuation: Option<bool>,
-    /// Whether streaming transcription is on (ADR-PROJ-011).
-    pub streaming: Option<bool>,
-    /// How readily the streamer cuts at a pause, `0.0..=1.0` (clamped on apply).
-    pub stream_sensitivity: Option<f64>,
 }
 
 /// Thread-safe settings store: in-memory state + the JSON file it is persisted to.
@@ -134,12 +130,6 @@ impl SettingsStore {
             if let Some(dictate_punctuation) = patch.dictate_punctuation {
                 guard.dictate_punctuation = dictate_punctuation;
             }
-            if let Some(streaming) = patch.streaming {
-                guard.streaming = streaming;
-            }
-            if let Some(sensitivity) = patch.stream_sensitivity {
-                guard.stream_sensitivity = sensitivity.clamp(0.0, 1.0);
-            }
             guard.clone()
         };
         self.persist(&next)?;
@@ -180,10 +170,6 @@ fn sanitize(mut s: SettingsDto) -> SettingsDto {
         tracing::warn!("settings carried an empty hotkey — falling back to the default");
         s.hotkey = SettingsDto::default().hotkey;
     }
-    if !s.stream_sensitivity.is_finite() {
-        s.stream_sensitivity = 0.5;
-    }
-    s.stream_sensitivity = s.stream_sensitivity.clamp(0.0, 1.0);
     s
 }
 

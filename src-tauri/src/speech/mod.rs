@@ -94,31 +94,6 @@ pub fn start_recording(app: &AppHandle) -> Result<()> {
     Ok(())
 }
 
-/// Freeze the recording at key-up: stop the microphone from capturing **more** audio without ending
-/// the recording (ADR-PROJ-011).
-///
-/// Called first thing on key-release, **before** the streaming pump is joined. The pump may still be
-/// transcribing an in-flight segment (slow on CPU), and joining it takes as long as that transcription;
-/// if the microphone stayed open across that wait, the final tail would include every second the user
-/// spent *not* holding the key. Pausing here means the tail is only the audio captured while the key was
-/// actually down.
-pub fn stop_capturing(app: &AppHandle) {
-    let state = app.state::<SpeechState>();
-    let slot = match state.recording.lock() {
-        Ok(slot) => slot,
-        Err(_) => {
-            tracing::error!(
-                "the recording lock is poisoned; cannot freeze the microphone on key-up"
-            );
-            return;
-        }
-    };
-    match slot.as_ref() {
-        Some(recorder) => recorder.stop_capture(),
-        None => tracing::debug!("stop_capturing: no recording is open"),
-    }
-}
-
 /// Stop capturing and recognise. Called on key-up.
 ///
 /// Returns the processed text ready to insert — the recognised words run through `huginn-text` (spoken
@@ -201,34 +176,6 @@ fn process_audio(app: &AppHandle, audio: &[f32]) -> Result<huginn_text::Processe
         &options,
         &ctx,
     ))
-}
-
-/// Cut, transcribe and post-process the next silence-bounded segment, **while recording continues**
-/// (ADR-PROJ-011). `Ok(None)` means nothing was ready to cut yet — keep recording. `Ok(Some(_))` is a
-/// finished segment (its text may be empty, e.g. a pause the model heard nothing in); the caller
-/// inserts it and the audio is already gone from the recorder's buffer.
-pub fn stream_segment(app: &AppHandle) -> Result<Option<huginn_text::Processed>> {
-    let settings = app.state::<crate::state::AppState>().settings.get();
-    // Streaming off → never cut; the key-release transcribes the whole recording (batch, ADR-PROJ-011).
-    if !settings.streaming {
-        return Ok(None);
-    }
-
-    let segment = {
-        let state = app.state::<SpeechState>();
-        let slot = state
-            .recording
-            .lock()
-            .map_err(|_| AppError::Other("the recording lock is poisoned".into()))?;
-        match slot.as_ref() {
-            Some(recorder) => recorder.take_silence_segment(settings.stream_sensitivity),
-            None => None,
-        }
-    };
-    match segment {
-        Some(audio) => Ok(Some(process_audio(app, &audio)?)),
-        None => Ok(None),
-    }
 }
 
 /// Resolve the runtime values a macro template might need — the clock, and the clipboard **only if a

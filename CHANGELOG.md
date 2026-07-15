@@ -23,22 +23,6 @@ All notable changes to this project are documented here. The format follows
   worker needs the platform GPU SDK (on Windows the Vulkan SDK, auto-detected) and the Ninja generator —
   `prepare-worker.mjs` sets both up (Ninja avoids MSBuild's 260-char path limit on ggml-vulkan's nested
   shader build; a short target dir keeps the linker under the same limit).
-- **Streaming transcription — text appears while you speak** (ADR-PROJ-011). Push-to-talk was batch: the
-  whole clip was transcribed only after the key was released, so a 20-second dictation meant 20+ seconds of
-  staring at "Ich höre zu …" (and on the large model a long clip could crash the worker). Now the recording
-  is cut into **silence-bounded segments** taken off the front of the recorder's own buffer — so memory is
-  bounded by how far transcription lags behind speech, not by the whole dictation — and each segment is
-  transcribed and inserted the moment it is ready, while the next is still being spoken. The key-release
-  transcribes only the final tail. It **degrades to batch**: if there is never a pause, nothing is cut and
-  the release transcribes the whole thing, exactly as before — streaming is an accelerator, never a
-  regression. Segments run through the **same** deprivileged worker and `huginn-text` post-processing, and
-  are inserted **strictly in order** (the release joins the streaming pump before doing the tail). The
-  silence-cut policy (`find_silence_cut`) is pure and unit-tested; the perceived speed-up is what the
-  maintainer verifies with a real microphone. Note: this makes the *wait* disappear behind the speaking, but
-  the raw throughput ceiling is still the model's (a smaller/quantised model is a separate lever,
-  ADR-PROJ-006). **The tuning is in the settings** (Speech → Streaming): an on/off toggle (off falls back to
-  batch) and a five-step **sensitivity** — how readily it cuts at a pause, the one environment-dependent
-  knob — both live, no rebuild. Persisted and clamped like every other setting.
 - **No entry point dies silently** (ADR-CORE-037, ADR-APP-032 — pulled from the upstream governance and
   implemented here). A crash is permitted; a silent crash is not. Both runtimes now have a last-resort
   handler: a Rust panic (or a startup failure that happens before there is a window) logs, writes a crash
@@ -201,21 +185,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- **The microphone no longer keeps recording after you let go of the key** (ADR-PROJ-011). With streaming on
-  and a slow transcription, releasing the key did *not* stop capture: `on_released` joined the streaming pump
-  first, and that join waits as long as the in-flight segment takes to transcribe (~24 s on the CPU model) —
-  the microphone stayed open the whole time. Measured: a 13.6 s hold produced a 23.7 s "tail", i.e. ~14 s of
-  audio captured *after* the user stopped speaking, then transcribed as if it were dictation. Key-up now
-  **freezes the recording immediately** (`Recorder::stop_capture` pauses the capture stream, `stop_capturing`
-  calls it before the pump is joined), so the final tail is only the audio captured while the key was actually
-  held. The privacy boundary is unchanged — nothing is written to disk and the buffer is still dropped after
-  transcription (ADR-PROJ-007).
 - **Recognition recovers on its own after a worker failure** (ADR-PROJ-005). If the ASR worker died
   mid-transcription (a long clip, a native whisper.cpp abort), every later recording failed until the app
   was restarted — the dead worker handle was never replaced. A transcription failure now restarts the
   worker off the keypress thread and shows "Nicht erkannt" in the overlay, so the next recording works and
-  the failure is never silent. (The underlying long-clip crash and streaming transcription are tracked
-  separately.)
+  the failure is never silent.
 - **The installed app can actually transcribe — the ASR worker is now bundled** (ADR-PROJ-005). An
   installed release could never load a model: the deprivileged worker process (`huginn-asr-worker.exe`)
   was never built for release nor shipped, so the UI showed the model as "installed" while the log said

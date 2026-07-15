@@ -84,55 +84,32 @@ pub(crate) fn on_pressed(app: &AppHandle, session: &mut Option<Session>, at: Ins
         tracing::error!(error = %e, "the microphone could not be opened");
     }
 
-    // Streaming (ADR-PROJ-011): one pump drives the overlay's level meter AND cuts, transcribes and
-    // inserts silence-bounded segments while the key is still held — so text appears as the user speaks,
-    // not only after release. `stopping` lets the key-release stop it cleanly; `inserted` records whether
-    // any segment already produced text, so an empty final tail after a full dictation still reads "done".
+    // A background pump drives the overlay's live input-level meter while the key is held
+    // (ADR-PROJ-004). It does no transcription — that happens once, on release — so `stopping` only ends
+    // the meter loop, and joining it on release is instant.
     let stopping = Arc::new(AtomicBool::new(false));
-    let inserted = Arc::new(AtomicBool::new(false));
-    let pump = start_stream_pump(app, stopping.clone(), inserted.clone());
+    let pump = start_level_pump(app, stopping.clone());
 
     *session = Some(Session {
         target,
         started: at,
         stopping,
         pump: Some(pump),
-        inserted,
     });
 }
 
-/// The streaming pump (ADR-PROJ-011). While the key is held it drives the overlay level meter and,
-/// whenever a silence-bounded segment is ready, transcribes and inserts it — so the text lands as the
-/// user speaks. It runs until `stopping` is set on key-release, then settles the meter.
-///
-/// **Sequential by construction:** one segment is transcribed and inserted before the next is even cut,
-/// so words can never arrive out of order; and the key-release joins this thread *before* transcribing
-/// the final tail, so the tail can never interleave with a streamed segment.
-///
-/// The overlay is pushed with `eval` (ADR-PROJ-004): it holds no IPC capability and is told, never asks.
-fn start_stream_pump(
-    app: &AppHandle,
-    stopping: Arc<AtomicBool>,
-    inserted: Arc<AtomicBool>,
-) -> std::thread::JoinHandle<()> {
+/// The overlay's live input-level meter (ADR-PROJ-004). While the key is held it polls the microphone
+/// level ~20×/s and pushes it into the capability-less overlay window (`eval` — the overlay holds no IPC
+/// capability and is told, never asks); on release it settles the meter back to rest. It does **no**
+/// transcription: recognition happens once, on the whole recording, at key-up.
+fn start_level_pump(app: &AppHandle, stopping: Arc<AtomicBool>) -> std::thread::JoinHandle<()> {
     let app = app.clone();
     std::thread::spawn(move || {
         while !stopping.load(Ordering::Relaxed) {
             if let Some(level) = crate::speech::recording_level(&app) {
                 push_level(&app, level);
             }
-            match crate::speech::stream_segment(&app) {
-                Ok(Some(processed)) if !processed.text.is_empty() => {
-                    if inject_processed(&processed) {
-                        inserted.store(true, Ordering::Relaxed);
-                    }
-                }
-                Ok(_) => {}
-                Err(e) => {
-                    tracing::error!(error = %e, "a streamed segment could not be transcribed")
-                }
-            }
-            std::thread::sleep(std::time::Duration::from_millis(120));
+            std::thread::sleep(std::time::Duration::from_millis(50));
         }
         // The recording ended: let the meter settle back to rest rather than freeze at the last value.
         push_level(&app, 0.0);
@@ -140,8 +117,7 @@ fn start_stream_pump(
 }
 
 /// Insert processed text into the focused window, applying a macro's `{cursor}` placeholder. Returns
-/// whether the text actually reached the window (SendInput events were produced). Shared by the streaming
-/// pump and the final-tail path so both insert identically (ADR-PROJ-010, rule:reusability).
+/// whether the text actually reached the window (SendInput events were produced) (ADR-PROJ-010).
 fn inject_processed(processed: &huginn_text::Processed) -> bool {
     let started = Instant::now();
     match inject::send_text(&processed.text) {
@@ -197,19 +173,13 @@ pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: In
     };
     let hold_ms = at.duration_since(session.started).as_millis();
 
-    // Freeze the microphone at THIS instant — the key-up — before doing anything slow. The pump join
-    // below can take as long as an in-flight segment's transcription (seconds on CPU); if the microphone
-    // stayed open across it, the final tail would swallow every second the user spent after letting go
-    // (measured: a 23.7 s tail for a 13.6 s hold). Pausing first makes the tail only the held audio.
-    crate::speech::stop_capturing(app);
-
-    // Stop the streaming pump and WAIT for it to finish its current segment, so the final tail is
-    // transcribed and inserted strictly AFTER every streamed segment — never interleaved (ADR-PROJ-011).
+    // Stop the overlay's level meter. It does no work, so this is instant — and the microphone itself is
+    // stopped a moment later by `finish_recording`, which drops the capture stream before reading the
+    // buffer, so nothing keeps recording once the key is up.
     session.stopping.store(true, Ordering::Relaxed);
     if let Some(pump) = session.pump.take() {
         let _ = pump.join();
     }
-    let streamed_any = session.inserted.load(Ordering::Relaxed);
 
     // Is the focus still where it was?
     let now = focus::foreground();
@@ -221,7 +191,6 @@ pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: In
     tracing::info!(
         hold_ms,
         focus_kept,
-        streamed_any,
         target_process = %session.target.process,
         now_process = now.as_ref().map(|f| f.process.as_str()).unwrap_or("<none>"),
         "push-to-talk released"
@@ -239,9 +208,9 @@ pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: In
         );
     }
 
-    // Show "working" for the final tail: whatever audio is left after the last streamed segment (or the
-    // whole recording, if it never paused long enough to stream — the batch fallback, ADR-PROJ-011). The
-    // text is never logged (ADR-PROJ-007); it goes from the worker's pipe into the focused window only.
+    // The whole recording is transcribed once, here (ADR-PROJ-005). The overlay shows "working" while
+    // whisper runs; the text is never logged (ADR-PROJ-007) — it goes from the worker's pipe into the
+    // focused window only.
     push_state(app, "working");
 
     let outcome = match crate::speech::finish_recording(app) {
@@ -254,15 +223,10 @@ pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: In
                 "error"
             }
         }
-        // The tail was empty. If segments already inserted text this is a normal end to a full dictation
-        // ("done"); only if NOTHING was ever inserted did the model truly hear nothing (ADR-PROJ-011).
+        // Nothing recognised — the model truly heard nothing in the recording.
         Ok(Some(_)) => {
-            if streamed_any {
-                "done"
-            } else {
-                tracing::info!("nothing was recognised");
-                "error"
-            }
+            tracing::info!("nothing was recognised");
+            "error"
         }
         Ok(None) => {
             tracing::debug!("no recording was open");

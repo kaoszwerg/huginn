@@ -1,6 +1,6 @@
 {
   "generated": true,
-  "count": 40,
+  "count": 41,
   "adrs": [
     {
       "id": "ADR-APP-001",
@@ -1119,7 +1119,7 @@
       "tldr": "Transcribe while speaking, in silence-cut segments inserted as ready; the key-release does the final tail; falls back to batch when there is no pause.",
       "scope": "architecture",
       "load": "conditional",
-      "status": "accepted",
+      "status": "superseded",
       "triggers": [
         "streaming",
         "stream",
@@ -1141,7 +1141,7 @@
         "src-tauri/src/speech/**",
         "src-tauri/src/pushtotalk/**"
       ],
-      "supersededBy": null,
+      "supersededBy": "ADR-PROJ-013",
       "path": "docs/adr/project/proj-011-streaming-transcription.md",
       "hash": "b8fb476d0d4076c2"
     },
@@ -1181,6 +1181,37 @@
       "supersededBy": null,
       "path": "docs/adr/project/proj-012-gpu-acceleration.md",
       "hash": "333aee7d66ea7aa5"
+    },
+    {
+      "id": "ADR-PROJ-013",
+      "layer": "proj",
+      "title": "Batch-only transcription — streaming removed",
+      "tldr": "Streaming removed: GPU made batch instant and fragmentation lost words at every cut. Transcribe the whole recording once; whisper handles any length.",
+      "scope": "architecture",
+      "load": "conditional",
+      "status": "accepted",
+      "triggers": [
+        "streaming",
+        "stream",
+        "segment",
+        "chunk",
+        "silence",
+        "batch",
+        "transcribe",
+        "transcription",
+        "fragment",
+        "pump",
+        "latency",
+        "whole-recording"
+      ],
+      "applies-to": [
+        "src-tauri/crates/huginn-audio/**",
+        "src-tauri/src/speech/**",
+        "src-tauri/src/pushtotalk/**"
+      ],
+      "supersededBy": null,
+      "path": "docs/adr/project/proj-013-batch-only-transcription.md",
+      "hash": "b53c989d4c18c3b1"
     }
   ]
 }
