@@ -186,6 +186,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **The microphone no longer keeps recording after you let go of the key** (ADR-PROJ-011). With streaming on
+  and a slow transcription, releasing the key did *not* stop capture: `on_released` joined the streaming pump
+  first, and that join waits as long as the in-flight segment takes to transcribe (~24 s on the CPU model) —
+  the microphone stayed open the whole time. Measured: a 13.6 s hold produced a 23.7 s "tail", i.e. ~14 s of
+  audio captured *after* the user stopped speaking, then transcribed as if it were dictation. Key-up now
+  **freezes the recording immediately** (`Recorder::stop_capture` pauses the capture stream, `stop_capturing`
+  calls it before the pump is joined), so the final tail is only the audio captured while the key was actually
+  held. The privacy boundary is unchanged — nothing is written to disk and the buffer is still dropped after
+  transcription (ADR-PROJ-007).
 - **Recognition recovers on its own after a worker failure** (ADR-PROJ-005). If the ASR worker died
   mid-transcription (a long clip, a native whisper.cpp abort), every later recording failed until the app
   was restarted — the dead worker handle was never replaced. A transcription failure now restarts the

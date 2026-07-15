@@ -197,6 +197,12 @@ pub(crate) fn on_released(app: &AppHandle, session: &mut Option<Session>, at: In
     };
     let hold_ms = at.duration_since(session.started).as_millis();
 
+    // Freeze the microphone at THIS instant — the key-up — before doing anything slow. The pump join
+    // below can take as long as an in-flight segment's transcription (seconds on CPU); if the microphone
+    // stayed open across it, the final tail would swallow every second the user spent after letting go
+    // (measured: a 23.7 s tail for a 13.6 s hold). Pausing first makes the tail only the held audio.
+    crate::speech::stop_capturing(app);
+
     // Stop the streaming pump and WAIT for it to finish its current segment, so the final tail is
     // transcribed and inserted strictly AFTER every streamed segment — never interleaved (ADR-PROJ-011).
     session.stopping.store(true, Ordering::Relaxed);

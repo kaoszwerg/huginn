@@ -94,6 +94,31 @@ pub fn start_recording(app: &AppHandle) -> Result<()> {
     Ok(())
 }
 
+/// Freeze the recording at key-up: stop the microphone from capturing **more** audio without ending
+/// the recording (ADR-PROJ-011).
+///
+/// Called first thing on key-release, **before** the streaming pump is joined. The pump may still be
+/// transcribing an in-flight segment (slow on CPU), and joining it takes as long as that transcription;
+/// if the microphone stayed open across that wait, the final tail would include every second the user
+/// spent *not* holding the key. Pausing here means the tail is only the audio captured while the key was
+/// actually down.
+pub fn stop_capturing(app: &AppHandle) {
+    let state = app.state::<SpeechState>();
+    let slot = match state.recording.lock() {
+        Ok(slot) => slot,
+        Err(_) => {
+            tracing::error!(
+                "the recording lock is poisoned; cannot freeze the microphone on key-up"
+            );
+            return;
+        }
+    };
+    match slot.as_ref() {
+        Some(recorder) => recorder.stop_capture(),
+        None => tracing::debug!("stop_capturing: no recording is open"),
+    }
+}
+
 /// Stop capturing and recognise. Called on key-up.
 ///
 /// Returns the processed text ready to insert — the recognised words run through `huginn-text` (spoken

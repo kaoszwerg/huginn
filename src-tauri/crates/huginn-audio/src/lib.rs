@@ -235,6 +235,27 @@ impl Recorder {
         Some(normalise(resample_to_16k(&mono, self.source_rate)))
     }
 
+    /// Freeze the recording at key-up: stop capturing **more** audio without consuming the recorder or
+    /// discarding the buffer (ADR-PROJ-011).
+    ///
+    /// Called the instant the push-to-talk key is released, **before** the streaming pump is joined.
+    /// Without it the microphone keeps recording for as long as the (possibly slow) in-flight segment
+    /// takes to transcribe, and the final tail balloons to include seconds of audio captured *after* the
+    /// user let go — measured as a 23.7 s tail for a 13.6 s hold. Pausing the stream stops the capture
+    /// callback, so the buffer stays exactly as it was at key-up while the pump finishes.
+    ///
+    /// Non-fatal: a backend that cannot pause is logged, not panicked — [`finish`] still ends the stream
+    /// by dropping it. Idempotent: pausing an already-paused stream is harmless.
+    pub fn stop_capture(&self) {
+        match self.stream.pause() {
+            Ok(()) => tracing::debug!("microphone paused on key-up — capture buffer frozen"),
+            Err(e) => tracing::warn!(
+                error = %e,
+                "could not pause the microphone on key-up; the tail may include a little audio after release"
+            ),
+        }
+    }
+
     /// Stop the microphone and hand over the audio, converted to what whisper wants: 16 kHz mono.
     ///
     /// Consumes the recorder — a recording is finished exactly once, and the samples are moved out
